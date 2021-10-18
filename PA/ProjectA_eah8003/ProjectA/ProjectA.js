@@ -1,20 +1,3 @@
-var VSHADER_SOURCE = `
-  uniform mat4 u_ModelMatrix;
-  attribute vec4 a_Position;
-  attribute vec4 a_Color;
-  varying vec4 v_Color;
-  void main() {
-    gl_Position = u_ModelMatrix * a_Position;
-    gl_PointSize = 10.0;
-    v_Color = a_Color;
-  }`;
-
-var FSHADER_SOURCE = `
-  precision mediump float;
-  varying vec4 v_Color;
-  void main() {
-    gl_FragColor = v_Color;
-  }`;
 
 class Vec3 {
   x;
@@ -48,16 +31,24 @@ class Vertex {
     this.pos = pos;
     this.color = color;
   }
+
+  static primsPerVertex = 7;
+  static primsPerPos = 4;
+  static primsPerColor = 3;
+  static primSize;
+  static primType = gl.FLOAT;
+  static get stride() {
+    return Vertex.primSize * Vertex.primsPerVertex;
+  }
 }
 
 class Mesh {
   verts = [];
+  renderType;
 
   // These get filled in after the vbo generation
-  vboId;
   vboStart;
-  vboEnd;
-  vboStride;
+  vboCount;
 }
 
 class SceneGraphNode {
@@ -95,10 +86,34 @@ class SceneGraphNode {
 
 var SceneGraph = SceneGraphNode;
 
+class RenderProgram {
+  vertShader = `
+    uniform mat4 u_ModelMatrix;
+    attribute vec4 a_Position;
+    attribute vec4 a_Color;
+    varying vec4 v_Color;
+    void main() {
+      gl_Position = u_ModelMatrix * a_Position;
+      gl_PointSize = 10.0;
+      v_Color = a_Color;
+    }`;
+
+  fragShader = `
+    precision mediump float;
+    varying vec4 v_Color;
+    void main() {
+      gl_FragColor = v_Color;
+    }`;
+
+  attribIds = {};
+}
+
 class Context {
   static gl;
   static canvas;
-  static SceneGraph;
+  static sceneGraph;
+  static vboId;
+  static renderProgram = new RenderProgram();
 }
 
 function main() {
@@ -109,27 +124,28 @@ function main() {
     return;
   }
 
-  if (!initShaders(Context.gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
+  if (!initShaders(Context.gl, Context.vertShader, Context.fragShader)) {
     console.log('Failed to intialize shaders.');
     return;
   }
 
   initSceneGraph();
 
-  g_maxVerts = initVertexBuffer(gl);
-  if (g_maxVerts < 0) {
+  maxVerts = initVertexBuffer(gl);
+  if (maxVerts < 0) {
     console.log('Failed to set the vertex information');
     return;
   }
 
-  gl.clearColor(0.3, 0.3, 0.3, 1.0);
+  Context.gl.clearColor(0.3, 0.3, 0.3, 1.0);
 
-  gl.depthFunc(gl.GREATER);
-  gl.clearDepth(0.0);
-  gl.enable(gl.DEPTH_TEST);
+  Context.gl.depthFunc(gl.GREATER);
+  Context.gl.clearDepth(0.0);
+  Context.gl.enable(gl.DEPTH_TEST);
 
-  g_modelMatLoc = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
-  if (!g_modelMatLoc) { 
+  modelMatrixId = Context.gl.getUniformLocation(Context.gl.program, 'u_ModelMatrix');
+  Context.renderProgram.attribIds['u_ModelMatrix'] = modelMatrixId;
+  if (!initUniformPointer('u_ModelMatrix') {
     console.log('Failed to get the storage location of u_ModelMatrix');
     return;
   }
@@ -137,6 +153,7 @@ function main() {
 
 function initSceneGraph() {
   tetraMesh = new Mesh();
+  tetraMesh.renderType = gl.TRIANGLES;
   tetraMesh.verts = [
     new Vertex({.pos = new Vec3( 0.0,  0.0, 0.0), .color = new Vec3(1.0, 1.0, 1.0)}),
     new Vertex({.pos = new Vec3( c30, -0.5, 0.0), .color = new Vec3(0.0, 0.0, 1.0)}),
@@ -152,7 +169,19 @@ function initSceneGraph() {
     new Vertex({.pos = new Vec3( c30, -0.5, 0.0), .color = new Vec3(0.0, 0.0, 1.0)})
   ];
 
+  wedgeMesh = new Mesh();
+  wegdeMesh.renderType = gl.TRIANGLES;
+  wedgeMesh.verts = [
+    new Vertex({.pos = new Vec3( 0.0,  0.0, sq2), .color = new Vec3(1.0, 1.0, 1.0)}),
+    new Vertex({.pos = new Vec3(-c30, -0.5, 0.0), .color = new Vec3(0.0, 1.0, 0.0)}),
+    new Vertex({.pos = new Vec3( c30, -0.5, 0.0), .color = new Vec3(0.0, 0.0, 1.0)}),
+    new Vertex({.pos = new Vec3(-c30, -0.5, 0.0), .color = new Vec3(0.0, 1.0, 0.0)}),
+    new Vertex({.pos = new Vec3( 0.0,  1.0, 0.0), .color = new Vec3(1.0, 0.0, 0.0)}),
+    new Vertex({.pos = new Vec3( c30, -0.5, 0.0), .color = new Vec3(0.0, 0.0, 1.0)})
+  ];
+
   squareMesh = new Mesh();
+  squareMesh.renderType = gl.TRIANGLE_FAN
   squareMesh.verts = [
     new Vertex({.pos = new Vec3(-0.5, -0.5, 0.0), .color = new Vec3(1.0, 0.0, 0.0)}),
     new Vertex({.pos = new Vec3(-0.5,  0.5, 0.0), .color = new Vec3(0.0, 1.0, 0.0)}),
@@ -161,85 +190,119 @@ function initSceneGraph() {
   ];
 
   triangleMesh = new Mesh();
+  triangleMesh.renderType = gl.TRIANGLES;
   triangleMesh.verts = [
     new Vertex({.pos = new Vec3(-0.5, -0.5, 0.0), .color = new Vec3(0.0, 1.0, 1.0)}),
     new Vertex({.pos = new Vec3(-0.5,  0.5, 0.0), .color = new Vec3(1.0, 0.0, 1.0)}),
     new Vertex({.pos = new Vec3( 0.5,  0.5, 0.0), .color = new Vec3(1.0, 1.0, 0.0)}),
   ];
+
+  topNode = new SceneGraph();
+
+  tetraParentNode = new SceneGraphNode();
+  tetraNode = new SceneGraphNode();
+  squareNode = new SceneGraphNode();
+
+  dragObjNode = new SceneGraphNode();
+  dragTetraNode = new SceneGraphNode();
+  triangleNode = new SceneGraphNode();
+
+  topNode.children = [tetraParentNode, dragObjNode];
+  tetraParentNode.children = [tetraNode, squareNode];
+  dragObjNode.children = [dragTetraNode, triangleNode];
+
+  tetraNode.mesh = tetraMesh;
+  dragTetraNode.mesh = wedgeMesh;
+  squareNode.mesh = squareMesh;
+  triangleNode.mesh = triangleMesh;
+
+  Context.sceneGraph = topNode;
+}
+
+function buildBuffer(graphNode, currBuffer) {
+  if (graphNode.mesh) {
+    mesh.vboStart = currBuffer.length;
+    for (vertex in graphNode.mesh.verts) {
+      currBuffer.append(vertex.pos.x);
+      currBuffer.append(vertex.pos.y);
+      currBuffer.append(vertex.pos.z);
+      currBuffer.append(1.0);
+      currBuffer.append(vertex.color.r);
+      currBuffer.append(vertex.color.g);
+      currBuffer.append(vertex.color.b);
+    }
+    mesh.vboCount = (currBuffer.length - mesh.vboStart) / Vertex.primsPerVertex;
+  }
+
+  for (child in graphNode.children) {
+    buildBuffer(child, currBuffer);
+  }
+
+  return currBuffer;
 }
 
 function initVertexBuffer() {
-  var colorShapes = new Float32Array([
-
-  ]);
+  var bufferValues = buildBuffer(Context.sceneGraph, []);
+  var buffer = new Float32Array(bufferValues);
 
   // Create a buffer object
-  var shapeBufferHandle = gl.createBuffer();
-  if (!shapeBufferHandle) {
+  var Context.vboId = gl.createBuffer();
+  if (!Context.vboId) {
     console.log('Failed to create the shape buffer object');
     return false;
   }
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, shapeBufferHandle);
-  gl.bufferData(gl.ARRAY_BUFFER, colorShapes, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, Context.vboId);
+  gl.bufferData(gl.ARRAY_BUFFER, buffer, gl.STATIC_DRAW);
 
-  var FSIZE = colorShapes.BYTES_PER_ELEMENT;
+  Vertex.primSize = buffer.BYTES_PER_ELEMENT;
 
   var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+  Context.renderProgram.attribIds['a_Position'] = a_Position;
   if (a_Position < 0) {
     console.log('Failed to get the storage location of a_Position');
     return -1;
   }
-
-  gl.vertexAttribPointer(
-      a_Position, // VBO
-      FSIZE,      // Primitives per entry
-      gl.FLOAT,   // Data type
-      false,      // Normalize
-      FSIZE * 7,  // Stride
-      0);         // Offset
+  gl.vertexAttribPointer(a_Position, Vertex,primsPerPos, Vertex.primType, false /* Normalize */, Vertex.stride, 0);
   gl.enableVertexAttribArray(a_Position);
 
   var a_Color = gl.getAttribLocation(gl.program, 'a_Color');
+  Context.renderProgram.attribIds['a_Color'] = a_Color;
   if(a_Color < 0) {
     console.log('Failed to get the storage location of a_Color');
     return -1;
   }
-
-  gl.vertexAttribPointer(
-    a_Color,    // VBO
-    3,          // Primitives per entry
-    gl.FLOAT,   // Data type
-    false,      // Normalize
-    FSIZE * 7,  // Stride
-    FSIZE * 4); // Offset
-  gl.enableVertexAttribArray(a_Color);  
+  gl.vertexAttribPointer(a_Color, Vertex.primsPerColor, Vertex.primType, false /* Normalize */, Vertex.stride, Vertex.primSize * Vertex.primsPerPos);
+  gl.enableVertexAttribArray(a_Color);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
+  return bufferValues.length;
 }
 
-function drawTetra() {
-  gl.drawArrays(gl.TRIANGLES, 0, 12);
-}
+function drawNode(modelMatrix, node) {
+  pushMatrix(modelMatrix);
+  modelMatrix.translate(node.pos.x, node.pos.y, node.pos.z);
+  modelMatrix.scale(node.scale.x, node.scale.y, node.scale.z);
+  modelMatrix.rotate(node.rot.x, 1, 0, 0);
+  modelMatrix.rotate(node.rot.y, 0, 1, 0);
+  modelMatrix.rotate(node.rot.z, 1, 0, 0);
 
-function drawWedge() {
-  gl.drawArrays(gl.TRIANGLES, 6,6);
-}
+  if (node.mesh) {
+    Context.gl.uniformMatrix4fv(Context.renderProgram.attribIds['u_ModelMatrix'], false, modelMatrix.elements);
+    Context.gl.drawArrays(node.mesh.renderType, node.mesh.vboStart, node.mesh.vboCount);
+  }
 
-function drawSquare() {
-  gl.drawArrays(gl.TRIANGLE_FAN, 12, 4);
-}
-
-function drawTriangle() {
-  gl.drawArrays(gl.TRIANGLES, 16, 3);
+  for (child in node.children) {
+    modelMatrix = drawNode(modelMatrix, node);
+  }
+  return popMatrix();
 }
 
 function drawAll() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  clrColr = new Float32Array(4);
-  clrColr = gl.getParameter(gl.COLOR_CLEAR_VALUE);
+  modelMatrix = new Matrix4();
+  drawNode(modelMatrix, Context.sceneGraph);
 
   g_modelMatrix.setTranslate(-0.4,-0.4, 0.0);
   g_modelMatrix.scale(1,1,-1);
