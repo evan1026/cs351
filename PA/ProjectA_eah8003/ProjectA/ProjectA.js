@@ -52,6 +52,7 @@ class Mesh {
 }
 
 class SceneGraphNode {
+  name;
   pos;
   rot;
   scale;
@@ -59,7 +60,16 @@ class SceneGraphNode {
   children = [];
   mesh;
 
-  constructor(pos, rot, scale, mesh) {
+  constructor(name, pos, rot, scale, mesh) {
+    if (name === undefined || name === null) {
+      throw 'Name for a SceneGraphNode is required!'
+    }
+    this.name = name;
+    if (Animation.nodes[name] !== undefined && Animation.nodes[name] !== null) {
+      throw 'Duplicate SceneGraphNode name: ' + name;
+    }
+    Animation.nodes[name] = this;
+
     if (pos === undefined || pos === null) {
       this.pos = new Vec3(0, 0, 0);
     } else {
@@ -116,6 +126,11 @@ class Context {
   static fps = 30;
 }
 
+class Animation {
+  static nodes = {};
+}
+
+// Allowing 1 global bc it makes things so much easier and gl is more of a namespace than a variable anyway
 var gl;
 
 function main() {
@@ -157,7 +172,9 @@ function main() {
 }
 
 function animate() {
-
+  timeVal = (new Date().getTime() / 10) % 360
+  Animation.nodes['square2'].rot = new Vec3(timeVal, timeVal, timeVal);
+  Animation.nodes['tetraParent'].rot = new Vec3((new Date().getTime() / 100) % 360, 0, 0);
 }
 
 function tick() {
@@ -173,12 +190,12 @@ function initSceneGraph() {
   tetraMesh = new Mesh();
   tetraMesh.renderType = gl.TRIANGLES;
   tetraMesh.verts = [
-    new Vertex(new Vec3( 0.0,  0.0, 0.0), new Vec3(1.0, 1.0, 1.0)),
+    new Vertex(new Vec3( 0.0,  0.0, sq2), new Vec3(1.0, 1.0, 1.0)),
     new Vertex(new Vec3( c30, -0.5, 0.0), new Vec3(0.0, 0.0, 1.0)),
     new Vertex(new Vec3( 0.0,  1.0, 0.0), new Vec3(1.0, 0.0, 0.0)),
-    new Vertex(new Vec3( 0.0,  1.0, sq2), new Vec3(1.0, 1.0, 1.0)),
+    new Vertex(new Vec3( 0.0,  0.0, sq2), new Vec3(1.0, 1.0, 1.0)),
     new Vertex(new Vec3( 0.0,  1.0, 0.0), new Vec3(1.0, 0.0, 0.0)),
-    new Vertex(new Vec3(-c30, -0.5, 0.0), new Vec3(1.0, 1.0, 0.0)),
+    new Vertex(new Vec3(-c30, -0.5, 0.0), new Vec3(0.0, 1.0, 0.0)),
     new Vertex(new Vec3( 0.0,  0.0, sq2), new Vec3(1.0, 1.0, 1.0)),
     new Vertex(new Vec3(-c30, -0.5, 0.0), new Vec3(0.0, 1.0, 0.0)),
     new Vertex(new Vec3( c30, -0.5, 0.0), new Vec3(0.0, 0.0, 1.0)),
@@ -215,35 +232,36 @@ function initSceneGraph() {
     new Vertex(new Vec3( 0.5,  0.5, 0.0), new Vec3(1.0, 1.0, 0.0))
   ];
 
-  topNode = new SceneGraph();
+  topNode = new SceneGraph("root");
 
-  tetraParentNode = new SceneGraphNode(new Vec3(-0.4, -0.4, 0.0),   new Vec3(0, 0, 0),        new Vec3(0.5, 0.5, 0.5),  null);
-  tetraNode       = new SceneGraphNode(null,                        null,                     null,                     tetraMesh);
-  square1Node     = new SceneGraphNode(new Vec3(-1.1, -0.75, 0.0),  new Vec3(-50, 50, -100),  new Vec3(0.5, 0.5, 0.5),  squareMesh);
-  square2Node     = new SceneGraphNode(new Vec3(0.0, 0.0, 1.75),    new Vec3(90, 90, 0),      new Vec3(0.5, 0.5, 0.5),  squareMesh);
-  square3Node     = new SceneGraphNode(new Vec3(-1.1, -0.75, 0.0),  new Vec3(50, 50, -100),   new Vec3(0.5, 0.5, 0.5),  squareMesh);
+  tetraParentNode = new SceneGraphNode("tetraParent", new Vec3(-0.4, -0.4, 0.0),   new Vec3(0, 0, 0),        new Vec3(0.5, 0.5, 0.5),  null);
+  tetraNode       = new SceneGraphNode("tetra",       null,                        null,                     null,                     tetraMesh);
+  square1Node     = new SceneGraphNode("square1",     new Vec3(-1.1, -0.75, 0.0),  new Vec3(-50, 50, -100),  new Vec3(0.5, 0.5, 0.5),  squareMesh);
+  square2Node     = new SceneGraphNode("square2",     new Vec3(1.5, -.75, 0.0),    new Vec3(90, 90, -100),   new Vec3(0.5, 0.5, 0.5),  squareMesh);
+  square3Node     = new SceneGraphNode("square3",     new Vec3(1.1, -0.75, 0.0),   new Vec3(50, 50, -100),   new Vec3(0.5, 0.5, 0.5),  squareMesh);
 
-  dragObjNode   = new SceneGraphNode(new Vec3(0, 0.5, 0.5),  null,                     null,  null);
-  dragTetraNode = new SceneGraphNode(null,                   null,                     null,  wedgeMesh);
-  triangleNode  = new SceneGraphNode(null,                   new Vec3(-25, -25, 135),  null,  triangleMesh});
+  dragObjNode   = new SceneGraphNode("dragObj",       new Vec3(0, 0.5, 0.0),  null,                     new Vec3(0.2, 0.2, 0.2),  null);
+  dragTetraNode = new SceneGraphNode("dragTetra",     null,                   null,                     null,                     wedgeMesh);
+  triangleNode  = new SceneGraphNode("triangle",      null,                   new Vec3(-25, -25, 135),  null,                     triangleMesh);
 
   topNode.children = [tetraParentNode, dragObjNode];
   tetraParentNode.children = [tetraNode, square1Node, square2Node, square3Node];
   dragObjNode.children = [dragTetraNode, triangleNode];
 
   Context.sceneGraph = topNode;
+  console.log("Full Graph: ",topNode);
 }
 
 function buildBuffer(graphNode, currBuffer) {
   if (graphNode.mesh) {
-    graphNode.mesh.vboStart = currBuffer.length;
+    graphNode.mesh.vboStart = currBuffer.length / Vertex.primsPerVertex;
     for (vertex of graphNode.mesh.verts) {
       if (vertex.color === undefined) {
         console.log(vertex);
       }
       currBuffer.push(vertex.pos.x, vertex.pos.y, vertex.pos.z, 1.0, vertex.color.r, vertex.color.g, vertex.color.b);
     }
-    mesh.vboCount = (currBuffer.length - mesh.vboStart) / Vertex.primsPerVertex;
+    graphNode.mesh.vboCount = currBuffer.length / Vertex.primsPerVertex - graphNode.mesh.vboStart;
   }
 
   for (child of graphNode.children) {
@@ -298,7 +316,7 @@ function drawNode(modelMatrix, node) {
   modelMatrix.scale(node.scale.x, node.scale.y, node.scale.z);
   modelMatrix.rotate(node.rot.x, 1, 0, 0);
   modelMatrix.rotate(node.rot.y, 0, 1, 0);
-  modelMatrix.rotate(node.rot.z, 1, 0, 0);
+  modelMatrix.rotate(node.rot.z, 0, 0, 1);
 
   if (node.mesh) {
     gl.uniformMatrix4fv(Context.renderProgram.attribIds['u_ModelMatrix'], false, modelMatrix.elements);
@@ -312,21 +330,15 @@ function drawNode(modelMatrix, node) {
 }
 
 function drawAll() {
+  // First, fix canvas size if the user resized the window
+  var canvas = Context.canvas;
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+  var aspect_ratio = canvas.width / canvas.height;
+  gl.viewport(0, 0, canvas.width, canvas.height);
+
+  // Now clear and draw
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   modelMatrix = new Matrix4();
   drawNode(modelMatrix, Context.sceneGraph);
-
-  //var dist = Math.sqrt(g_xMdragTot*g_xMdragTot + g_yMdragTot*g_yMdragTot);
-  //g_modelMatrix.rotate(dist*120.0, -g_yMdragTot+0.0001, g_xMdragTot+0.0001, 0.0);
-
-  pushMatrix(g_modelMatrix);
-  g_modelMatrix.translate(0, 0.5, 0.5);
-  g_modelMatrix.rotate(135, 0, 0, 1);
-  g_modelMatrix.rotate(-25, 1, 1, 0);
-  gl.uniformMatrix4fv(g_modelMatLoc, false, g_modelMatrix.elements);
-  drawTriangle();
-
-  g_modelMatrix = popMatrix();
-  gl.uniformMatrix4fv(g_modelMatLoc, false, g_modelMatrix.elements);
-  drawWedge();
 }
