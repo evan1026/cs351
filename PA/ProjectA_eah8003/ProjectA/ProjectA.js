@@ -131,6 +131,10 @@ class Animation {
   static nodes = {};
 }
 
+class Event {
+  static mouseDrag = {x: 0, y: 0, currentlyDragging: false};
+}
+
 // Allowing 1 global bc it makes things so much easier and gl is more of a namespace than a variable anyway
 var gl;
 
@@ -169,6 +173,10 @@ function main() {
     return;
   }
 
+  window.addEventListener("mousedown", myMouseDown);
+  window.addEventListener("mousemove", myMouseMove);
+  window.addEventListener("mouseup", myMouseUp);
+
   tick();
 }
 
@@ -180,6 +188,9 @@ function animate() {
   Animation.nodes['l3'].rot = new Vec3(0.0, 45 * Math.sin(time / 250), 0.0);
   Animation.nodes['l4'].rot = new Vec3(0.0, 45 * Math.sin(time / 125), 0.0);
   Animation.nodes['l5'].rot = new Vec3(0.0, 45 * Math.sin(time / 62.5), 0.0);
+
+  currPos = Animation.nodes['l1'].pos;
+  Animation.nodes['l1'].pos = new Vec3(Event.mouseDrag.x, Event.mouseDrag.y, currPos.z);
 
   Context.lastAnimationTick = time;
 }
@@ -372,3 +383,39 @@ function HSVtoRGB(h, s, v) {
         b: b
     };
 }
+
+// Code adapted from ControlMulti.js
+function getMouseEventCoords(ev) {
+  var rect = ev.target.getBoundingClientRect();
+  var xp = ev.clientX - rect.left;
+  var yp = Context.canvas.height - (ev.clientY - rect.top);
+
+  var x = (xp - Context.canvas.width/2) / (Context.canvas.width/2);
+  var y = (yp - Context.canvas.height/2) / (Context.canvas.height/2);
+
+  return {x: x, y: y};
+}
+
+function myMouseDown(ev) {
+  coords = getMouseEventCoords(ev);
+  Event.mouseDrag.x = coords.x;
+  Event.mouseDrag.y = coords.y;
+  Event.mouseDrag.currentlyDragging = true;
+};
+
+function myMouseMove(ev) {
+  if(!Event.mouseDrag.currentlyDragging) return;
+
+  coords = getMouseEventCoords(ev);
+
+  Event.mouseDrag.x = coords.x;
+  Event.mouseDrag.y = coords.y;
+
+  console.log(Event.mouseDrag);
+};
+
+function myMouseUp(ev) {
+  coords = getMouseEventCoords(ev);
+
+  Event.mouseDrag.currentlyDragging = false;
+};
