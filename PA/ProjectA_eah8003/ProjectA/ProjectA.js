@@ -183,7 +183,8 @@ function main() {
 function animate() {
   time = Date.now();
 
-  Animation.nodes['l1'].rot = new Vec3(90,  180 + 45 * Math.sin(time / 1000), 0.0);
+  xRot = document.getElementById("armRotation").value;
+  Animation.nodes['l1'].rot = new Vec3(xRot, 180 + 45 * Math.sin(time / 1000), 0.0);
   Animation.nodes['l2'].rot = new Vec3(0.0, 45 * Math.sin(time / 500), 0.0);
   Animation.nodes['l3'].rot = new Vec3(0.0, 45 * Math.sin(time / 250), 0.0);
   Animation.nodes['l4'].rot = new Vec3(0.0, 45 * Math.sin(time / 125), 0.0);
@@ -386,7 +387,7 @@ function HSVtoRGB(h, s, v) {
 
 // Code adapted from ControlMulti.js
 function getMouseEventCoords(ev) {
-  var rect = ev.target.getBoundingClientRect();
+  var rect = Context.canvas.getBoundingClientRect();
   var xp = ev.clientX - rect.left;
   var yp = Context.canvas.height - (ev.clientY - rect.top);
 
@@ -398,6 +399,13 @@ function getMouseEventCoords(ev) {
 
 function myMouseDown(ev) {
   coords = getMouseEventCoords(ev);
+
+  console.log(coords);
+
+  if (coords.x > 1 || coords.x < -1 || coords.y > 1 || coords.y < -1) {
+    return;
+  }
+
   Event.mouseDrag.x = coords.x;
   Event.mouseDrag.y = coords.y;
   Event.mouseDrag.currentlyDragging = true;
@@ -410,8 +418,6 @@ function myMouseMove(ev) {
 
   Event.mouseDrag.x = coords.x;
   Event.mouseDrag.y = coords.y;
-
-  console.log(Event.mouseDrag);
 };
 
 function myMouseUp(ev) {
