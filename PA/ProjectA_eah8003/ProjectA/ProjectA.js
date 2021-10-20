@@ -124,6 +124,7 @@ class Context {
   static vboId;
   static renderProgram = new RenderProgram();
   static fps = 30;
+  static lastAnimationTick = Date.now();
 }
 
 class Animation {
@@ -172,9 +173,15 @@ function main() {
 }
 
 function animate() {
-  timeVal = (new Date().getTime() / 10) % 360
-  Animation.nodes['square2'].rot = new Vec3(timeVal, timeVal, timeVal);
-  Animation.nodes['tetraParent'].rot = new Vec3((new Date().getTime() / 100) % 360, 0, 0);
+  time = Date.now();
+
+  Animation.nodes['l1'].rot = new Vec3(90,  180 + 45 * Math.sin(time / 1000), 0.0);
+  Animation.nodes['l2'].rot = new Vec3(0.0, 45 * Math.sin(time / 500), 0.0);
+  Animation.nodes['l3'].rot = new Vec3(0.0, 45 * Math.sin(time / 250), 0.0);
+  Animation.nodes['l4'].rot = new Vec3(0.0, 45 * Math.sin(time / 125), 0.0);
+  Animation.nodes['l5'].rot = new Vec3(0.0, 45 * Math.sin(time / 62.5), 0.0);
+
+  Context.lastAnimationTick = time;
 }
 
 function tick() {
@@ -184,69 +191,57 @@ function tick() {
 }
 
 function initSceneGraph() {
-  var c30 = Math.sqrt(0.75); // cos(30deg) == sqrt(3) / 2 == sqrt(3/4)
-  var sq2 = Math.sqrt(2.0);
+  var numCircleParts = 100;
 
-  tetraMesh = new Mesh();
-  tetraMesh.renderType = gl.TRIANGLES;
-  tetraMesh.verts = [
-    new Vertex(new Vec3( 0.0,  0.0, sq2), new Vec3(1.0, 1.0, 1.0)),
-    new Vertex(new Vec3( c30, -0.5, 0.0), new Vec3(0.0, 0.0, 1.0)),
-    new Vertex(new Vec3( 0.0,  1.0, 0.0), new Vec3(1.0, 0.0, 0.0)),
-    new Vertex(new Vec3( 0.0,  0.0, sq2), new Vec3(1.0, 1.0, 1.0)),
-    new Vertex(new Vec3( 0.0,  1.0, 0.0), new Vec3(1.0, 0.0, 0.0)),
-    new Vertex(new Vec3(-c30, -0.5, 0.0), new Vec3(0.0, 1.0, 0.0)),
-    new Vertex(new Vec3( 0.0,  0.0, sq2), new Vec3(1.0, 1.0, 1.0)),
-    new Vertex(new Vec3(-c30, -0.5, 0.0), new Vec3(0.0, 1.0, 0.0)),
-    new Vertex(new Vec3( c30, -0.5, 0.0), new Vec3(0.0, 0.0, 1.0)),
-    new Vertex(new Vec3(-c30, -0.5, 0.0), new Vec3(0.0, 1.0, 0.0)),
-    new Vertex(new Vec3( 0.0,  1.0, 0.0), new Vec3(1.0, 0.0, 0.0)),
-    new Vertex(new Vec3( c30, -0.5, 0.0), new Vec3(0.0, 0.0, 1.0))
-  ];
+  circleVerts = [new Vertex(new Vec3(0.0, 0.0, 0.0), new Vec3(1.0, 1.0, 1.0))];
+  for (i = 0; i <= numCircleParts; ++i) {
+    rads = 2.0 * Math.PI / numCircleParts * i;
+    rgb = HSVtoRGB(i / numCircleParts, 1, 1);
 
-  wedgeMesh = new Mesh();
-  wedgeMesh.renderType = gl.TRIANGLES;
-  wedgeMesh.verts = [
-    new Vertex(new Vec3( 0.0,  0.0, sq2), new Vec3(1.0, 1.0, 1.0)),
-    new Vertex(new Vec3(-c30, -0.5, 0.0), new Vec3(0.0, 1.0, 0.0)),
-    new Vertex(new Vec3( c30, -0.5, 0.0), new Vec3(0.0, 0.0, 1.0)),
-    new Vertex(new Vec3(-c30, -0.5, 0.0), new Vec3(0.0, 1.0, 0.0)),
-    new Vertex(new Vec3( 0.0,  1.0, 0.0), new Vec3(1.0, 0.0, 0.0)),
-    new Vertex(new Vec3( c30, -0.5, 0.0), new Vec3(0.0, 0.0, 1.0))
-  ];
+    pos = new Vec3(Math.cos(rads), Math.sin(rads), 0.0);
+    color = new Vec3(rgb.r, rgb.g, rgb.b);
+    circleVerts.push(new Vertex(pos, color));
+  }
+  circleMesh = new Mesh();
+  circleMesh.renderType = gl.TRIANGLE_FAN;
+  circleMesh.verts = circleVerts;
 
-  squareMesh = new Mesh();
-  squareMesh.renderType = gl.TRIANGLE_FAN
-  squareMesh.verts = [
-    new Vertex(new Vec3(-0.5, -0.5, 0.0), new Vec3(1.0, 0.0, 0.0)),
-    new Vertex(new Vec3(-0.5,  0.5, 0.0), new Vec3(0.0, 1.0, 0.0)),
-    new Vertex(new Vec3( 0.5,  0.5, 0.0), new Vec3(0.0, 0.0, 1.0)),
-    new Vertex(new Vec3( 0.5, -0.5, 0.0), new Vec3(1.0, 1.0, 1.0))
-  ];
+  cyllinderVerts = []
+  for (i = 0; i <= numCircleParts; ++i) {
+    rads = 2.0 * Math.PI / numCircleParts * i;
+    rgb = HSVtoRGB(i / numCircleParts, 1, 1);
 
-  triangleMesh = new Mesh();
-  triangleMesh.renderType = gl.TRIANGLES;
-  triangleMesh.verts = [
-    new Vertex(new Vec3(-0.5, -0.5, 0.0), new Vec3(0.0, 1.0, 1.0)),
-    new Vertex(new Vec3(-0.5,  0.5, 0.0), new Vec3(1.0, 0.0, 1.0)),
-    new Vertex(new Vec3( 0.5,  0.5, 0.0), new Vec3(1.0, 1.0, 0.0))
-  ];
+    pos1 = new Vec3(Math.cos(rads), Math.sin(rads), 0.0);
+    pos2 = new Vec3(Math.cos(rads), Math.sin(rads), 1.0);
+    color = new Vec3(rgb.r, rgb.g, rgb.b);
+    cyllinderVerts.push(new Vertex(pos1, color), new Vertex(pos2, color));
+  }
+  cyllinderMesh = new Mesh();
+  cyllinderMesh.renderType = gl.TRIANGLE_STRIP;
+  cyllinderMesh.verts = cyllinderVerts;
 
   topNode = new SceneGraph("root");
 
-  tetraParentNode = new SceneGraphNode("tetraParent", new Vec3(-0.4, -0.4, 0.0),   new Vec3(0, 0, 0),        new Vec3(0.5, 0.5, 0.5),  null);
-  tetraNode       = new SceneGraphNode("tetra",       null,                        null,                     null,                     tetraMesh);
-  square1Node     = new SceneGraphNode("square1",     new Vec3(-1.1, -0.75, 0.0),  new Vec3(-50, 50, -100),  new Vec3(0.5, 0.5, 0.5),  squareMesh);
-  square2Node     = new SceneGraphNode("square2",     new Vec3(1.5, -.75, 0.0),    new Vec3(90, 90, -100),   new Vec3(0.5, 0.5, 0.5),  squareMesh);
-  square3Node     = new SceneGraphNode("square3",     new Vec3(1.1, -0.75, 0.0),   new Vec3(50, 50, -100),   new Vec3(0.5, 0.5, 0.5),  squareMesh);
+  var makeCyllinder = function(height, pos, rot, scale, name) {
+    cylNode =       new SceneGraphNode(name,             pos,                        rot,               scale,                          null);
+    cylTopNode =    new SceneGraphNode(name + "_Top",    new Vec3(0.0, 0.0, 0),      new Vec3(0, 0, 0), new Vec3(1.0, 1.0, 1.0),        circleMesh);
+    cylBotNode =    new SceneGraphNode(name + "_Bot",    new Vec3(0.0, 0.0, height), new Vec3(0, 0, 0), new Vec3(1.0, 1.0, 1.0),        circleMesh);
+    cylMiddleNode = new SceneGraphNode(name + "_Middle", new Vec3(0.0, 0.0, 0),      new Vec3(0, 0, 0), new Vec3(1.0, 1.0, height), cyllinderMesh);
+    cylNode.children = [cylTopNode, cylBotNode, cylMiddleNode];
+    return cylNode;
+  }
 
-  dragObjNode   = new SceneGraphNode("dragObj",       new Vec3(0, 0.5, 0.0),  null,                     new Vec3(0.2, 0.2, 0.2),  null);
-  dragTetraNode = new SceneGraphNode("dragTetra",     null,                   null,                     null,                     wedgeMesh);
-  triangleNode  = new SceneGraphNode("triangle",      null,                   new Vec3(-25, -25, 135),  null,                     triangleMesh);
+  l1Node = makeCyllinder(4, new Vec3(0.0, -1.0, 0.0), new Vec3(90, 180, 0), new Vec3(0.1, 0.1, 0.1), "l1");
+  l2Node = makeCyllinder(2, new Vec3(0.0, 0.0, 4.0), new Vec3(0, 0, 0), new Vec3(0.5, 0.5, 1.0), "l2");
+  l1Node.children.push(l2Node);
+  l3Node = makeCyllinder(1, new Vec3(0.0, 0.0, 2.0), new Vec3(0, 0, 0), new Vec3(0.5, 0.5, 1.0), "l3");
+  l2Node.children.push(l3Node);
+  l4Node = makeCyllinder(0.5, new Vec3(0.0, 0.0, 1.0), new Vec3(0, 0, 0), new Vec3(0.5, 0.5, 1.0), "l4");
+  l3Node.children.push(l4Node);
+  l5Node = makeCyllinder(0.25, new Vec3(0.0, 0.0, 0.5), new Vec3(0, 0, 0), new Vec3(0.5, 0.5, 1.0), "l5");
+  l4Node.children.push(l5Node);
 
-  topNode.children = [tetraParentNode, dragObjNode];
-  tetraParentNode.children = [tetraNode, square1Node, square2Node, square3Node];
-  dragObjNode.children = [dragTetraNode, triangleNode];
+  topNode.children = [l1Node];
 
   Context.sceneGraph = topNode;
   console.log("Full Graph: ",topNode);
@@ -350,4 +345,30 @@ function drawAll() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   modelMatrix = new Matrix4();
   drawNode(modelMatrix, Context.sceneGraph);
+}
+
+// HSV to RGB conversion from https://stackoverflow.com/questions/17242144/javascript-convert-hsb-hsv-color-to-rgb-accurately
+function HSVtoRGB(h, s, v) {
+    var r, g, b, i, f, p, q, t;
+    if (arguments.length === 1) {
+        s = h.s, v = h.v, h = h.h;
+    }
+    i = Math.floor(h * 6);
+    f = h * 6 - i;
+    p = v * (1 - s);
+    q = v * (1 - f * s);
+    t = v * (1 - (1 - f) * s);
+    switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+    }
+    return {
+        r: r,
+        g: g,
+        b: b
+    };
 }
