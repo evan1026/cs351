@@ -310,21 +310,30 @@ function initVertexBuffer() {
   return bufferValues.length;
 }
 
-function drawNode(modelMatrix, node) {
+function drawNode(modelMatrix, node, scale) {
+  // Gotta do all these scaling hacks because scaling and rotation don't play nice
+  if (scale === undefined) {
+    scale = new Vec3(1.0, 1.0, 1.0);
+  }
+
   pushMatrix(modelMatrix);
-  modelMatrix.translate(node.pos.x, node.pos.y, node.pos.z);
-  modelMatrix.scale(node.scale.x, node.scale.y, node.scale.z);
+  modelMatrix.translate(scale.x * node.pos.x, scale.y * node.pos.y, scale.z * node.pos.z);
   modelMatrix.rotate(node.rot.x, 1, 0, 0);
   modelMatrix.rotate(node.rot.y, 0, 1, 0);
   modelMatrix.rotate(node.rot.z, 0, 0, 1);
 
+  scale = new Vec3(scale.x * node.scale.x, scale.y * node.scale.y, scale.z * node.scale.z);
+
   if (node.mesh) {
+    pushMatrix(modelMatrix);
+    modelMatrix.scale(scale.x, scale.y, scale.z);
     gl.uniformMatrix4fv(Context.renderProgram.attribIds['u_ModelMatrix'], false, modelMatrix.elements);
     gl.drawArrays(node.mesh.renderType, node.mesh.vboStart, node.mesh.vboCount);
+    modelMatrix = popMatrix();
   }
 
   for (child of node.children) {
-    modelMatrix = drawNode(modelMatrix, child);
+    modelMatrix = drawNode(modelMatrix, child, scale);
   }
   return popMatrix();
 }
