@@ -211,3 +211,19 @@ function init(canvas) {
   
   return true;
 }
+
+function getNameGraph(topNode) {
+  var topNameNode = {};
+  topNameNode[topNode.name] = getNameGraphHelper(topNode);
+  return topNameNode;
+}
+
+function getNameGraphHelper(topNode) {
+  var currNode = {};
+  
+  for (child of topNode.children) {
+    currNode[child.name] = getNameGraphHelper(child);
+  }
+  
+  return currNode;
+}

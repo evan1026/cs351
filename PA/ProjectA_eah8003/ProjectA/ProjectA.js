@@ -57,6 +57,10 @@ function animate() {
 
   var currPos = Animation.nodes['l1'].pos;
   Animation.nodes['l1'].pos = new Pos(Event.mouseDrag.x, Event.mouseDrag.y, currPos.z);
+  
+  Animation.nodes["house"].rot = new Rot(90 * Math.sin(time / 500), 90 * Math.cos(time / 500), 90 * -Math.sin(time / 500))
+  var house2Rot = Animation.nodes["house2"].rot;
+  house2Rot.y = (time / 3) % 360;
 
   Context.lastAnimationTick = time;
 }
@@ -71,6 +75,7 @@ function initSceneGraph() {
   var numCircleParts = 100;
   var circleMesh = initCircleMesh(numCircleParts);
   var cyllinderMesh = initCyllinderSideMesh(numCircleParts);
+  var houseMesh = initHouseMesh();
 
   var makeCyllinder = function(height, pos, rot, scale, name) {
     cylNode =       new SceneGraphNode(name,             pos,                       rot,              scale,                       null);
@@ -91,8 +96,13 @@ function initSceneGraph() {
   l3Node.children.push(l4Node);
   var l5Node = makeCyllinder(0.25, new Pos(0.0, 0.0, 0.5), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l5");
   l4Node.children.push(l5Node);
+  
+  var houseNode = new SceneGraphNode("house", new Pos(0.0, 0.0, 0.0), new Rot(0, 0, 0), new Scale(0.25, 0.25, 0.25), houseMesh);
+  var houseNode2 = new SceneGraphNode("house2", new Pos(0.0, 1.5, 0.0), new Rot(180, 0, 0), new Scale(1.0, 1.0, 1.0), houseMesh);
+  houseNode.children.push(houseNode2);
 
   topNode.children.push(l1Node);
+  topNode.children.push(houseNode);
 
   Context.sceneGraph = topNode;
   console.log("Full Graph: ",topNode);
@@ -133,20 +143,62 @@ function initCyllinderSideMesh(numCircleParts) {
   return cyllinderMesh;
 }
 
-function getNameGraph(topNode) {
-  var topNameNode = {};
-  topNameNode[topNode.name] = getNameGraphHelper(topNode);
-  return topNameNode;
-}
-
-function getNameGraphHelper(topNode) {
-  var currNode = {};
-  
-  for (child of topNode.children) {
-    currNode[child.name] = getNameGraphHelper(child);
-  }
-  
-  return currNode;
+function initHouseMesh() {
+  var houseMesh = new Mesh();
+  houseMesh.renderType = gl.TRIANGLES;
+  houseMesh.verts = [
+    new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(0.0, 1.0, 1.0)),
+    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 1.0, 1.0)),
+    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 1.0, 1.0)),
+    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 1.0, 1.0)),
+    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 1.0, 1.0)),
+    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 1.0, 1.0)),
+    
+    new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(1.0, 1.0, 0.0)),
+    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(1.0, 1.0, 0.0)),
+    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(1.0, 1.0, 0.0)),
+    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(1.0, 1.0, 0.0)),
+    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(1.0, 1.0, 0.0)),
+    new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(1.0, 1.0, 0.0)),
+    
+    new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(1.0, 0.0, 1.0)),
+    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(1.0, 0.0, 1.0)),
+    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(1.0, 0.0, 1.0)),
+    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(1.0, 0.0, 1.0)),
+    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(1.0, 0.0, 1.0)),
+    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(1.0, 0.0, 1.0)),
+    
+    new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(0.0, 0.0, 1.0)),
+    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 1.0)),
+    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 1.0)),
+    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 1.0)),
+    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 1.0)),
+    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 1.0)),
+    
+    new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(0.0, 1.0, 0.0)),
+    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 1.0, 0.0)),
+    new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 1.0, 0.0)),
+    new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 1.0, 0.0)),
+    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 1.0, 0.0)),
+    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 1.0, 0.0)),
+    
+    new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(1.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(1.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.0,  0.75, 0.0), new Color(1.0, 0.0, 0.0)),
+    
+    new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(1.0, 1.0, 1.0)),
+    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(1.0, 1.0, 1.0)),
+    new Vertex(new Pos( 0.0,  0.75, 0.0), new Color(1.0, 1.0, 1.0)),
+    
+    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.0,  0.75, 0.0), new Color(0.0, 0.0, 0.0)),
+    
+    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(1.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(1.0, 1.0, 0.0)),
+    new Vertex(new Pos( 0.0,  0.75, 0.0), new Color(1.0, 1.0, 1.0)),
+  ];
+  return houseMesh;
 }
 
 function initVertexBuffer() {
