@@ -22,7 +22,7 @@ class Event {
 }
 
 function main() {
-  canvas = document.getElementById('webgl');
+  var canvas = document.getElementById('webgl');
 
   if (!init(canvas)) {
     return;
@@ -30,7 +30,7 @@ function main() {
 
   initSceneGraph();
 
-  maxVerts = initVertexBuffer(gl);
+  var maxVerts = initVertexBuffer(gl);
   if (maxVerts < 0) {
     console.log('Failed to set the vertex information');
     return;
@@ -46,16 +46,16 @@ function main() {
 }
 
 function animate() {
-  time = Date.now();
+  var time = Date.now();
 
-  xRot = document.getElementById("armRotation").value;
+  var xRot = document.getElementById("armRotation").value;
   Animation.nodes['l1'].rot = new Rot(xRot, 180 + 45 * Math.sin(time / 1000), 0.0);
   Animation.nodes['l2'].rot = new Rot(0.0, 45 * Math.sin(time / 500), 0.0);
   Animation.nodes['l3'].rot = new Rot(0.0, 45 * Math.sin(time / 250), 0.0);
   Animation.nodes['l4'].rot = new Rot(0.0, 45 * Math.sin(time / 125), 0.0);
   Animation.nodes['l5'].rot = new Rot(0.0, 45 * Math.sin(time / 62.5), 0.0);
 
-  currPos = Animation.nodes['l1'].pos;
+  var currPos = Animation.nodes['l1'].pos;
   Animation.nodes['l1'].pos = new Pos(Event.mouseDrag.x, Event.mouseDrag.y, currPos.z);
 
   Context.lastAnimationTick = time;
@@ -70,7 +70,7 @@ function tick() {
 function initSceneGraph() {
   var numCircleParts = 100;
 
-  circleVerts = [new Vertex(new Pos(0.0, 0.0, 0.0), new Color(1.0, 1.0, 1.0))];
+  var circleVerts = [new Vertex(new Pos(0.0, 0.0, 0.0), new Color(1.0, 1.0, 1.0))];
   for (i = 0; i <= numCircleParts; ++i) {
     rads = 2.0 * Math.PI / numCircleParts * i;
     rgb = HSVtoRGB(i / numCircleParts, 1, 1);
@@ -79,7 +79,7 @@ function initSceneGraph() {
     color = new Color(rgb.r, rgb.g, rgb.b);
     circleVerts.push(new Vertex(pos, color));
   }
-  circleMesh = new Mesh();
+  var circleMesh = new Mesh();
   circleMesh.renderType = gl.TRIANGLE_FAN;
   circleMesh.verts = circleVerts;
 
@@ -93,11 +93,11 @@ function initSceneGraph() {
     color = new Color(rgb.r, rgb.g, rgb.b);
     cyllinderVerts.push(new Vertex(pos1, color), new Vertex(pos2, color));
   }
-  cyllinderMesh = new Mesh();
+  var cyllinderMesh = new Mesh();
   cyllinderMesh.renderType = gl.TRIANGLE_STRIP;
   cyllinderMesh.verts = cyllinderVerts;
 
-  topNode = new SceneGraph("root");
+  var topNode = new SceneGraph("root");
 
   var makeCyllinder = function(height, pos, rot, scale, name) {
     cylNode =       new SceneGraphNode(name,             pos,                       rot,              scale,                       null);
@@ -108,15 +108,15 @@ function initSceneGraph() {
     return cylNode;
   }
 
-  l1Node = makeCyllinder(4, new Pos(0.0, -1.0, 0.0), new Rot(90, 180, 0), new Scale(0.1, 0.1, 0.1), "l1");
-  l2Node = makeCyllinder(2, new Pos(0.0, 0.0, 4.0), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l2");
-  l1Node.children.push(l2Node);
-  l3Node = makeCyllinder(1, new Pos(0.0, 0.0, 2.0), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l3");
-  l2Node.children.push(l3Node);
-  l4Node = makeCyllinder(0.5, new Pos(0.0, 0.0, 1.0), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l4");
-  l3Node.children.push(l4Node);
-  l5Node = makeCyllinder(0.25, new Pos(0.0, 0.0, 0.5), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l5");
-  l4Node.children.push(l5Node);
+  var l1Node = makeCyllinder(4, new Pos(0.0, -1.0, 0.0), new Rot(90, 180, 0), new Scale(0.1, 0.1, 0.1), "l1");
+  var l2Node = makeCyllinder(2, new Pos(0.0, 0.0, 4.0), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l2");
+  var l1Node.children.push(l2Node);
+  var l3Node = makeCyllinder(1, new Pos(0.0, 0.0, 2.0), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l3");
+  var l2Node.children.push(l3Node);
+  var l4Node = makeCyllinder(0.5, new Pos(0.0, 0.0, 1.0), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l4");
+  var l3Node.children.push(l4Node);
+  var l5Node = makeCyllinder(0.25, new Pos(0.0, 0.0, 0.5), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l5");
+  var l4Node.children.push(l5Node);
 
   topNode.children = [l1Node];
 
@@ -124,6 +124,8 @@ function initSceneGraph() {
   console.log("Full Graph: ",topNode);
   console.log("Name Graph: ", getNameGraph(topNode));
 }
+
+function
 
 function getNameGraph(topNode) {
   var topNameNode = {};
@@ -224,7 +226,7 @@ function getMouseEventCoords(ev) {
 }
 
 function myMouseDown(ev) {
-  coords = getMouseEventCoords(ev);
+  var coords = getMouseEventCoords(ev);
 
   console.log(coords);
 
@@ -240,14 +242,14 @@ function myMouseDown(ev) {
 function myMouseMove(ev) {
   if(!Event.mouseDrag.currentlyDragging) return;
 
-  coords = getMouseEventCoords(ev);
+  var coords = getMouseEventCoords(ev);
 
   Event.mouseDrag.x = coords.x;
   Event.mouseDrag.y = coords.y;
 };
 
 function myMouseUp(ev) {
-  coords = getMouseEventCoords(ev);
+  var coords = getMouseEventCoords(ev);
 
   Event.mouseDrag.currentlyDragging = false;
 };
