@@ -1,12 +1,15 @@
 RenderProgram.vertShader = `
     uniform mat4 u_ModelMatrix;
+    uniform vec4 u_ColorOverride;
     attribute vec4 a_Position;
-    attribute vec4 a_Color;
+    attribute vec3 a_Color;
     varying vec4 v_Color;
     void main() {
       gl_Position = u_ModelMatrix * a_Position;
       gl_PointSize = 10.0;
-      v_Color = a_Color;
+      
+      vec4 a_Color4 = vec4(a_Color.r, a_Color.g, a_Color.b, 1.0);
+      v_Color = mix(u_ColorOverride, a_Color4, 1.0 - u_ColorOverride.a);
     }`;
 
 RenderProgram.fragShader = `
@@ -55,6 +58,12 @@ function main() {
 function animate() {
   var time = Date.now();
   
+  var r = document.getElementById("r").value / 255;
+  var g = document.getElementById("g").value / 255;
+  var b = document.getElementById("b").value / 255;
+  var a = document.getElementById("a").value / 255;
+  gl.uniform4f(Context.renderProgram.attribIds['u_ColorOverride'], r, g, b, a);
+  
   var armShown = document.getElementById("armShown").checked;
   var boxShown = document.getElementById("boxShown").checked;
   var armAnimate = document.getElementById("armAnimation").checked;
@@ -75,11 +84,12 @@ function animate() {
   armTime = Animation.armTime;
 
   var xRot = document.getElementById("armRotation").value;
-  Animation.nodes['l1'].rot = new Rot(xRot, 180 + 45 * Math.sin(armTime / 1000), 0.0);
-  Animation.nodes['l2'].rot = new Rot(0.0, 45 * Math.sin(armTime / 500), 0.0);
-  Animation.nodes['l3'].rot = new Rot(0.0, 45 * Math.sin(armTime / 250), 0.0);
-  Animation.nodes['l4'].rot = new Rot(0.0, 45 * Math.sin(armTime / 125), 0.0);
-  Animation.nodes['l5'].rot = new Rot(0.0, 45 * Math.sin(armTime / 62.5), 0.0);
+  var waveAmount = document.getElementById("armWaveAmount").value;
+  Animation.nodes['l1'].rot = new Rot(xRot, 180 + waveAmount * Math.sin(armTime / 1000), 0.0);
+  Animation.nodes['l2'].rot = new Rot(0.0, waveAmount * Math.sin(armTime / 500), 0.0);
+  Animation.nodes['l3'].rot = new Rot(0.0, waveAmount * Math.sin(armTime / 250), 0.0);
+  Animation.nodes['l4'].rot = new Rot(0.0, waveAmount * Math.sin(armTime / 125), 0.0);
+  Animation.nodes['l5'].rot = new Rot(0.0, waveAmount * Math.sin(armTime / 62.5), 0.0);
   
   if (Animation.armUp) {
     Event.mouseDrag.y += 0.01;
@@ -260,7 +270,7 @@ function initVertexBuffer() {
   Context.vboId = gl.createBuffer();
   if (!Context.vboId) {
     console.log('Failed to create the shape buffer object');
-    return false;
+    return -1;
   }
 
   gl.bindBuffer(gl.ARRAY_BUFFER, Context.vboId);
@@ -290,7 +300,14 @@ function initVertexBuffer() {
   Context.renderProgram.attribIds['u_ModelMatrix'] = modelMatrixId;
   if (!modelMatrixId) {
     console.log('Failed to get the storage location of u_ModelMatrix');
-    return;
+    return -1;
+  }
+  
+  colorOverrideId = gl.getUniformLocation(gl.program, 'u_ColorOverride');
+  Context.renderProgram.attribIds['u_ColorOverride'] = colorOverrideId;
+  if (!colorOverrideId) {
+    console.log('Failed to get the storage location of u_ColorOverride');
+    return -1;
   }
 
   return bufferValues.length;
