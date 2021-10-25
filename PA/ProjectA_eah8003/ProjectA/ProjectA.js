@@ -49,14 +49,14 @@ function animate() {
   time = Date.now();
 
   xRot = document.getElementById("armRotation").value;
-  Animation.nodes['l1'].rot = new Vec3(xRot, 180 + 45 * Math.sin(time / 1000), 0.0);
-  Animation.nodes['l2'].rot = new Vec3(0.0, 45 * Math.sin(time / 500), 0.0);
-  Animation.nodes['l3'].rot = new Vec3(0.0, 45 * Math.sin(time / 250), 0.0);
-  Animation.nodes['l4'].rot = new Vec3(0.0, 45 * Math.sin(time / 125), 0.0);
-  Animation.nodes['l5'].rot = new Vec3(0.0, 45 * Math.sin(time / 62.5), 0.0);
+  Animation.nodes['l1'].rot = new Rot(xRot, 180 + 45 * Math.sin(time / 1000), 0.0);
+  Animation.nodes['l2'].rot = new Rot(0.0, 45 * Math.sin(time / 500), 0.0);
+  Animation.nodes['l3'].rot = new Rot(0.0, 45 * Math.sin(time / 250), 0.0);
+  Animation.nodes['l4'].rot = new Rot(0.0, 45 * Math.sin(time / 125), 0.0);
+  Animation.nodes['l5'].rot = new Rot(0.0, 45 * Math.sin(time / 62.5), 0.0);
 
   currPos = Animation.nodes['l1'].pos;
-  Animation.nodes['l1'].pos = new Vec3(Event.mouseDrag.x, Event.mouseDrag.y, currPos.z);
+  Animation.nodes['l1'].pos = new Pos(Event.mouseDrag.x, Event.mouseDrag.y, currPos.z);
 
   Context.lastAnimationTick = time;
 }
@@ -70,13 +70,13 @@ function tick() {
 function initSceneGraph() {
   var numCircleParts = 100;
 
-  circleVerts = [new Vertex(new Vec3(0.0, 0.0, 0.0), new Vec3(1.0, 1.0, 1.0))];
+  circleVerts = [new Vertex(new Pos(0.0, 0.0, 0.0), new Color(1.0, 1.0, 1.0))];
   for (i = 0; i <= numCircleParts; ++i) {
     rads = 2.0 * Math.PI / numCircleParts * i;
     rgb = HSVtoRGB(i / numCircleParts, 1, 1);
 
-    pos = new Vec3(Math.cos(rads), Math.sin(rads), 0.0);
-    color = new Vec3(rgb.r, rgb.g, rgb.b);
+    pos = new Pos(Math.cos(rads), Math.sin(rads), 0.0);
+    color = new Color(rgb.r, rgb.g, rgb.b);
     circleVerts.push(new Vertex(pos, color));
   }
   circleMesh = new Mesh();
@@ -88,9 +88,9 @@ function initSceneGraph() {
     rads = 2.0 * Math.PI / numCircleParts * i;
     rgb = HSVtoRGB(i / numCircleParts, 1, 1);
 
-    pos1 = new Vec3(Math.cos(rads), Math.sin(rads), 0.0);
-    pos2 = new Vec3(0.5 * Math.cos(rads), 0.5 * Math.sin(rads), 1.0);
-    color = new Vec3(rgb.r, rgb.g, rgb.b);
+    pos1 = new Pos(Math.cos(rads), Math.sin(rads), 0.0);
+    pos2 = new Pos(0.5 * Math.cos(rads), 0.5 * Math.sin(rads), 1.0);
+    color = new Color(rgb.r, rgb.g, rgb.b);
     cyllinderVerts.push(new Vertex(pos1, color), new Vertex(pos2, color));
   }
   cyllinderMesh = new Mesh();
@@ -100,22 +100,22 @@ function initSceneGraph() {
   topNode = new SceneGraph("root");
 
   var makeCyllinder = function(height, pos, rot, scale, name) {
-    cylNode =       new SceneGraphNode(name,             pos,                        rot,               scale,                          null);
-    cylTopNode =    new SceneGraphNode(name + "_Top",    new Vec3(0.0, 0.0, 0),      new Vec3(0, 0, 0), new Vec3(1.0, 1.0, 1.0),        circleMesh);
-    cylBotNode =    new SceneGraphNode(name + "_Bot",    new Vec3(0.0, 0.0, height), new Vec3(0, 0, 0), new Vec3(0.5, 0.5, 1.0),        circleMesh);
-    cylMiddleNode = new SceneGraphNode(name + "_Middle", new Vec3(0.0, 0.0, 0),      new Vec3(0, 0, 0), new Vec3(1.0, 1.0, height), cyllinderMesh);
+    cylNode =       new SceneGraphNode(name,             pos,                       rot,              scale,                       null);
+    cylTopNode =    new SceneGraphNode(name + "_Top",    new Pos(0.0, 0.0, 0),      new Rot(0, 0, 0), new Scale(1.0, 1.0, 1.0),    circleMesh);
+    cylBotNode =    new SceneGraphNode(name + "_Bot",    new Pos(0.0, 0.0, height), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0),    circleMesh);
+    cylMiddleNode = new SceneGraphNode(name + "_Middle", new Pos(0.0, 0.0, 0),      new Rot(0, 0, 0), new Scale(1.0, 1.0, height), cyllinderMesh);
     cylNode.children = [cylTopNode, cylBotNode, cylMiddleNode];
     return cylNode;
   }
 
-  l1Node = makeCyllinder(4, new Vec3(0.0, -1.0, 0.0), new Vec3(90, 180, 0), new Vec3(0.1, 0.1, 0.1), "l1");
-  l2Node = makeCyllinder(2, new Vec3(0.0, 0.0, 4.0), new Vec3(0, 0, 0), new Vec3(0.5, 0.5, 1.0), "l2");
+  l1Node = makeCyllinder(4, new Pos(0.0, -1.0, 0.0), new Rot(90, 180, 0), new Scale(0.1, 0.1, 0.1), "l1");
+  l2Node = makeCyllinder(2, new Pos(0.0, 0.0, 4.0), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l2");
   l1Node.children.push(l2Node);
-  l3Node = makeCyllinder(1, new Vec3(0.0, 0.0, 2.0), new Vec3(0, 0, 0), new Vec3(0.5, 0.5, 1.0), "l3");
+  l3Node = makeCyllinder(1, new Pos(0.0, 0.0, 2.0), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l3");
   l2Node.children.push(l3Node);
-  l4Node = makeCyllinder(0.5, new Vec3(0.0, 0.0, 1.0), new Vec3(0, 0, 0), new Vec3(0.5, 0.5, 1.0), "l4");
+  l4Node = makeCyllinder(0.5, new Pos(0.0, 0.0, 1.0), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l4");
   l3Node.children.push(l4Node);
-  l5Node = makeCyllinder(0.25, new Vec3(0.0, 0.0, 0.5), new Vec3(0, 0, 0), new Vec3(0.5, 0.5, 1.0), "l5");
+  l5Node = makeCyllinder(0.25, new Pos(0.0, 0.0, 0.5), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l5");
   l4Node.children.push(l5Node);
 
   topNode.children = [l1Node];

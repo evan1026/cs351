@@ -22,6 +22,11 @@ class Vec3 {
   }
 }
 
+var Pos = Vec3;
+var Rot = Vec3;
+var Scale = Vec3;
+var Color = Vec3;
+
 class Vertex {
   pos;
   color;
@@ -70,19 +75,19 @@ class SceneGraphNode {
     Animation.nodes[name] = this;
 
     if (pos === undefined || pos === null) {
-      this.pos = new Vec3(0, 0, 0);
+      this.pos = new Pos(0, 0, 0);
     } else {
       this.pos = pos;
     }
 
     if (rot === undefined || rot === null) {
-      this.rot = new Vec3(0, 0, 0);
+      this.rot = new Rot(0, 0, 0);
     } else {
       this.rot = rot;
     }
 
     if (scale === undefined || scale === null) {
-      this.scale = new Vec3(1, 1, 1);
+      this.scale = new Scale(1, 1, 1);
     } else {
       this.scale = scale;
     }
@@ -141,7 +146,7 @@ function buildBuffer(graphNode, currBuffer) {
 function drawNode(modelMatrix, node, scale) {
   // Gotta do all these scaling hacks because scaling and rotation don't play nice
   if (scale === undefined) {
-    scale = new Vec3(1.0, 1.0, 1.0);
+    scale = new Scale(1.0, 1.0, 1.0);
   }
 
   pushMatrix(modelMatrix);
@@ -150,7 +155,7 @@ function drawNode(modelMatrix, node, scale) {
   modelMatrix.rotate(node.rot.y, 0, 1, 0);
   modelMatrix.rotate(node.rot.z, 0, 0, 1);
 
-  scale = new Vec3(scale.x * node.scale.x, scale.y * node.scale.y, scale.z * node.scale.z);
+  scale = new Scale(scale.x * node.scale.x, scale.y * node.scale.y, scale.z * node.scale.z);
 
   if (node.mesh) {
     pushMatrix(modelMatrix);
