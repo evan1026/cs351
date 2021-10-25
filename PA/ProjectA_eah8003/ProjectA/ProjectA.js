@@ -224,7 +224,7 @@ function initSceneGraph() {
     rgb = HSVtoRGB(i / numCircleParts, 1, 1);
 
     pos1 = new Vec3(Math.cos(rads), Math.sin(rads), 0.0);
-    pos2 = new Vec3(Math.cos(rads), Math.sin(rads), 1.0);
+    pos2 = new Vec3(0.5 * Math.cos(rads), 0.5 * Math.sin(rads), 1.0);
     color = new Vec3(rgb.r, rgb.g, rgb.b);
     cyllinderVerts.push(new Vertex(pos1, color), new Vertex(pos2, color));
   }
@@ -237,7 +237,7 @@ function initSceneGraph() {
   var makeCyllinder = function(height, pos, rot, scale, name) {
     cylNode =       new SceneGraphNode(name,             pos,                        rot,               scale,                          null);
     cylTopNode =    new SceneGraphNode(name + "_Top",    new Vec3(0.0, 0.0, 0),      new Vec3(0, 0, 0), new Vec3(1.0, 1.0, 1.0),        circleMesh);
-    cylBotNode =    new SceneGraphNode(name + "_Bot",    new Vec3(0.0, 0.0, height), new Vec3(0, 0, 0), new Vec3(1.0, 1.0, 1.0),        circleMesh);
+    cylBotNode =    new SceneGraphNode(name + "_Bot",    new Vec3(0.0, 0.0, height), new Vec3(0, 0, 0), new Vec3(0.5, 0.5, 1.0),        circleMesh);
     cylMiddleNode = new SceneGraphNode(name + "_Middle", new Vec3(0.0, 0.0, 0),      new Vec3(0, 0, 0), new Vec3(1.0, 1.0, height), cyllinderMesh);
     cylNode.children = [cylTopNode, cylBotNode, cylMiddleNode];
     return cylNode;
