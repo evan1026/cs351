@@ -69,7 +69,37 @@ function tick() {
 
 function initSceneGraph() {
   var numCircleParts = 100;
+  var circleMesh = initCircleMesh(numCircleParts);
+  var cyllinderMesh = initCyllinderSideMesh(numCircleParts);
 
+  var makeCyllinder = function(height, pos, rot, scale, name) {
+    cylNode =       new SceneGraphNode(name,             pos,                       rot,              scale,                       null);
+    cylTopNode =    new SceneGraphNode(name + "_Top",    new Pos(0.0, 0.0, 0),      new Rot(0, 0, 0), new Scale(1.0, 1.0, 1.0),    circleMesh);
+    cylBotNode =    new SceneGraphNode(name + "_Bot",    new Pos(0.0, 0.0, height), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0),    circleMesh);
+    cylMiddleNode = new SceneGraphNode(name + "_Middle", new Pos(0.0, 0.0, 0),      new Rot(0, 0, 0), new Scale(1.0, 1.0, height), cyllinderMesh);
+    cylNode.children = [cylTopNode, cylBotNode, cylMiddleNode];
+    return cylNode;
+  };
+
+  var topNode = new SceneGraph("root");
+  var l1Node = makeCyllinder(4, new Pos(0.0, -1.0, 0.0), new Rot(90, 180, 0), new Scale(0.1, 0.1, 0.1), "l1");
+  var l2Node = makeCyllinder(2, new Pos(0.0, 0.0, 4.0), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l2");
+  l1Node.children.push(l2Node);
+  var l3Node = makeCyllinder(1, new Pos(0.0, 0.0, 2.0), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l3");
+  l2Node.children.push(l3Node);
+  var l4Node = makeCyllinder(0.5, new Pos(0.0, 0.0, 1.0), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l4");
+  l3Node.children.push(l4Node);
+  var l5Node = makeCyllinder(0.25, new Pos(0.0, 0.0, 0.5), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l5");
+  l4Node.children.push(l5Node);
+
+  topNode.children.push(l1Node);
+
+  Context.sceneGraph = topNode;
+  console.log("Full Graph: ",topNode);
+  console.log("Name Graph: ", getNameGraph(topNode));
+}
+
+function initCircleMesh(numCircleParts) {
   var circleVerts = [new Vertex(new Pos(0.0, 0.0, 0.0), new Color(1.0, 1.0, 1.0))];
   for (i = 0; i <= numCircleParts; ++i) {
     rads = 2.0 * Math.PI / numCircleParts * i;
@@ -82,7 +112,11 @@ function initSceneGraph() {
   var circleMesh = new Mesh();
   circleMesh.renderType = gl.TRIANGLE_FAN;
   circleMesh.verts = circleVerts;
+  
+  return circleMesh;
+}
 
+function initCyllinderSideMesh(numCircleParts) {
   cyllinderVerts = []
   for (i = 0; i <= numCircleParts; ++i) {
     rads = 2.0 * Math.PI / numCircleParts * i;
@@ -96,36 +130,8 @@ function initSceneGraph() {
   var cyllinderMesh = new Mesh();
   cyllinderMesh.renderType = gl.TRIANGLE_STRIP;
   cyllinderMesh.verts = cyllinderVerts;
-
-  var topNode = new SceneGraph("root");
-
-  var makeCyllinder = function(height, pos, rot, scale, name) {
-    cylNode =       new SceneGraphNode(name,             pos,                       rot,              scale,                       null);
-    cylTopNode =    new SceneGraphNode(name + "_Top",    new Pos(0.0, 0.0, 0),      new Rot(0, 0, 0), new Scale(1.0, 1.0, 1.0),    circleMesh);
-    cylBotNode =    new SceneGraphNode(name + "_Bot",    new Pos(0.0, 0.0, height), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0),    circleMesh);
-    cylMiddleNode = new SceneGraphNode(name + "_Middle", new Pos(0.0, 0.0, 0),      new Rot(0, 0, 0), new Scale(1.0, 1.0, height), cyllinderMesh);
-    cylNode.children = [cylTopNode, cylBotNode, cylMiddleNode];
-    return cylNode;
-  }
-
-  var l1Node = makeCyllinder(4, new Pos(0.0, -1.0, 0.0), new Rot(90, 180, 0), new Scale(0.1, 0.1, 0.1), "l1");
-  var l2Node = makeCyllinder(2, new Pos(0.0, 0.0, 4.0), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l2");
-  var l1Node.children.push(l2Node);
-  var l3Node = makeCyllinder(1, new Pos(0.0, 0.0, 2.0), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l3");
-  var l2Node.children.push(l3Node);
-  var l4Node = makeCyllinder(0.5, new Pos(0.0, 0.0, 1.0), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l4");
-  var l3Node.children.push(l4Node);
-  var l5Node = makeCyllinder(0.25, new Pos(0.0, 0.0, 0.5), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l5");
-  var l4Node.children.push(l5Node);
-
-  topNode.children = [l1Node];
-
-  Context.sceneGraph = topNode;
-  console.log("Full Graph: ",topNode);
-  console.log("Name Graph: ", getNameGraph(topNode));
+  return cyllinderMesh;
 }
-
-function
 
 function getNameGraph(topNode) {
   var topNameNode = {};

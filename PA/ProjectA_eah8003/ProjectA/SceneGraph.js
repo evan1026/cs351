@@ -125,19 +125,21 @@ function buildBuffer(graphNode, currBuffer) {
     currBuffer = [];
   }
   
-  if (graphNode.mesh) {
-    graphNode.mesh.vboStart = currBuffer.length / Vertex.primsPerVertex;
-    for (vertex of graphNode.mesh.verts) {
-      if (vertex.color === undefined) {
-        console.log(vertex);
+  if (graphNode) {
+    if (graphNode.mesh) {
+      graphNode.mesh.vboStart = currBuffer.length / Vertex.primsPerVertex;
+      for (vertex of graphNode.mesh.verts) {
+        if (vertex.color === undefined) {
+          console.log(vertex);
+        }
+        currBuffer.push(vertex.pos.x, vertex.pos.y, vertex.pos.z, 1.0, vertex.color.r, vertex.color.g, vertex.color.b);
       }
-      currBuffer.push(vertex.pos.x, vertex.pos.y, vertex.pos.z, 1.0, vertex.color.r, vertex.color.g, vertex.color.b);
+      graphNode.mesh.vboCount = currBuffer.length / Vertex.primsPerVertex - graphNode.mesh.vboStart;
     }
-    graphNode.mesh.vboCount = currBuffer.length / Vertex.primsPerVertex - graphNode.mesh.vboStart;
-  }
 
-  for (child of graphNode.children) {
-    buildBuffer(child, currBuffer);
+    for (child of graphNode.children) {
+      buildBuffer(child, currBuffer);
+    }
   }
 
   return currBuffer;
