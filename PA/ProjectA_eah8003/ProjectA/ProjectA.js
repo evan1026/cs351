@@ -122,6 +122,23 @@ function initSceneGraph() {
 
   Context.sceneGraph = topNode;
   console.log("Full Graph: ",topNode);
+  console.log("Name Graph: ", getNameGraph(topNode));
+}
+
+function getNameGraph(topNode) {
+  var topNameNode = {};
+  topNameNode[topNode.name] = getNameGraphHelper(topNode);
+  return topNameNode;
+}
+
+function getNameGraphHelper(topNode) {
+  var currNode = {};
+  
+  for (child of topNode.children) {
+    currNode[child.name] = getNameGraphHelper(child);
+  }
+  
+  return currNode;
 }
 
 function initVertexBuffer() {
