@@ -63,6 +63,7 @@ class SceneGraphNode {
 
   children = [];
   mesh;
+  enabled = true;
 
   constructor(name, pos, rot, scale, mesh) {
     if (name === undefined || name === null) {
@@ -149,6 +150,10 @@ function drawNode(modelMatrix, node, scale) {
   // Gotta do all these scaling hacks because scaling and rotation don't play nice
   if (scale === undefined) {
     scale = new Scale(1.0, 1.0, 1.0);
+  }
+
+  if (!node.enabled) {
+    return modelMatrix;
   }
 
   pushMatrix(modelMatrix);

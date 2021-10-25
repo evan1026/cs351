@@ -41,26 +41,71 @@ function main() {
   window.addEventListener("mousedown", myMouseDown);
   window.addEventListener("mousemove", myMouseMove);
   window.addEventListener("mouseup", myMouseUp);
+  window.addEventListener("keydown", myKeyDown, false);
+  window.addEventListener("keyup", myKeyUp, false);
+
+  Animation.armTime = Date.now();
+  Animation.boxTime = Date.now();
+  Event.mouseDrag.x = 0.0;
+  Event.mouseDrag.y = -1.0;
 
   tick();
 }
 
 function animate() {
   var time = Date.now();
+  
+  var armShown = document.getElementById("armShown").checked;
+  var boxShown = document.getElementById("boxShown").checked;
+  var armAnimate = document.getElementById("armAnimation").checked;
+  var boxAnimate = document.getElementById("boxAnimation").checked;
+  
+  Animation.nodes["l1"].enabled = armShown;
+  Animation.nodes["house"].enabled = boxShown;
+
+  if (armAnimate) {
+    Animation.armTime += (time - Context.lastAnimationTick);
+  }
+  
+  if (boxAnimate) {
+    Animation.boxTime += (time - Context.lastAnimationTick);
+  }
+  
+  boxTime = Animation.boxTime;
+  armTime = Animation.armTime;
 
   var xRot = document.getElementById("armRotation").value;
-  Animation.nodes['l1'].rot = new Rot(xRot, 180 + 45 * Math.sin(time / 1000), 0.0);
-  Animation.nodes['l2'].rot = new Rot(0.0, 45 * Math.sin(time / 500), 0.0);
-  Animation.nodes['l3'].rot = new Rot(0.0, 45 * Math.sin(time / 250), 0.0);
-  Animation.nodes['l4'].rot = new Rot(0.0, 45 * Math.sin(time / 125), 0.0);
-  Animation.nodes['l5'].rot = new Rot(0.0, 45 * Math.sin(time / 62.5), 0.0);
-
+  Animation.nodes['l1'].rot = new Rot(xRot, 180 + 45 * Math.sin(armTime / 1000), 0.0);
+  Animation.nodes['l2'].rot = new Rot(0.0, 45 * Math.sin(armTime / 500), 0.0);
+  Animation.nodes['l3'].rot = new Rot(0.0, 45 * Math.sin(armTime / 250), 0.0);
+  Animation.nodes['l4'].rot = new Rot(0.0, 45 * Math.sin(armTime / 125), 0.0);
+  Animation.nodes['l5'].rot = new Rot(0.0, 45 * Math.sin(armTime / 62.5), 0.0);
+  
+  if (Animation.armUp) {
+    Event.mouseDrag.y += 0.01;
+  } else if (Animation.armDown) {
+    Event.mouseDrag.y -= 0.01;
+  }
+  
+  if (Animation.armLeft) {
+    Event.mouseDrag.x -= 0.01;
+  } else if (Animation.armRight) {
+    Event.mouseDrag.x += 0.01;
+  }
+  
   var currPos = Animation.nodes['l1'].pos;
   Animation.nodes['l1'].pos = new Pos(Event.mouseDrag.x, Event.mouseDrag.y, currPos.z);
   
-  Animation.nodes["house"].rot = new Rot(90 * Math.sin(time / 500), 90 * Math.cos(time / 500), 90 * -Math.sin(time / 500))
+  Animation.nodes["house"].pos = new Pos(0.5 * Math.cos(boxTime / 500), 0.5 * Math.sin(boxTime / 500), 0.0);
+  Animation.nodes["house"].rot = new Rot(90 * Math.sin(boxTime / 500), 90 * Math.cos(boxTime / 500), 90 * -Math.sin(boxTime / 500))
   var house2Rot = Animation.nodes["house2"].rot;
-  house2Rot.y = (time / 3) % 360;
+  house2Rot.y = (boxTime / 2) % 360;
+  var house3Rot = Animation.nodes["house3"].rot;
+  house3Rot.y = (boxTime / 4) % 360;
+  var house4Rot = Animation.nodes["house4"].rot;
+  house4Rot.y = (boxTime / 6) % 360;
+  var house5Rot = Animation.nodes["house5"].rot;
+  house5Rot.y = (boxTime / 8) % 360;
 
   Context.lastAnimationTick = time;
 }
@@ -97,9 +142,15 @@ function initSceneGraph() {
   var l5Node = makeCyllinder(0.25, new Pos(0.0, 0.0, 0.5), new Rot(0, 0, 0), new Scale(0.5, 0.5, 1.0), "l5");
   l4Node.children.push(l5Node);
   
-  var houseNode = new SceneGraphNode("house", new Pos(0.0, 0.0, 0.0), new Rot(0, 0, 0), new Scale(0.25, 0.25, 0.25), houseMesh);
+  var houseNode = new SceneGraphNode("house", new Pos(0.5, 0.5, 0.0), new Rot(0, 0, 0), new Scale(0.15, 0.15, 0.15), houseMesh);
   var houseNode2 = new SceneGraphNode("house2", new Pos(0.0, 1.5, 0.0), new Rot(180, 0, 0), new Scale(1.0, 1.0, 1.0), houseMesh);
   houseNode.children.push(houseNode2);
+  var houseNode3 = new SceneGraphNode("house3", new Pos(0.0, 0.0, 1.25), new Rot(270, 0, 0), new Scale(1.0, 1.0, 1.0), houseMesh);
+  houseNode.children.push(houseNode3);
+  var houseNode4 = new SceneGraphNode("house4", new Pos(0.0, 0.0, -1.25), new Rot(90, 0, 0), new Scale(1.0, 1.0, 1.0), houseMesh);
+  houseNode.children.push(houseNode4);
+  var houseNode5 = new SceneGraphNode("house5", new Pos(0.0, -1.25, 0.0), new Rot(0, 0, 0), new Scale(1.0, 1.0, 1.0), houseMesh);
+  houseNode.children.push(houseNode5);
 
   topNode.children.push(l1Node);
   topNode.children.push(houseNode);
@@ -295,7 +346,7 @@ function myMouseDown(ev) {
   Event.mouseDrag.x = coords.x;
   Event.mouseDrag.y = coords.y;
   Event.mouseDrag.currentlyDragging = true;
-};
+}
 
 function myMouseMove(ev) {
   if(!Event.mouseDrag.currentlyDragging) return;
@@ -304,10 +355,56 @@ function myMouseMove(ev) {
 
   Event.mouseDrag.x = coords.x;
   Event.mouseDrag.y = coords.y;
-};
+}
 
 function myMouseUp(ev) {
   var coords = getMouseEventCoords(ev);
 
   Event.mouseDrag.currentlyDragging = false;
-};
+}
+
+function myKeyDown(kev) {
+  switch(kev.code) {
+		case "KeyA":
+    case "ArrowLeft":
+      Animation.armLeft = true;
+			break;
+    case "KeyD":
+    case "ArrowRight":
+      Animation.armRight = true;
+			break;
+		case "KeyS":
+    case "ArrowDown":
+      Animation.armDown = true;
+			break;
+		case "KeyW":
+    case "ArrowUp":
+      Animation.armUp = true;
+			break;
+    default:
+      break;
+	}
+}
+
+function myKeyUp(kev) {
+  switch(kev.code) {
+		case "KeyA":
+    case "ArrowLeft":
+      Animation.armLeft = false;
+			break;
+    case "KeyD":
+    case "ArrowRight":
+      Animation.armRight = false;
+			break;
+		case "KeyS":
+    case "ArrowDown":
+      Animation.armDown = false;
+			break;
+		case "KeyW":
+    case "ArrowUp":
+      Animation.armUp = false;
+			break;
+    default:
+      break;
+	}
+}

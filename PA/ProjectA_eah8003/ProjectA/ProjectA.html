@@ -5,7 +5,9 @@
     <title>ProjectA_eah8003</title>
     <style>
       body { margin: 0; }
-      canvas { width: 500px; height: 500px; display: block; }
+      canvas { width: 500px; height: 500px; display: block; float: left;}
+      #canvas { width: 500px; height: 500px; display: block; float: left;}
+      .aligned { display: flex; align-items: center; }
     </style>
       <!--canvas { width: 100vw; height: 100vh; display: block; }-->
     <script src="../lib/webgl-utils.js"></script>
@@ -16,9 +18,19 @@
     <script src="ProjectA.js"></script>
   </head>
   <body onload="main()">
-    <canvas id="webgl">
-    Please use a browser that supports "canvas"
-    </canvas>
-    <div>Arm rotation: <input type="range" min="0" max="360" value="90" class="slider" id="armRotation"></div>
+    <div id="canvas">
+        <canvas id="webgl">
+        Please use a browser that supports "canvas"
+        </canvas>
+    </div>
+    <div style="padding: 10px; float: left" >
+        <div class="aligned"><input type="checkbox" id="armAnimation" checked><label for="armAnimation">Animate Arm</label></div>
+        <div class="aligned"><input type="checkbox" id="boxAnimation" checked><label for="boxAnimation">Animate Boxes</label></div>
+        <div class="aligned"><input type="checkbox" id="armShown" checked><label for="armShown">Show Arm</label></div>
+        <div class="aligned"><input type="checkbox" id="boxShown" checked><label for="boxShown">Show Boxes</label></div>
+        <div class="aligned"><input type="range" min="0" max="360" value="90" class="slider" id="armRotation"><label for="armRotation">Arm Rotation</label></div>
+        <div style="padding-top: 50px;">Arrow Keys/WASD moves waving arm<br />Click and drag to set arm position</div>
+        
+    </div>
   </body>
 </html>
