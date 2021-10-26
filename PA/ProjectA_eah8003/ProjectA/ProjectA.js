@@ -354,8 +354,6 @@ function getMouseEventCoords(ev) {
 function myMouseDown(ev) {
   var coords = getMouseEventCoords(ev);
 
-  console.log(coords);
-
   if (coords.x > 1 || coords.x < -1 || coords.y > 1 || coords.y < -1) {
     return;
   }

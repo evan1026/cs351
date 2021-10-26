@@ -1,3 +1,6 @@
+/**
+ * Basic 3-tuple
+ */
 class Vec3 {
   x;
   y;
@@ -22,11 +25,18 @@ class Vec3 {
   }
 }
 
+// Aliased versions of Vec3 to make code more self-documenting
 var Pos = Vec3;
 var Rot = Vec3;
 var Scale = Vec3;
 var Color = Vec3;
 
+/**
+ * A vertex represents all of the things sent in the vertex attribute pointers.
+ * May need to be modified in later assignments.
+ *
+ * TODO: find a way to have arbitrary vertex definitions in the framework, maybe force the user to do it?
+ */
 class Vertex {
   pos;
   color;
@@ -46,6 +56,10 @@ class Vertex {
   }
 }
 
+/**
+ * A mesh is a list of verteces which get stored in a vbo.
+ * This corresponds to the drawn objects in the scene graph.
+ */
 class Mesh {
   verts = [];
   renderType;
@@ -55,6 +69,15 @@ class Mesh {
   vboCount;
 }
 
+/**
+ * The SceneGraphNode combines Group nodes and Transform nodes
+ * in the scene graph. Each node has both a transform and a list
+ * of children, as well as a reference to a mesh object.
+ *
+ * You can disable sections of the scene graph by setting enabled
+ * to false. This will cause that node and everything under it
+ * to be ignored when rendering.
+ */
 class SceneGraphNode {
   name;
   pos;
@@ -101,6 +124,12 @@ class SceneGraphNode {
 
 var SceneGraph = SceneGraphNode;
 
+/**
+ * A render program holds information about shaders that
+ * are loaded onto the GPU.
+ *
+ * TODO: Support for multiple render programs
+ */
 class RenderProgram {
   static vertShader;
   static fragShader;
@@ -108,6 +137,10 @@ class RenderProgram {
   attribIds = {};
 }
 
+/**
+ * Context is just a holder for some global variables
+ * relating to rendering.
+ */
 class Context {
   static canvas;
   static sceneGraph;
@@ -117,10 +150,23 @@ class Context {
   static lastAnimationTick = Date.now();
 }
 
+/**
+ * The animation class holds information necessary to do animations.
+ * The nodes object is a dictionary mapping SceneGraphNode names to the
+ * nodes themselves to they can be easily accessed. Users can add additional
+ * variables to hold constants they need for animation.
+ */
 class Animation {
   static nodes = {};
 }
 
+/**
+ * Turns a SceneGraph into a 1-dimensional array that can
+ * be sent to the graphics card in a VBO.
+ *
+ * TODO: if verteces are changed to hold arbitrary stuff then
+ *       this needs an overhaul
+ */
 function buildBuffer(graphNode, currBuffer) {
   if (currBuffer === undefined) {
     currBuffer = [];
@@ -146,6 +192,11 @@ function buildBuffer(graphNode, currBuffer) {
   return currBuffer;
 }
 
+/**
+ * Draws a single graph node and its children. First applies transformations,
+ * then renders the mesh if there is one, then calls this function recursively
+ * on all of the node's children.
+ */
 function drawNode(modelMatrix, node, scale) {
   // Gotta do all these scaling hacks because scaling and rotation don't play nice
   if (scale === undefined) {
@@ -178,6 +229,10 @@ function drawNode(modelMatrix, node, scale) {
   return popMatrix();
 }
 
+/**
+ * Draws the entire scene graph. Roughly equivalent to calling drawNode(new Matrix4(), Context.sceneGraph)
+ * after clearing the screen.
+ */
 function drawAll() {
   // First, fix canvas size if the user resized the window/canvas
   var canvas = Context.canvas;
@@ -195,6 +250,10 @@ function drawAll() {
 // Allowing 1 global bc it makes things so much easier and gl is more of a namespace than a variable anyway
 var gl;
 
+/**
+ * Init the rendering library.
+ * The canvas argument must be a canvas element on the webpage.
+ */
 function init(canvas) {
   Context.canvas = canvas;
   
@@ -217,12 +276,19 @@ function init(canvas) {
   return true;
 }
 
+/**
+ * Utility function to generate a tree with just the names of the SceneGraphNodes
+ * so that it's easier to see the hierachy.
+ */
 function getNameGraph(topNode) {
   var topNameNode = {};
   topNameNode[topNode.name] = getNameGraphHelper(topNode);
   return topNameNode;
 }
 
+/**
+ * Helper for getNameGraph
+ */
 function getNameGraphHelper(topNode) {
   var currNode = {};
   
