@@ -1,0 +1,122 @@
+```dot
+digraph G {
+
+    subgraph cluster_0 {
+        label = "Rotating Boxes Transforms";
+        houseTransform -> houseGroup [color=darkgreen];
+        houseGroup -> house2Transform [color=darkgoldenrod4];
+        houseGroup -> house3Transform [color=darkgoldenrod4];
+        houseGroup -> house4Transform [color=darkgoldenrod4];
+        houseGroup -> house5Transform [color=darkgoldenrod4];
+    }
+    
+    
+    subgraph cluster_1 {
+        label = "Waving Arm Transforms"
+        l1Transform -> l1Group [color=darkgreen];
+        l1Group -> l1BotTransform [color=darkgoldenrod4];
+        l1Group -> l1MidTransform [color=darkgoldenrod4];
+        l1Group -> l1TopTransform [color=darkgoldenrod4];
+        l1Group -> l2Transform [color=darkgoldenrod4];
+        
+        subgraph cluster_2 {
+            style=invis;
+            l2Transform -> l2Group [color=darkgreen];
+            l2Group -> l2BotTransform [color=darkgoldenrod4];
+            l2Group -> l2MidTransform [color=darkgoldenrod4];
+            l2Group -> l2TopTransform [color=darkgoldenrod4];
+            l2Group -> l3Transform [color=darkgoldenrod4];
+            
+            subgraph cluster_3 {
+                l3Transform -> l3Group [color=darkgreen];
+                l3Group -> l3BotTransform [color=darkgoldenrod4];
+                l3Group -> l3MidTransform [color=darkgoldenrod4];
+                l3Group -> l3TopTransform [color=darkgoldenrod4];
+                l3Group -> l4Transform [color=darkgoldenrod4];
+                
+                subgraph cluster_4 {
+                    l4Transform -> l4Group [color=darkgreen];
+                    l4Group -> l4BotTransform [color=darkgoldenrod4];
+                    l4Group -> l4MidTransform [color=darkgoldenrod4];
+                    l4Group -> l4TopTransform [color=darkgoldenrod4];
+                    l4Group -> l5Transform [color=darkgoldenrod4];
+                    
+                    subgraph cluster_5 {
+                        l5Transform -> l5Group [color=darkgreen];
+                        l5Group -> l5BotTransform [color=darkgoldenrod4];
+                        l5Group -> l5MidTransform [color=darkgoldenrod4];
+                        l5Group -> l5TopTransform [color=darkgoldenrod4];
+                    }
+                }
+            }
+        }
+        
+
+    }
+    
+    l1BotTransform -> Circle [color=firebrick4];
+    l2BotTransform -> Circle [color=firebrick4];
+    l3BotTransform -> Circle [color=firebrick4];
+    l4BotTransform -> Circle [color=firebrick4];
+    l5BotTransform -> Circle [color=firebrick4];
+    
+    l1TopTransform -> Circle [color=firebrick4];
+    l2TopTransform -> Circle [color=firebrick4];
+    l3TopTransform -> Circle [color=firebrick4];
+    l4TopTransform -> Circle [color=firebrick4];
+    l5TopTransform -> Circle [color=firebrick4];
+    
+    l1MidTransform -> Cyllinder [color=firebrick4];
+    l2MidTransform -> Cyllinder [color=firebrick4];
+    l3MidTransform -> Cyllinder [color=firebrick4];
+    l4MidTransform -> Cyllinder [color=firebrick4];
+    l5MidTransform -> Cyllinder [color=firebrick4];
+    
+    houseGroup -> House [color=firebrick4];
+    house2Transform -> House [color=firebrick4];
+    house3Transform -> House [color=firebrick4];
+    house4Transform -> House [color=firebrick4];
+    house5Transform -> House [color=firebrick4];
+    
+    CVV -> l1Transform;
+    CVV -> houseTransform;
+    
+    houseTransform [label="'house' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    house2Transform [label="'house2' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    house3Transform [label="'house3' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    house4Transform [label="'house4' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    house5Transform [label="'house5' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l1Transform [label="'l1' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l1BotTransform [label="'l1_Bot' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l1MidTransform [label="'l1_Middle' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l1TopTransform [label="'l1_Top' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l2Transform [label="'l2' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l2BotTransform [label="'l2_Bot' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l2MidTransform [label="'l2_Middle' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l2TopTransform [label="'l2_Top' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l3Transform [label="'l3' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l3BotTransform [label="'l3_Bot' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l3MidTransform [label="'l3_Middle' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l3TopTransform [label="'l3_Top' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l4Transform [label="'l4' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l4BotTransform [label="'l4_Bot' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l4MidTransform [label="'l4_Middle' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l4TopTransform [label="'l4_Top' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l5Transform [label="'l5' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l5BotTransform [label="'l5_Bot' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l5MidTransform [label="'l5_Middle' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l5TopTransform [label="'l5_Top' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    
+    CVV [style=filled, fillcolor=darkgreen]
+    houseGroup [label="'house' Group", style=filled, fillcolor=darkgreen]
+    l1Group [label="'l1' Group", style=filled, fillcolor=darkgreen]
+    l2Group [label="'l2' Group", style=filled, fillcolor=darkgreen]
+    l3Group [label="'l3' Group", style=filled, fillcolor=darkgreen]
+    l4Group [label="'l4' Group", style=filled, fillcolor=darkgreen]
+    l5Group [label="'l5' Group", style=filled, fillcolor=darkgreen]
+    
+    House [fillcolor=firebrick4, shape=trapezium, style=filled];
+    Circle [fillcolor=firebrick4, shape=trapezium, style=filled];
+    Cyllinder [fillcolor=firebrick4, shape=trapezium, style=filled];
+}
+```
