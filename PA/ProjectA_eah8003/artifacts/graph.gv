@@ -1,4 +1,3 @@
-```dot
 digraph G {
 
     subgraph cluster_0 {
@@ -119,4 +118,3 @@ digraph G {
     Circle [fillcolor=firebrick4, shape=trapezium, style=filled];
     Cyllinder [fillcolor=firebrick4, shape=trapezium, style=filled];
 }
-```
