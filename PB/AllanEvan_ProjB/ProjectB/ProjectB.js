@@ -77,6 +77,7 @@ function animate() {
   
   animateArm(time);
   animateBoxes(time);
+  animateProp(time);
   
   updateFramerate(elapsed);
   
@@ -91,7 +92,7 @@ function animateArm(time) {
   var armAnimate = document.getElementById("armAnimation").checked;
   
   Animation.nodes["l1"].enabled = armShown;
-  
+
   if (armAnimate) {
     Animation.armTime += (time - Context.lastAnimationTick);
   }
@@ -126,7 +127,7 @@ function animateBoxes(time) {
   boxTime = Animation.boxTime;
   boxStep = Animation.boxStep;
   
-  Animation.nodes["house"].pos = new Pos(1.0 + 0.5 * Math.cos(boxTime / 500), 1.0 + 0.5 * Math.sin(boxTime / 500), 0.0);
+  Animation.nodes["house"].pos = new Pos(-2.0 + 0.5 * Math.cos(boxTime / 500), -2.0 + 0.5 * Math.sin(boxTime / 500), 0.0);
   Animation.nodes["house"].rot = QuatFromEuler(90 * Math.sin(boxTime / 500), 90 * Math.cos(boxTime / 500), 90 * -Math.sin(boxTime / 500))
   var house2Rot = Animation.nodes["house2"].rot;
   house2Rot.rotateFromAxisAngle(0, 1, 0, (boxStep / 2) % 360);
@@ -136,6 +137,23 @@ function animateBoxes(time) {
   house4Rot.rotateFromAxisAngle(0, 1, 0, (boxStep / 6) % 360);
   var house5Rot = Animation.nodes["house5"].rot;
   house5Rot.rotateFromAxisAngle(0, 1, 0, (boxStep / 8) % 360);
+}
+
+/**
+ * Animates the propeller on the heli.
+ */
+function animateProp(time) {
+  var propShown = document.getElementById("propShown").checked;
+  var propAnimate = document.getElementById("propAnimation").checked;
+  
+  Animation.nodes["plane"].enabled = propShown;
+  
+  if (propAnimate) {
+    Animation.propTime = time / 3;
+  }
+  propTime = Animation.propTime;
+  
+  Animation.nodes["propConnector"].rot = QuatFromEuler(0, 0, propTime);
 }
 
 /**
@@ -221,6 +239,8 @@ function initSceneGraph() {
   var houseMesh = initHouseMesh(); 
   var gridMesh = initGridMesh(-5, 5, -5, 5, 50);
   var axesMesh = initAxesMesh();
+  var planeMesh = initPlaneMesh();
+  var blackBoxMesh = initBlackBoxMesh();
 
   var makeCyllinder = function(height, pos, rot, scale, name) {
     cylNode =       new SceneGraphNode(name,             pos,                       rot,              scale,                       null);
@@ -263,6 +283,15 @@ function initSceneGraph() {
   var armTipAxesNode = new SceneGraphNode("armTipAxes", new Pos(), new Quaternion(), new Scale(32.0, 32.0, 0.5), axesMesh);
   var housesAxesNode = new SceneGraphNode("housesAxes", new Pos(), new Quaternion(), new Scale(3.0, 3.0, 3.0), axesMesh);
   
+  var planeNode = new SceneGraphNode("plane", new Pos(), new Quaternion(), new Scale(1.0, 1.0, 1.0), planeMesh);
+  var propConnectorNode = new SceneGraphNode("propConnector", new Pos(0.5, 0.5, 0.55), new Quaternion(), new Scale(0.01, 0.01, 0.15), blackBoxMesh);
+  planeNode.children.push(propConnectorNode);
+  
+  var prop1 = new SceneGraphNode("prop1", new Pos(0.0, 0.0, 0.5), QuatFromEuler(90, 0, 0), new Scale(1.0, 1.0, 10.0), blackBoxMesh);
+  var prop2 = new SceneGraphNode("prop2", new Pos(0.0, 0.0, 0.5), QuatFromEuler(90, 60, 0), new Scale(1.0, 1.0, 10.0), blackBoxMesh);
+  var prop3 = new SceneGraphNode("prop3", new Pos(0.0, 0.0, 0.5), QuatFromEuler(90, 120, 0), new Scale(1.0, 1.0, 10.0), blackBoxMesh);
+  propConnectorNode.children.push(prop1, prop2, prop3);
+  
   l1Node.children.push(armAxesNode);
   l7Node.children.push(armTipAxesNode);
   houseNode.children.push(housesAxesNode);
@@ -271,6 +300,7 @@ function initSceneGraph() {
   topNode.children.push(houseNode);
   topNode.children.push(gridNode);
   topNode.children.push(axesNode);
+  topNode.children.push(planeNode);
 
   Context.sceneGraph = topNode;
   console.log("Full Graph: ",topNode);
@@ -411,6 +441,250 @@ function initAxesMesh() {
 }
 
 /**
+ * Creates the plane mesh.
+ */
+function initPlaneMesh() {
+  var planeMesh = new Mesh(gl.TRIANGLES);
+  
+  /*
+   * Fuselage
+   */
+  {
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.4)));
+
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.3)));
+
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.4)));
+
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.4)));
+
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.5)));
+
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.5)));
+
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.4)));
+
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.4)));
+
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.5)));
+
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.5)));
+
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.5)));
+
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.5)));
+
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.4)));
+
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.5)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.5)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.5)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.5)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.5)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.3)));
+
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.3)));
+  }
+  
+  /*
+   * Right wing
+   */
+  {
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.4, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.35)));
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.4, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.4, 0.45)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.35)));
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.4)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.45)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.4, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.35)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.35)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.35)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.35)));
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.35)));
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.35)));
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.4)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.45)));
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.45)));
+    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.4, 0.45)));
+  }
+  
+  /*
+   * Left wing
+   */
+  {
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.4, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.35)));
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.4, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.4, 0.45)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.35)));
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.4)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.45)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.4, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.35)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.35)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.35)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.35)));
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.35)));
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.35)));
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.4)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.45)));
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.45)));
+    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.4, 0.45)));
+  }
+  
+  return planeMesh;
+}
+
+/**
+ * Creates a black box mesh.
+ */
+function initBlackBoxMesh() {
+   var boxMesh = new Mesh(gl.TRIANGLES);
+   
+   boxMesh.verts = [
+    new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    
+    new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    
+    new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    
+    new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    
+    new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    
+    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+    new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
+  ];
+    
+  return boxMesh;
+}
+
+/**
+ * Quick util to make a vertex with a color that is based on the position.
+ */
+function planeVertex(pos) {
+  return new Vertex(pos, new Color(pos));
+}
+
+/**
  * Creates the perspective and orthographic cameras.
  */
 function initCameras() {
@@ -433,7 +707,7 @@ function initCameras() {
   cam2.viewport.mode = "relative";
   cam2.pos.z = 5.0;
   cam2.applyProjection = function(modelMatrix, width, height) {
-    applyOrthoProjection(modelMatrix, -width / height, width / height, -1, 1, 1, 1000);
+    applyOrthoProjection(modelMatrix, -width / height * 5, width / height * 3, -3, 3, -1000, 1000);
   }
   
   Context.cameras = [cam1, cam2];
