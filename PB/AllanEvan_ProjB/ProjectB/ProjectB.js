@@ -688,16 +688,28 @@ function planeVertex(pos) {
  * Creates the perspective and orthographic cameras.
  */
 function initCameras() {
+  near = 0.1;
+  far = 30;
+  fovy = 35;
+
+  startx = -7;
+  starty = 7;
+  startz = 5;
+
+  startPitch = -25;
+  startYaw = 50;
+  startRoll = 0;
+
   var cam1 = new Camera();
   cam1.viewport.x = 0;
   cam1.viewport.y = 0;
   cam1.viewport.width = 0.5;
   cam1.viewport.height = 1;
   cam1.viewport.mode = "relative";
-  cam1.move(-7, 7, 5);
-  cam1.rotate(-25, 50, 0);
+  cam1.move(startx, starty, startz);
+  cam1.rotate(startPitch, startYaw, startRoll);
   cam1.applyProjection = function(modelMatrix, width, height) {
-    applyPerspectiveProjection(modelMatrix, 35, width / height, 0.001, 1000);
+    applyPerspectiveProjection(modelMatrix, fovy, width / height, near, far);
   };
 
   var cam2 = new Camera();
@@ -706,10 +718,13 @@ function initCameras() {
   cam2.viewport.width = 0.5;
   cam2.viewport.height = 1;
   cam2.viewport.mode = "relative";
-  cam2.move(-7, 7, 5);
-  cam2.rotate(-25, 50, 0);
+  cam2.move(startx, starty, startz);
+  cam2.rotate(startPitch, startYaw, startRoll);
   cam2.applyProjection = function(modelMatrix, width, height) {
-    applyOrthoProjection(modelMatrix, -width / height * 5, width / height * 3, -3, 3, -1000, 1000);
+    targetPlane = (far - near) / 3;
+    targetTop = targetPlane * Math.sin(fovy / 2 * Math.PI / 180);
+    targetRight = targetTop * width / height;
+    applyOrthoProjection(modelMatrix, -targetRight, targetRight, -targetTop, targetTop, near, far);
   };
 
   Context.cameras = [cam1, cam2];
