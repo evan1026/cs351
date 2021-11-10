@@ -14,6 +14,37 @@ Quaternion.prototype.rotateFromEuler = function(a1, a2, a3) {
   return this.multiplySelf(new Quaternion().setFromEuler(a1, a2, a3));
 };
 
+Quaternion.prototype.toEulerRad = function() {
+  var out = new Vec3(0, 0, 0);
+
+  // roll (z-axis rotation)
+  sinr_cosp = 2 * (this.w * this.x + this.y * this.z);
+  cosr_cosp = 1 - 2 * (this.x * this.x + this.y * this.y);
+  out.z = Math.atan2(sinr_cosp, cosr_cosp);
+
+  // pitch (x-axis rotation)
+  sinp = 2 * (this.w * this.y - this.z * this.x);
+  if (Math.abs(sinp) >= 1)
+      out.x = Math.PI / 2 * Math.sign(sinp); // use 90 degrees if out of range
+  else
+      out.x = Math.asin(sinp);
+
+  // yaw (y-axis rotation)
+  siny_cosp = 2 * (this.w * this.z + this.x * this.y);
+  cosy_cosp = 1 - 2 * (this.y * this.y + this.z * this.z);
+  out.y = Math.atan2(siny_cosp, cosy_cosp);
+  
+  return out;
+}
+
+Quaternion.prototype.toEulerDeg = function() {
+  var out = this.toEulerRad();
+  out.x *= 180 / Math.PI;
+  out.y *= 180 / Math.PI;
+  out.z *= 180 / Math.PI;
+  return out;
+}
+
 Quaternion.prototype.setFromEuler = function(alpha, beta, gamma) {
   var quat = new Quaternion();
   quat.rotateFromAxisAngle(1, 0, 0, alpha);
@@ -24,6 +55,8 @@ Quaternion.prototype.setFromEuler = function(alpha, beta, gamma) {
   this.y = quat.y;
   this.z = quat.z;
   this.w = quat.w;
+  
+  return this;
 };
 
 function QuatFromAxisAngle(ax, ay, az, angle) {
@@ -47,9 +80,21 @@ class Vec3 {
   z;
 
   constructor(x, y, z) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
+    if (y === undefined && z === undefined) {
+      if (x === undefined) {
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+      } else {
+        this.x = x.x;
+        this.y = x.y;
+        this.z = x.z;
+      }
+    } else {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
   }
 
   get r() {
@@ -62,6 +107,26 @@ class Vec3 {
 
   get b() {
     return this.z;
+  }
+  
+  add(other) {
+    return new Vec3(this.x + other.x, this.y + other.y, this.z + other.z);
+  }
+  
+  subtract(other) {
+    return this.add(new Vec3(-other.x, -other.y, -other.z));
+  }
+  
+  normalized() {
+    return this.multiply(1 / this.magnitude);
+  }
+  
+  multiply(amount) {
+    return new Vec3(this.x * amount, this.y * amount, this.z * amount);
+  }
+  
+  get magnitude() {
+    return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
   }
 }
 
@@ -203,6 +268,65 @@ class Animation {
 class Camera {
   viewport;
   applyProjection;
+  pos;
+  lookAt;
+  up;
+  
+  constructor() {
+    this.viewport = new Viewport();
+    this.pos = new Pos(0, 0, 0);
+    this.lookDir = new Pos(1, 0, -1);
+    this.up = new Pos(0, 0, 1);
+  }
+  
+  translate(x, y, z) {
+    if (y !== undefined && z !== undefined) {
+      z = x.z;
+      y = x.y;
+      x = x.x;
+    }
+    
+    this.pos.x += x;
+    this.pos.y += y;
+    this.pos.z += z;
+  }
+  
+  move(fwdAmt, rightAmt, upAmt) {
+    var fwd = this.lookDir.normalized();
+    fwd.z = 0;
+    
+    var right = this.right.normalized();
+    right.z = 0;
+    
+    var up = this.up.normalized();
+    up.x = 0;
+    up.y = 0;
+    
+    this.pos = this.pos.add(fwd.multiply(fwdAmt));
+    this.pos = this.pos.add(right.multiply(rightAmt));
+    this.pos = this.pos.add(up.multiply(upAmt));
+  }
+  
+  rotate(pitch, yaw, roll) {
+    var right = this.right;
+    var fwd = this.lookDir;
+
+    var pitchRotation = QuatFromAxisAngle(right.x, right.y, right.z, pitch);
+    var yawRotation = QuatFromAxisAngle(0, 0, 1, yaw);
+    var rollRotation = QuatFromAxisAngle(fwd.x, fwd.y, fwd.z, roll);
+    
+    yawRotation.multiplyVector3(this.lookDir);
+    pitchRotation.multiplyVector3(this.lookDir);
+    rollRotation.multiplyVector3(this.lookDir);
+  }
+  
+  get right() {
+    var lookDirVector = new Vector3([this.lookDir.x, this.lookDir.y, this.lookDir.z]);
+    var upVector = new Vector3([this.up.x, this.up.y, this.up.z]);
+    var rightVector = lookDirVector.cross(upVector);
+    var right = new Vec3(rightVector.elements[0], rightVector.elements[1], rightVector.elements[2]);
+    return right;
+  }
 }
 
 class Viewport {
@@ -211,6 +335,14 @@ class Viewport {
   width;
   height;
   mode;
+  
+  constructor() {
+    this.x = 0;
+    this.y = 0;
+    this.width = 0;
+    this.height = 0;
+    this.mode = "relative";
+  }
 }
 
 /**
@@ -319,6 +451,11 @@ function drawAll() {
     if (camera.applyProjection) {
       camera.applyProjection(modelMatrix, camWidth, camHeight);
     }
+    
+    var lookAt = new Vec3(camera.pos.x + camera.lookDir.x, camera.pos.y + camera.lookDir.y, camera.pos.z + camera.lookDir.z);
+    modelMatrix.lookAt(camera.pos.x,    camera.pos.y,    camera.pos.z,
+                       lookAt.x,        lookAt.y,        lookAt.z,
+                       camera.up.x,     camera.up.y,     camera.up.z);
     drawNode(modelMatrix, Context.sceneGraph);
   }
 }

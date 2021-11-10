@@ -58,6 +58,10 @@ function main() {
 
 function animate() {
   var time = Date.now();
+  var elapsed = time - Context.lastAnimationTick;
+  
+  translateCamera(elapsed);
+  rotateCamera(elapsed);
   
   var r = document.getElementById("r").value / 255;
   var g = document.getElementById("g").value / 255;
@@ -95,21 +99,6 @@ function animate() {
   Animation.nodes['l4'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 125), 0.0);
   Animation.nodes['l5'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 62.5), 0.0);
   
-  if (Animation.armUp) {
-    Event.mouseDrag.y += 0.01;
-  } else if (Animation.armDown) {
-    Event.mouseDrag.y -= 0.01;
-  }
-  
-  if (Animation.armLeft) {
-    Event.mouseDrag.x -= 0.01;
-  } else if (Animation.armRight) {
-    Event.mouseDrag.x += 0.01;
-  }
-  
-  var currPos = Animation.nodes['l1'].pos;
-  Animation.nodes['l1'].pos = new Pos(Event.mouseDrag.x, Event.mouseDrag.y, currPos.z);
-  
   Animation.nodes["house"].pos = new Pos(0.5 * Math.cos(boxTime / 500), 0.5 * Math.sin(boxTime / 500), 0.0);
   Animation.nodes["house"].rot = QuatFromEuler(90 * Math.sin(boxTime / 500), 90 * Math.cos(boxTime / 500), 90 * -Math.sin(boxTime / 500))
   var house2Rot = Animation.nodes["house2"].rot;
@@ -124,6 +113,55 @@ function animate() {
   Context.lastAnimationTick = time;
 }
 
+function translateCamera(elapsed) {
+  speed = 0.05 * elapsed / 15;
+  if (Animation.moveFwd) {
+    Context.cameras[0].move(speed, 0, 0);
+    Context.cameras[1].move(speed, 0, 0);
+  } else if (Animation.moveBack) {
+    Context.cameras[0].move(-speed, 0, 0);
+    Context.cameras[1].move(-speed, 0, 0);
+  }
+  
+  if (Animation.moveLeft) {
+    Context.cameras[0].move(0, -speed, 0);
+    Context.cameras[1].move(0, -speed, 0);
+  } else if (Animation.moveRight) {
+    Context.cameras[0].move(0, speed, 0);
+    Context.cameras[1].move(0, speed, 0);
+  }
+  
+  if (Animation.moveUp) {
+    Context.cameras[0].move(0, 0, speed);
+    Context.cameras[1].move(0, 0, speed);
+  } else if (Animation.moveDown) {
+    Context.cameras[0].move(0, 0, -speed);
+    Context.cameras[1].move(0, 0, -speed);
+  }
+  
+  
+}
+
+function rotateCamera(elapsed) {
+  degPerTick = 0.5 * elapsed / 15;
+  
+  if (Animation.lookUp) {
+    Context.cameras[0].rotate(degPerTick, 0, 0);
+    Context.cameras[1].rotate(degPerTick, 0, 0);
+  } else if (Animation.lookDown) {
+    Context.cameras[0].rotate(-degPerTick, 0, 0);
+    Context.cameras[1].rotate(-degPerTick, 0, 0);
+  }
+  
+  if (Animation.lookLeft) {
+    Context.cameras[0].rotate(0, degPerTick * 2, 0);
+    Context.cameras[1].rotate(0, degPerTick * 2, 0);
+  } else if (Animation.lookRight) {
+    Context.cameras[0].rotate(0, -degPerTick * 2, 0);
+    Context.cameras[1].rotate(0, -degPerTick * 2, 0);
+  }
+}
+
 function tick() {
   animate();
   drawAll();
@@ -134,7 +172,8 @@ function initSceneGraph() {
   var numCircleParts = 100;
   var circleMesh = initCircleMesh(numCircleParts);
   var cyllinderMesh = initCyllinderSideMesh(numCircleParts);
-  var houseMesh = initHouseMesh();
+  var houseMesh = initHouseMesh(); 
+  var gridMesh = initGridMesh(-5, 5, -5, 5, 50);
 
   var makeCyllinder = function(height, pos, rot, scale, name) {
     cylNode =       new SceneGraphNode(name,             pos,                       rot,              scale,                       null);
@@ -146,7 +185,7 @@ function initSceneGraph() {
   };
 
   var topNode = new SceneGraph("root");
-  var l1Node = makeCyllinder(4, new Pos(0.0, -1.0, 0.0), QuatFromEuler(90, 180, 0), new Scale(0.1, 0.1, 0.1), "l1");
+  var l1Node = makeCyllinder(4, new Pos(0.0, -2.0, 0.0), QuatFromEuler(90, 180, 0), new Scale(0.1, 0.1, 0.1), "l1");
   var l2Node = makeCyllinder(2, new Pos(0.0, 0.0, 4.0), new Quaternion(), new Scale(0.5, 0.5, 1.0), "l2");
   l1Node.children.push(l2Node);
   var l3Node = makeCyllinder(1, new Pos(0.0, 0.0, 2.0), new Quaternion(), new Scale(0.5, 0.5, 1.0), "l3");
@@ -165,9 +204,12 @@ function initSceneGraph() {
   houseNode.children.push(houseNode4);
   var houseNode5 = new SceneGraphNode("house5", new Pos(0.0, -1.25, 0.0), new Quaternion(), new Scale(1.0, 1.0, 1.0), houseMesh);
   houseNode.children.push(houseNode5);
+  
+  var gridNode = new SceneGraphNode("grid", new Pos(0.0, 0.0, 0.0), new Quaternion(), new Scale(1.0, 1.0, 1.0), gridMesh);
 
   topNode.children.push(l1Node);
   topNode.children.push(houseNode);
+  topNode.children.push(gridNode);
 
   Context.sceneGraph = topNode;
   console.log("Full Graph: ",topNode);
@@ -266,27 +308,44 @@ function initHouseMesh() {
   return houseMesh;
 }
 
+function initGridMesh(xmin, xmax, ymin, ymax, numlines) {
+  var gridMesh = new Mesh();
+  gridMesh.renderType = gl.LINES;
+  
+  for (x = xmin; x <= xmax; x += (xmax - xmin) / (numlines - 1)) {
+    gridMesh.verts.push(new Vertex(new Pos(x, ymin, 0.0), new Color(1.0, 1.0, 0.3)));
+    gridMesh.verts.push(new Vertex(new Pos(x, ymax, 0.0), new Color(1.0, 1.0, 0.3)));
+  }
+  
+  for (y = ymin; y <= ymax; y += (ymax - ymin) / (numlines - 1)) {
+    gridMesh.verts.push(new Vertex(new Pos(xmin, y, 0.0), new Color(0.5, 1.0, 0.5)));
+    gridMesh.verts.push(new Vertex(new Pos(xmax, y, 0.0), new Color(0.5, 1.0, 0.5)));
+  }
+  
+  return gridMesh;
+}
+
 function initCameras() {
   var cam1 = new Camera();
-  cam1.viewport = new Viewport();
   cam1.viewport.x = 0;
   cam1.viewport.y = 0;
   cam1.viewport.width = 0.5;
   cam1.viewport.height = 1;
   cam1.viewport.mode = "relative";
+  cam1.pos.z = 5.0;
   cam1.applyProjection = function(modelMatrix, width, height) {
     applyPerspectiveProjection(modelMatrix, 35, width / height, 0.001, 1000);
   }
   
   var cam2 = new Camera();
-  cam2.viewport = new Viewport();
   cam2.viewport.x = 0.5;
   cam2.viewport.y = 0;
   cam2.viewport.width = 0.5;
   cam2.viewport.height = 1;
   cam2.viewport.mode = "relative";
+  cam2.pos.z = 5.0;
   cam2.applyProjection = function(modelMatrix, width, height) {
-    applyOrthoProjection(modelMatrix, -1, 1, -1, 1, 1, -1);
+    applyOrthoProjection(modelMatrix, -width / height, width / height, -1, 1, 1, 1000);
   }
   
   Context.cameras = [cam1, cam2];
@@ -411,21 +470,35 @@ function myMouseUp(ev) {
 function myKeyDown(kev) {
   switch(kev.code) {
 		case "KeyA":
-    case "ArrowLeft":
-      Animation.armLeft = true;
+      Animation.moveLeft = true;
 			break;
     case "KeyD":
-    case "ArrowRight":
-      Animation.armRight = true;
+      Animation.moveRight = true;
 			break;
 		case "KeyS":
-    case "ArrowDown":
-      Animation.armDown = true;
+      Animation.moveBack = true;
 			break;
 		case "KeyW":
-    case "ArrowUp":
-      Animation.armUp = true;
+      Animation.moveFwd = true;
 			break;
+    case "KeyE":
+      Animation.moveUp = true;
+      break;
+    case "KeyQ":
+      Animation.moveDown = true;
+      break;
+    case "ArrowUp":
+      Animation.lookUp = true;
+      break;
+    case "ArrowDown":
+      Animation.lookDown = true;
+      break;
+    case "ArrowLeft":
+      Animation.lookLeft = true;
+      break;
+    case "ArrowRight":
+      Animation.lookRight = true;
+      break;
     default:
       break;
 	}
@@ -434,21 +507,35 @@ function myKeyDown(kev) {
 function myKeyUp(kev) {
   switch(kev.code) {
 		case "KeyA":
-    case "ArrowLeft":
-      Animation.armLeft = false;
+      Animation.moveLeft = false;
 			break;
     case "KeyD":
-    case "ArrowRight":
-      Animation.armRight = false;
+      Animation.moveRight = false;
 			break;
 		case "KeyS":
-    case "ArrowDown":
-      Animation.armDown = false;
+      Animation.moveBack = false;
 			break;
 		case "KeyW":
-    case "ArrowUp":
-      Animation.armUp = false;
+      Animation.moveFwd = false;
 			break;
+    case "KeyE":
+      Animation.moveUp = false;
+      break;
+    case "KeyQ":
+      Animation.moveDown = false;
+      break;
+    case "ArrowUp":
+      Animation.lookUp = false;
+      break;
+    case "ArrowDown":
+      Animation.lookDown = false;
+      break;
+    case "ArrowLeft":
+      Animation.lookLeft = false;
+      break;
+    case "ArrowRight":
+      Animation.lookRight = false;
+      break;
     default:
       break;
 	}
