@@ -28,16 +28,22 @@
         <div class="aligned"><input type="checkbox" id="boxAnimation" checked><label for="boxAnimation">Animate Boxes</label></div>
         <div class="aligned"><input type="checkbox" id="armShown" checked><label for="armShown">Show Arm</label></div>
         <div class="aligned"><input type="checkbox" id="boxShown" checked><label for="boxShown">Show Boxes</label></div>
-        <div class="aligned"><input type="range" min="0" max="360" value="90" class="slider" id="armRotation"><label for="armRotation">Arm Rotation</label></div>
+        <div style="padding-top: 20px;" class="aligned"><input type="range" min="0" max="360" value="90" class="slider" id="armRotation"><label for="armRotation">Arm Rotation</label></div>
         <div class="aligned"><input type="range" min="0" max="90" value="45" class="slider" id="armWaveAmount"><label for="armWaveAmount">Arm Wave Amount</label></div>
-        <div> Color Override:
+        <div style="padding-top: 20px;"> Color Override:
             <div class="aligned" style="padding-left: 20px;"><input type="range" min="0" max="255" value="255" class="slider" id="r"><label for="r">R</label></div>
             <div class="aligned" style="padding-left: 20px;"><input type="range" min="0" max="255" value="255" class="slider" id="g"><label for="g">G</label></div>
             <div class="aligned" style="padding-left: 20px;"><input type="range" min="0" max="255" value="255" class="slider" id="b"><label for="b">B</label></div>
             <div class="aligned" style="padding-left: 20px;"><input type="range" min="0" max="255" value="0" class="slider" id="a"><label for="a">A</label></div>
         </div>
-        <div style="padding-top: 50px;">WASD moves camera<br/>E to ascend, Q to descend<br/>Arrow keys change camera view direction<br />Click and drag to rotated arm</div>
         
+    </div>
+    
+    <div style="padding: 10px;float:left">
+    <div>WASD moves camera<br/>E to ascend, Q to descend<br/>Arrow keys change camera view direction<br />Click and drag to rotated arm</div>
+    <div style="padding-top: 10px;float:left">
+        <div style="float:left">Framerate:&nbsp;</div><div id="framerate" style="float:left"></div>
+    </div>
     </div>
   </body>
 </html>

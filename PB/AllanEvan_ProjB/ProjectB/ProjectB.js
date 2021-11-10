@@ -98,6 +98,8 @@ function animate() {
   Animation.nodes['l3'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 250), 0.0);
   Animation.nodes['l4'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 125), 0.0);
   Animation.nodes['l5'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 62.5), 0.0);
+  Animation.nodes['l6'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 31.25), 0.0);
+  Animation.nodes['l7'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 15.625), 0.0);
   
   Animation.nodes["house"].pos = new Pos(0.5 * Math.cos(boxTime / 500), 0.5 * Math.sin(boxTime / 500), 0.0);
   Animation.nodes["house"].rot = QuatFromEuler(90 * Math.sin(boxTime / 500), 90 * Math.cos(boxTime / 500), 90 * -Math.sin(boxTime / 500))
@@ -111,6 +113,12 @@ function animate() {
   house5Rot.rotateFromAxisAngle(0, 1, 0, (boxStep / 8) % 360);
 
   Context.lastAnimationTick = time;
+  
+  if (!Context.framerateAverage) {
+    Context.framerateAverage = 0;
+  }
+  Context.framerateAverage = Context.framerateAverage * 0.9 + 0.1 / (elapsed / 1000);
+  document.getElementById("framerate").innerHTML = Context.framerateAverage.toPrecision(3) + " fps";
 }
 
 function translateCamera(elapsed) {
@@ -174,12 +182,13 @@ function initSceneGraph() {
   var cyllinderMesh = initCyllinderSideMesh(numCircleParts);
   var houseMesh = initHouseMesh(); 
   var gridMesh = initGridMesh(-5, 5, -5, 5, 50);
+  var axesMesh = initAxesMesh();
 
   var makeCyllinder = function(height, pos, rot, scale, name) {
     cylNode =       new SceneGraphNode(name,             pos,                       rot,              scale,                       null);
-    cylTopNode =    new SceneGraphNode(name + "_Top",    new Pos(0.0, 0.0, 0),      new Quaternion(), new Scale(1.0, 1.0, 1.0),    circleMesh);
+    cylTopNode =    new SceneGraphNode(name + "_Top",    new Pos(),                 new Quaternion(), new Scale(1.0, 1.0, 1.0),    circleMesh);
     cylBotNode =    new SceneGraphNode(name + "_Bot",    new Pos(0.0, 0.0, height), new Quaternion(), new Scale(0.5, 0.5, 1.0),    circleMesh);
-    cylMiddleNode = new SceneGraphNode(name + "_Middle", new Pos(0.0, 0.0, 0),      new Quaternion(), new Scale(1.0, 1.0, height), cyllinderMesh);
+    cylMiddleNode = new SceneGraphNode(name + "_Middle", new Pos(),                 new Quaternion(), new Scale(1.0, 1.0, height), cyllinderMesh);
     cylNode.children = [cylTopNode, cylBotNode, cylMiddleNode];
     return cylNode;
   };
@@ -194,6 +203,10 @@ function initSceneGraph() {
   l3Node.children.push(l4Node);
   var l5Node = makeCyllinder(0.25, new Pos(0.0, 0.0, 0.5), new Quaternion(), new Scale(0.5, 0.5, 1.0), "l5");
   l4Node.children.push(l5Node);
+  var l6Node = makeCyllinder(0.125, new Pos(0.0, 0.0, 0.25), new Quaternion(), new Scale(0.5, 0.5, 1.0), "l6");
+  l5Node.children.push(l6Node);
+  var l7Node = makeCyllinder(0.0625, new Pos(0.0, 0.0, 0.125), new Quaternion(), new Scale(0.5, 0.5, 1.0), "l7");
+  l6Node.children.push(l7Node);
   
   var houseNode = new SceneGraphNode("house", new Pos(0.5, 0.5, 0.0), new Quaternion(), new Scale(0.15, 0.15, 0.15), houseMesh);
   var houseNode2 = new SceneGraphNode("house2", new Pos(0.0, 1.5, 0.0), QuatFromEuler(180, 0, 0), new Scale(1.0, 1.0, 1.0), houseMesh);
@@ -205,11 +218,21 @@ function initSceneGraph() {
   var houseNode5 = new SceneGraphNode("house5", new Pos(0.0, -1.25, 0.0), new Quaternion(), new Scale(1.0, 1.0, 1.0), houseMesh);
   houseNode.children.push(houseNode5);
   
-  var gridNode = new SceneGraphNode("grid", new Pos(0.0, 0.0, 0.0), new Quaternion(), new Scale(1.0, 1.0, 1.0), gridMesh);
+  var gridNode = new SceneGraphNode("grid", new Pos(), new Quaternion(), new Scale(1.0, 1.0, 1.0), gridMesh);
+  
+  var axesNode = new SceneGraphNode("axes", new Pos(), new Quaternion(), new Scale(1.0, 1.0, 1.0), axesMesh);
+  var armAxesNode = new SceneGraphNode("armAxes", new Pos(-1, -1, 0), new Quaternion(), new Scale(3.0, 3.0, 3.0), axesMesh);
+  var armTipAxesNode = new SceneGraphNode("armTipAxes", new Pos(), new Quaternion(), new Scale(32.0, 32.0, 0.5), axesMesh);
+  var housesAxesNode = new SceneGraphNode("housesAxes", new Pos(), new Quaternion(), new Scale(3.0, 3.0, 3.0), axesMesh);
+  
+  l1Node.children.push(armAxesNode);
+  l7Node.children.push(armTipAxesNode);
+  houseNode.children.push(housesAxesNode);
 
   topNode.children.push(l1Node);
   topNode.children.push(houseNode);
   topNode.children.push(gridNode);
+  topNode.children.push(axesNode);
 
   Context.sceneGraph = topNode;
   console.log("Full Graph: ",topNode);
@@ -217,24 +240,22 @@ function initSceneGraph() {
 }
 
 function initCircleMesh(numCircleParts) {
-  var circleVerts = [new Vertex(new Pos(0.0, 0.0, 0.0), new Color(1.0, 1.0, 1.0))];
+  var circleMesh = new Mesh(gl.TRIANGLE_FAN);
+  circleMesh.verts = [new Vertex(new Pos(), new Color(1.0, 1.0, 1.0))];
   for (i = 0; i <= numCircleParts; ++i) {
     rads = 2.0 * Math.PI / numCircleParts * i;
     rgb = HSVtoRGB(i / numCircleParts, 1, 1);
 
     pos = new Pos(Math.cos(rads), Math.sin(rads), 0.0);
     color = new Color(rgb.r, rgb.g, rgb.b);
-    circleVerts.push(new Vertex(pos, color));
+    circleMesh.verts.push(new Vertex(pos, color));
   }
-  var circleMesh = new Mesh();
-  circleMesh.renderType = gl.TRIANGLE_FAN;
-  circleMesh.verts = circleVerts;
   
   return circleMesh;
 }
 
 function initCyllinderSideMesh(numCircleParts) {
-  cyllinderVerts = []
+  var cyllinderMesh = new Mesh(gl.TRIANGLE_STRIP);
   for (i = 0; i <= numCircleParts; ++i) {
     rads = 2.0 * Math.PI / numCircleParts * i;
     rgb = HSVtoRGB(i / numCircleParts, 1, 1);
@@ -242,17 +263,14 @@ function initCyllinderSideMesh(numCircleParts) {
     pos1 = new Pos(Math.cos(rads), Math.sin(rads), 0.0);
     pos2 = new Pos(0.5 * Math.cos(rads), 0.5 * Math.sin(rads), 1.0);
     color = new Color(rgb.r, rgb.g, rgb.b);
-    cyllinderVerts.push(new Vertex(pos1, color), new Vertex(pos2, color));
+    cyllinderMesh.verts.push(new Vertex(pos1, color), new Vertex(pos2, color));
   }
-  var cyllinderMesh = new Mesh();
-  cyllinderMesh.renderType = gl.TRIANGLE_STRIP;
-  cyllinderMesh.verts = cyllinderVerts;
+  
   return cyllinderMesh;
 }
 
 function initHouseMesh() {
-  var houseMesh = new Mesh();
-  houseMesh.renderType = gl.TRIANGLES;
+  var houseMesh = new Mesh(gl.TRIANGLES);
   houseMesh.verts = [
     new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(0.0, 1.0, 1.0)),
     new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 1.0, 1.0)),
@@ -309,8 +327,7 @@ function initHouseMesh() {
 }
 
 function initGridMesh(xmin, xmax, ymin, ymax, numlines) {
-  var gridMesh = new Mesh();
-  gridMesh.renderType = gl.LINES;
+  var gridMesh = new Mesh(gl.LINES);
   
   for (x = xmin; x <= xmax; x += (xmax - xmin) / (numlines - 1)) {
     gridMesh.verts.push(new Vertex(new Pos(x, ymin, 0.0), new Color(1.0, 1.0, 0.3)));
@@ -323,6 +340,21 @@ function initGridMesh(xmin, xmax, ymin, ymax, numlines) {
   }
   
   return gridMesh;
+}
+
+function initAxesMesh() {
+  var axesMesh = new Mesh(gl.LINES);
+  
+  axesMesh.verts.push(new Vertex(new Pos(0.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0)));
+  axesMesh.verts.push(new Vertex(new Pos(1.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0)));
+  
+  axesMesh.verts.push(new Vertex(new Pos(0.0, 0.0, 0.0), new Color(0.0, 1.0, 0.0)));
+  axesMesh.verts.push(new Vertex(new Pos(0.0, 1.0, 0.0), new Color(0.0, 1.0, 0.0)));
+  
+  axesMesh.verts.push(new Vertex(new Pos(0.0, 0.0, 0.0), new Color(0.0, 0.0, 1.0)));
+  axesMesh.verts.push(new Vertex(new Pos(0.0, 0.0, 1.0), new Color(0.0, 0.0, 1.0)));
+  
+  return axesMesh;
 }
 
 function initCameras() {

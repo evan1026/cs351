@@ -171,6 +171,10 @@ class Mesh {
   // These get filled in after the vbo generation
   vboStart;
   vboCount;
+  
+  constructor(renderType) {
+    this.renderType = renderType;
+  }
 }
 
 /**
