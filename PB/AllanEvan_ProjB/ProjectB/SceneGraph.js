@@ -362,7 +362,7 @@ function buildBuffer(graphNode, currBuffer) {
   }
   
   if (graphNode) {
-    if (graphNode.mesh) {
+    if (graphNode.mesh && graphNode.mesh.vboStart === undefined) {
       graphNode.mesh.vboStart = currBuffer.length / Vertex.primsPerVertex;
       for (vertex of graphNode.mesh.verts) {
         if (vertex.color === undefined) {

@@ -24,6 +24,9 @@ class Event {
   static mouseDrag = {x: 0, y: 0, currentlyDragging: false};
 }
 
+/**
+ * Entry point with basic setup.
+ */
 function main() {
   var canvas = document.getElementById('webgl');
 
@@ -56,6 +59,9 @@ function main() {
   tick();
 }
 
+/**
+ * Changes everything that needs to change each frame.
+ */
 function animate() {
   var time = Date.now();
   var elapsed = time - Context.lastAnimationTick;
@@ -69,28 +75,28 @@ function animate() {
   var a = document.getElementById("a").value / 255;
   gl.uniform4f(Context.renderProgram.attribIds['u_ColorOverride'], r, g, b, a);
   
+  animateArm(time);
+  animateBoxes(time);
+  
+  updateFramerate(elapsed);
+  
+  Context.lastAnimationTick = time;
+}
+
+/**
+ * Animates the waving arm.
+ */
+function animateArm(time) {
   var armShown = document.getElementById("armShown").checked;
-  var boxShown = document.getElementById("boxShown").checked;
   var armAnimate = document.getElementById("armAnimation").checked;
-  var boxAnimate = document.getElementById("boxAnimation").checked;
   
   Animation.nodes["l1"].enabled = armShown;
-  Animation.nodes["house"].enabled = boxShown;
-
+  
   if (armAnimate) {
     Animation.armTime += (time - Context.lastAnimationTick);
   }
-  
-  Animation.boxStep = 0;
-  if (boxAnimate) {
-    Animation.boxTime += (time - Context.lastAnimationTick);
-    Animation.boxStep = time - Context.lastAnimationTick;
-  }
-  
-  boxTime = Animation.boxTime;
-  boxStep = Animation.boxStep;
   armTime = Animation.armTime;
-
+  
   var xRot = document.getElementById("armRotation").value;
   var waveAmount = document.getElementById("armWaveAmount").value;
   Animation.nodes['l1'].rot = QuatFromEuler(xRot, 180 + waveAmount * Math.sin(armTime / 1000), 0.0);
@@ -100,8 +106,27 @@ function animate() {
   Animation.nodes['l5'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 62.5), 0.0);
   Animation.nodes['l6'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 31.25), 0.0);
   Animation.nodes['l7'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 15.625), 0.0);
+}
+
+/**
+ * Animates the pointed box objects.
+ */
+function animateBoxes(time) {
+  var boxShown = document.getElementById("boxShown").checked;
+  var boxAnimate = document.getElementById("boxAnimation").checked;
   
-  Animation.nodes["house"].pos = new Pos(0.5 * Math.cos(boxTime / 500), 0.5 * Math.sin(boxTime / 500), 0.0);
+  Animation.nodes["house"].enabled = boxShown;
+
+  Animation.boxStep = 0;
+  if (boxAnimate) {
+    Animation.boxTime += (time - Context.lastAnimationTick);
+    Animation.boxStep = time - Context.lastAnimationTick;
+  }
+  
+  boxTime = Animation.boxTime;
+  boxStep = Animation.boxStep;
+  
+  Animation.nodes["house"].pos = new Pos(1.0 + 0.5 * Math.cos(boxTime / 500), 1.0 + 0.5 * Math.sin(boxTime / 500), 0.0);
   Animation.nodes["house"].rot = QuatFromEuler(90 * Math.sin(boxTime / 500), 90 * Math.cos(boxTime / 500), 90 * -Math.sin(boxTime / 500))
   var house2Rot = Animation.nodes["house2"].rot;
   house2Rot.rotateFromAxisAngle(0, 1, 0, (boxStep / 2) % 360);
@@ -111,9 +136,12 @@ function animate() {
   house4Rot.rotateFromAxisAngle(0, 1, 0, (boxStep / 6) % 360);
   var house5Rot = Animation.nodes["house5"].rot;
   house5Rot.rotateFromAxisAngle(0, 1, 0, (boxStep / 8) % 360);
+}
 
-  Context.lastAnimationTick = time;
-  
+/**
+ * Updates the framerate display.
+ */
+function updateFramerate(elapsed) {
   if (!Context.framerateAverage) {
     Context.framerateAverage = 0;
   }
@@ -121,6 +149,9 @@ function animate() {
   document.getElementById("framerate").innerHTML = Context.framerateAverage.toPrecision(3) + " fps";
 }
 
+/**
+ * Moves the camera based on user input.
+ */
 function translateCamera(elapsed) {
   speed = 0.05 * elapsed / 15;
   if (Animation.moveFwd) {
@@ -146,10 +177,11 @@ function translateCamera(elapsed) {
     Context.cameras[0].move(0, 0, -speed);
     Context.cameras[1].move(0, 0, -speed);
   }
-  
-  
 }
 
+/**
+ * Rotates the camera based on user input.
+ */
 function rotateCamera(elapsed) {
   degPerTick = 0.5 * elapsed / 15;
   
@@ -170,12 +202,18 @@ function rotateCamera(elapsed) {
   }
 }
 
+/**
+ * Called once per frame.
+ */
 function tick() {
   animate();
   drawAll();
   requestAnimationFrame(tick, Context.canvas);
 }
 
+/**
+ * Creates the full scene graph.
+ */
 function initSceneGraph() {
   var numCircleParts = 100;
   var circleMesh = initCircleMesh(numCircleParts);
@@ -239,6 +277,9 @@ function initSceneGraph() {
   console.log("Name Graph: ", getNameGraph(topNode));
 }
 
+/**
+ * Creates a mesh for a circle. Used for the top and bottom of arm parts.
+ */
 function initCircleMesh(numCircleParts) {
   var circleMesh = new Mesh(gl.TRIANGLE_FAN);
   circleMesh.verts = [new Vertex(new Pos(), new Color(1.0, 1.0, 1.0))];
@@ -254,6 +295,9 @@ function initCircleMesh(numCircleParts) {
   return circleMesh;
 }
 
+/**
+ * Creates a mesh for the side of a cyllinder. Used for the sides of arm parts.
+ */
 function initCyllinderSideMesh(numCircleParts) {
   var cyllinderMesh = new Mesh(gl.TRIANGLE_STRIP);
   for (i = 0; i <= numCircleParts; ++i) {
@@ -269,6 +313,9 @@ function initCyllinderSideMesh(numCircleParts) {
   return cyllinderMesh;
 }
 
+/**
+ * Creates the pointy box mesh.
+ */
 function initHouseMesh() {
   var houseMesh = new Mesh(gl.TRIANGLES);
   houseMesh.verts = [
@@ -326,6 +373,9 @@ function initHouseMesh() {
   return houseMesh;
 }
 
+/**
+ * Creates a mesh for the grid on the ground.
+ */
 function initGridMesh(xmin, xmax, ymin, ymax, numlines) {
   var gridMesh = new Mesh(gl.LINES);
   
@@ -342,6 +392,9 @@ function initGridMesh(xmin, xmax, ymin, ymax, numlines) {
   return gridMesh;
 }
 
+/**
+ * Creates a mesh for the x,y,z axes.
+ */
 function initAxesMesh() {
   var axesMesh = new Mesh(gl.LINES);
   
@@ -357,6 +410,9 @@ function initAxesMesh() {
   return axesMesh;
 }
 
+/**
+ * Creates the perspective and orthographic cameras.
+ */
 function initCameras() {
   var cam1 = new Camera();
   cam1.viewport.x = 0;
@@ -383,6 +439,10 @@ function initCameras() {
   Context.cameras = [cam1, cam2];
 }
 
+/**
+ * Creates a vbo object with all of the meshes and gets the locations in the
+ * GLSL program and sets up of all of the attributes we need.
+ */
 function initVertexBuffer() {
   var bufferValues = buildBuffer(Context.sceneGraph);
   var buffer = new Float32Array(bufferValues);
