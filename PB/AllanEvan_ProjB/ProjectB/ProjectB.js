@@ -7,7 +7,7 @@ RenderProgram.vertShader = `
     void main() {
       gl_Position = u_ModelMatrix * a_Position;
       gl_PointSize = 10.0;
-      
+
       vec4 a_Color4 = vec4(a_Color.r, a_Color.g, a_Color.b, 1.0);
       v_Color = mix(u_ColorOverride, a_Color4, 1.0 - u_ColorOverride.a);
     }`;
@@ -65,22 +65,22 @@ function main() {
 function animate() {
   var time = Date.now();
   var elapsed = time - Context.lastAnimationTick;
-  
+
   translateCamera(elapsed);
   rotateCamera(elapsed);
-  
+
   var r = document.getElementById("r").value / 255;
   var g = document.getElementById("g").value / 255;
   var b = document.getElementById("b").value / 255;
   var a = document.getElementById("a").value / 255;
   gl.uniform4f(Context.renderProgram.attribIds['u_ColorOverride'], r, g, b, a);
-  
+
   animateArm(time);
   animateBoxes(time);
   animateProp(time);
-  
+
   updateFramerate(elapsed);
-  
+
   Context.lastAnimationTick = time;
 }
 
@@ -90,14 +90,14 @@ function animate() {
 function animateArm(time) {
   var armShown = document.getElementById("armShown").checked;
   var armAnimate = document.getElementById("armAnimation").checked;
-  
+
   Animation.nodes["l1"].enabled = armShown;
 
   if (armAnimate) {
     Animation.armTime += (time - Context.lastAnimationTick);
   }
   armTime = Animation.armTime;
-  
+
   var xRot = document.getElementById("armRotation").value;
   var waveAmount = document.getElementById("armWaveAmount").value;
   Animation.nodes['l1'].rot = QuatFromEuler(xRot, 180 + waveAmount * Math.sin(armTime / 1000), 0.0);
@@ -115,7 +115,7 @@ function animateArm(time) {
 function animateBoxes(time) {
   var boxShown = document.getElementById("boxShown").checked;
   var boxAnimate = document.getElementById("boxAnimation").checked;
-  
+
   Animation.nodes["house"].enabled = boxShown;
 
   Animation.boxStep = 0;
@@ -123,10 +123,10 @@ function animateBoxes(time) {
     Animation.boxTime += (time - Context.lastAnimationTick);
     Animation.boxStep = time - Context.lastAnimationTick;
   }
-  
+
   boxTime = Animation.boxTime;
   boxStep = Animation.boxStep;
-  
+
   Animation.nodes["house"].pos = new Pos(-2.0 + 0.5 * Math.cos(boxTime / 500), -2.0 + 0.5 * Math.sin(boxTime / 500), 0.0);
   Animation.nodes["house"].rot = QuatFromEuler(90 * Math.sin(boxTime / 500), 90 * Math.cos(boxTime / 500), 90 * -Math.sin(boxTime / 500))
   var house2Rot = Animation.nodes["house2"].rot;
@@ -145,14 +145,14 @@ function animateBoxes(time) {
 function animateProp(time) {
   var propShown = document.getElementById("propShown").checked;
   var propAnimate = document.getElementById("propAnimation").checked;
-  
+
   Animation.nodes["plane"].enabled = propShown;
-  
+
   if (propAnimate) {
     Animation.propTime = time / 3;
   }
   propTime = Animation.propTime;
-  
+
   Animation.nodes["propConnector"].rot = QuatFromEuler(0, 0, propTime);
 }
 
@@ -179,7 +179,7 @@ function translateCamera(elapsed) {
     Context.cameras[0].move(-speed, 0, 0);
     Context.cameras[1].move(-speed, 0, 0);
   }
-  
+
   if (Animation.moveLeft) {
     Context.cameras[0].move(0, -speed, 0);
     Context.cameras[1].move(0, -speed, 0);
@@ -187,7 +187,7 @@ function translateCamera(elapsed) {
     Context.cameras[0].move(0, speed, 0);
     Context.cameras[1].move(0, speed, 0);
   }
-  
+
   if (Animation.moveUp) {
     Context.cameras[0].move(0, 0, speed);
     Context.cameras[1].move(0, 0, speed);
@@ -201,22 +201,22 @@ function translateCamera(elapsed) {
  * Rotates the camera based on user input.
  */
 function rotateCamera(elapsed) {
-  degPerTick = 0.5 * elapsed / 15;
-  
+  degPerTick = elapsed / 15;
+
   if (Animation.lookUp) {
-    Context.cameras[0].rotate(degPerTick, 0, 0);
-    Context.cameras[1].rotate(degPerTick, 0, 0);
+    Context.cameras[0].rotate(degPerTick / 2, 0, 0);
+    Context.cameras[1].rotate(degPerTick / 2, 0, 0);
   } else if (Animation.lookDown) {
-    Context.cameras[0].rotate(-degPerTick, 0, 0);
-    Context.cameras[1].rotate(-degPerTick, 0, 0);
+    Context.cameras[0].rotate(-degPerTick / 2, 0, 0);
+    Context.cameras[1].rotate(-degPerTick / 2, 0, 0);
   }
-  
+
   if (Animation.lookLeft) {
-    Context.cameras[0].rotate(0, degPerTick * 2, 0);
-    Context.cameras[1].rotate(0, degPerTick * 2, 0);
+    Context.cameras[0].rotate(0, degPerTick, 0);
+    Context.cameras[1].rotate(0, degPerTick, 0);
   } else if (Animation.lookRight) {
-    Context.cameras[0].rotate(0, -degPerTick * 2, 0);
-    Context.cameras[1].rotate(0, -degPerTick * 2, 0);
+    Context.cameras[0].rotate(0, -degPerTick, 0);
+    Context.cameras[1].rotate(0, -degPerTick, 0);
   }
 }
 
@@ -236,7 +236,7 @@ function initSceneGraph() {
   var numCircleParts = 100;
   var circleMesh = initCircleMesh(numCircleParts);
   var cyllinderMesh = initCyllinderSideMesh(numCircleParts);
-  var houseMesh = initHouseMesh(); 
+  var houseMesh = initHouseMesh();
   var gridMesh = initGridMesh(-5, 5, -5, 5, 50);
   var axesMesh = initAxesMesh();
   var planeMesh = initPlaneMesh();
@@ -265,7 +265,7 @@ function initSceneGraph() {
   l5Node.children.push(l6Node);
   var l7Node = makeCyllinder(0.0625, new Pos(0.0, 0.0, 0.125), new Quaternion(), new Scale(0.5, 0.5, 1.0), "l7");
   l6Node.children.push(l7Node);
-  
+
   var houseNode = new SceneGraphNode("house", new Pos(0.5, 0.5, 0.0), new Quaternion(), new Scale(0.15, 0.15, 0.15), houseMesh);
   var houseNode2 = new SceneGraphNode("house2", new Pos(0.0, 1.5, 0.0), QuatFromEuler(180, 0, 0), new Scale(1.0, 1.0, 1.0), houseMesh);
   houseNode.children.push(houseNode2);
@@ -275,23 +275,23 @@ function initSceneGraph() {
   houseNode.children.push(houseNode4);
   var houseNode5 = new SceneGraphNode("house5", new Pos(0.0, -1.25, 0.0), new Quaternion(), new Scale(1.0, 1.0, 1.0), houseMesh);
   houseNode.children.push(houseNode5);
-  
+
   var gridNode = new SceneGraphNode("grid", new Pos(), new Quaternion(), new Scale(1.0, 1.0, 1.0), gridMesh);
-  
+
   var axesNode = new SceneGraphNode("axes", new Pos(), new Quaternion(), new Scale(1.0, 1.0, 1.0), axesMesh);
   var armAxesNode = new SceneGraphNode("armAxes", new Pos(-1, -1, 0), new Quaternion(), new Scale(3.0, 3.0, 3.0), axesMesh);
   var armTipAxesNode = new SceneGraphNode("armTipAxes", new Pos(), new Quaternion(), new Scale(32.0, 32.0, 0.5), axesMesh);
   var housesAxesNode = new SceneGraphNode("housesAxes", new Pos(), new Quaternion(), new Scale(3.0, 3.0, 3.0), axesMesh);
-  
+
   var planeNode = new SceneGraphNode("plane", new Pos(3.0, 3.0, 1.0), new Quaternion(), new Scale(1.0, 1.0, 1.0), planeMesh);
   var propConnectorNode = new SceneGraphNode("propConnector", new Pos(0.5, 0.5, 0.55), new Quaternion(), new Scale(0.01, 0.01, 0.15), blackBoxMesh);
   planeNode.children.push(propConnectorNode);
-  
+
   var prop1 = new SceneGraphNode("prop1", new Pos(0.0, 0.0, 0.5), QuatFromEuler(90, 0, 0), new Scale(1.0, 1.0, 10.0), blackBoxMesh);
   var prop2 = new SceneGraphNode("prop2", new Pos(0.0, 0.0, 0.5), QuatFromEuler(90, 60, 0), new Scale(1.0, 1.0, 10.0), blackBoxMesh);
   var prop3 = new SceneGraphNode("prop3", new Pos(0.0, 0.0, 0.5), QuatFromEuler(90, 120, 0), new Scale(1.0, 1.0, 10.0), blackBoxMesh);
   propConnectorNode.children.push(prop1, prop2, prop3);
-  
+
   l1Node.children.push(armAxesNode);
   l7Node.children.push(armTipAxesNode);
   houseNode.children.push(housesAxesNode);
@@ -321,7 +321,7 @@ function initCircleMesh(numCircleParts) {
     color = new Color(rgb.r, rgb.g, rgb.b);
     circleMesh.verts.push(new Vertex(pos, color));
   }
-  
+
   return circleMesh;
 }
 
@@ -339,7 +339,7 @@ function initCyllinderSideMesh(numCircleParts) {
     color = new Color(rgb.r, rgb.g, rgb.b);
     cyllinderMesh.verts.push(new Vertex(pos1, color), new Vertex(pos2, color));
   }
-  
+
   return cyllinderMesh;
 }
 
@@ -355,47 +355,47 @@ function initHouseMesh() {
     new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 1.0, 1.0)),
     new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 1.0, 1.0)),
     new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 1.0, 1.0)),
-    
+
     new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(1.0, 1.0, 0.0)),
     new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(1.0, 1.0, 0.0)),
     new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(1.0, 1.0, 0.0)),
     new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(1.0, 1.0, 0.0)),
     new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(1.0, 1.0, 0.0)),
     new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(1.0, 1.0, 0.0)),
-    
+
     new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(1.0, 0.0, 1.0)),
     new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(1.0, 0.0, 1.0)),
     new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(1.0, 0.0, 1.0)),
     new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(1.0, 0.0, 1.0)),
     new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(1.0, 0.0, 1.0)),
     new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(1.0, 0.0, 1.0)),
-    
+
     new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(0.0, 0.0, 1.0)),
     new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 1.0)),
     new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 1.0)),
     new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 1.0)),
     new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 1.0)),
     new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 1.0)),
-    
+
     new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(0.0, 1.0, 0.0)),
     new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 1.0, 0.0)),
     new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 1.0, 0.0)),
     new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 1.0, 0.0)),
     new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 1.0, 0.0)),
     new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 1.0, 0.0)),
-    
+
     new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(1.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(1.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.0,  0.75, 0.0), new Color(1.0, 0.0, 0.0)),
-    
+
     new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(1.0, 1.0, 1.0)),
     new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(1.0, 1.0, 1.0)),
     new Vertex(new Pos( 0.0,  0.75, 0.0), new Color(1.0, 1.0, 1.0)),
-    
+
     new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.0,  0.75, 0.0), new Color(0.0, 0.0, 0.0)),
-    
+
     new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(1.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(1.0, 1.0, 0.0)),
     new Vertex(new Pos( 0.0,  0.75, 0.0), new Color(1.0, 1.0, 1.0)),
@@ -408,17 +408,17 @@ function initHouseMesh() {
  */
 function initGridMesh(xmin, xmax, ymin, ymax, numlines) {
   var gridMesh = new Mesh(gl.LINES);
-  
+
   for (x = xmin; x <= xmax; x += (xmax - xmin) / (numlines - 1)) {
     gridMesh.verts.push(new Vertex(new Pos(x, ymin, 0.0), new Color(1.0, 1.0, 0.3)));
     gridMesh.verts.push(new Vertex(new Pos(x, ymax, 0.0), new Color(1.0, 1.0, 0.3)));
   }
-  
+
   for (y = ymin; y <= ymax; y += (ymax - ymin) / (numlines - 1)) {
     gridMesh.verts.push(new Vertex(new Pos(xmin, y, 0.0), new Color(0.5, 1.0, 0.5)));
     gridMesh.verts.push(new Vertex(new Pos(xmax, y, 0.0), new Color(0.5, 1.0, 0.5)));
   }
-  
+
   return gridMesh;
 }
 
@@ -427,16 +427,16 @@ function initGridMesh(xmin, xmax, ymin, ymax, numlines) {
  */
 function initAxesMesh() {
   var axesMesh = new Mesh(gl.LINES);
-  
+
   axesMesh.verts.push(new Vertex(new Pos(0.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0)));
   axesMesh.verts.push(new Vertex(new Pos(1.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0)));
-  
+
   axesMesh.verts.push(new Vertex(new Pos(0.0, 0.0, 0.0), new Color(0.0, 1.0, 0.0)));
   axesMesh.verts.push(new Vertex(new Pos(0.0, 1.0, 0.0), new Color(0.0, 1.0, 0.0)));
-  
+
   axesMesh.verts.push(new Vertex(new Pos(0.0, 0.0, 0.0), new Color(0.0, 0.0, 1.0)));
   axesMesh.verts.push(new Vertex(new Pos(0.0, 0.0, 1.0), new Color(0.0, 0.0, 1.0)));
-  
+
   return axesMesh;
 }
 
@@ -445,7 +445,7 @@ function initAxesMesh() {
  */
 function initPlaneMesh() {
   var planeMesh = new Mesh(gl.TRIANGLES);
-  
+
   /*
    * Fuselage
    */
@@ -505,23 +505,23 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.4)));
     planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.5)));
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.5)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.5)));
     planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.5)));
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.5)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.5)));
     planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.5)));
     planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.5)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.5)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.5)));
     planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.5)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.3)));
@@ -530,7 +530,7 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.3)));
   }
-  
+
   /*
    * Right wing
    */
@@ -538,44 +538,44 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos(0.4, 0.4, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.35)));
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.4, 0.4, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
     planeMesh.verts.push(planeVertex(new Pos(0.4, 0.4, 0.45)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.35)));
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.4)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.4)));
     planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.45)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.4, 0.4, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.35)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.35)));
     planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.35)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.35)));
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.35)));
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.35)));
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.4)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.4)));
     planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.45)));
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
     planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.45)));
     planeMesh.verts.push(planeVertex(new Pos(0.4, 0.4, 0.45)));
   }
-  
+
   /*
    * Left wing
    */
@@ -583,44 +583,44 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.4, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.35)));
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.4, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.4, 0.45)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.35)));
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.4)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.4)));
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.45)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.4, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.35)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.35)));
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.3)));
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.35)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.35)));
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.35)));
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.35)));
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.4)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.4)));
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.45)));
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.45)));
     planeMesh.verts.push(planeVertex(new Pos(0.6, 0.4, 0.45)));
   }
-  
+
   return planeMesh;
 }
 
@@ -629,7 +629,7 @@ function initPlaneMesh() {
  */
 function initBlackBoxMesh() {
    var boxMesh = new Mesh(gl.TRIANGLES);
-   
+
    boxMesh.verts = [
     new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
@@ -637,35 +637,35 @@ function initBlackBoxMesh() {
     new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    
+
     new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    
+
     new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    
+
     new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    
+
     new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    
+
     new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
@@ -673,7 +673,7 @@ function initBlackBoxMesh() {
     new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
   ];
-    
+
   return boxMesh;
 }
 
@@ -694,22 +694,24 @@ function initCameras() {
   cam1.viewport.width = 0.5;
   cam1.viewport.height = 1;
   cam1.viewport.mode = "relative";
-  cam1.pos.z = 5.0;
+  cam1.move(-7, 7, 5);
+  cam1.rotate(-25, 50, 0);
   cam1.applyProjection = function(modelMatrix, width, height) {
     applyPerspectiveProjection(modelMatrix, 35, width / height, 0.001, 1000);
-  }
-  
+  };
+
   var cam2 = new Camera();
   cam2.viewport.x = 0.5;
   cam2.viewport.y = 0;
   cam2.viewport.width = 0.5;
   cam2.viewport.height = 1;
   cam2.viewport.mode = "relative";
-  cam2.pos.z = 5.0;
+  cam2.move(-7, 7, 5);
+  cam2.rotate(-25, 50, 0);
   cam2.applyProjection = function(modelMatrix, width, height) {
     applyOrthoProjection(modelMatrix, -width / height * 5, width / height * 3, -3, 3, -1000, 1000);
-  }
-  
+  };
+
   Context.cameras = [cam1, cam2];
 }
 
@@ -750,14 +752,14 @@ function initVertexBuffer() {
   }
   gl.vertexAttribPointer(a_Color, Vertex.primsPerColor, Vertex.primType, false /* Normalize */, Vertex.stride, Vertex.primSize * Vertex.primsPerPos);
   gl.enableVertexAttribArray(a_Color);
-  
+
   modelMatrixId = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
   Context.renderProgram.attribIds['u_ModelMatrix'] = modelMatrixId;
   if (!modelMatrixId) {
     console.log('Failed to get the storage location of u_ModelMatrix');
     return -1;
   }
-  
+
   colorOverrideId = gl.getUniformLocation(gl.program, 'u_ColorOverride');
   Context.renderProgram.attribIds['u_ColorOverride'] = colorOverrideId;
   if (!colorOverrideId) {

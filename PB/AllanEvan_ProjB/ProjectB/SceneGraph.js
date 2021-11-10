@@ -33,7 +33,7 @@ Quaternion.prototype.toEulerRad = function() {
   siny_cosp = 2 * (this.w * this.z + this.x * this.y);
   cosy_cosp = 1 - 2 * (this.y * this.y + this.z * this.z);
   out.y = Math.atan2(siny_cosp, cosy_cosp);
-  
+
   return out;
 }
 
@@ -55,7 +55,7 @@ Quaternion.prototype.setFromEuler = function(alpha, beta, gamma) {
   this.y = quat.y;
   this.z = quat.z;
   this.w = quat.w;
-  
+
   return this;
 };
 
@@ -108,23 +108,23 @@ class Vec3 {
   get b() {
     return this.z;
   }
-  
+
   add(other) {
     return new Vec3(this.x + other.x, this.y + other.y, this.z + other.z);
   }
-  
+
   subtract(other) {
     return this.add(new Vec3(-other.x, -other.y, -other.z));
   }
-  
+
   normalized() {
     return this.multiply(1 / this.magnitude);
   }
-  
+
   multiply(amount) {
     return new Vec3(this.x * amount, this.y * amount, this.z * amount);
   }
-  
+
   get magnitude() {
     return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
   }
@@ -171,7 +171,7 @@ class Mesh {
   // These get filled in after the vbo generation
   vboStart;
   vboCount;
-  
+
   constructor(renderType) {
     this.renderType = renderType;
   }
@@ -275,42 +275,45 @@ class Camera {
   pos;
   lookAt;
   up;
-  
+
   constructor() {
     this.viewport = new Viewport();
     this.pos = new Pos(0, 0, 0);
-    this.lookDir = new Pos(1, 0, -1);
+    this.lookDir = new Pos(1, 0, 0);
     this.up = new Pos(0, 0, 1);
   }
-  
+
   translate(x, y, z) {
     if (y !== undefined && z !== undefined) {
       z = x.z;
       y = x.y;
       x = x.x;
     }
-    
+
     this.pos.x += x;
     this.pos.y += y;
     this.pos.z += z;
   }
-  
+
   move(fwdAmt, rightAmt, upAmt) {
-    var fwd = this.lookDir.normalized();
+    var fwd = new Vec3(this.lookDir);
     fwd.z = 0;
-    
-    var right = this.right.normalized();
+    fwd = fwd.normalized();
+
+    var right = new Vec3(this.right);
     right.z = 0;
-    
-    var up = this.up.normalized();
+    right = right.normalized();
+
+    var up = new Vec3(this.up);
     up.x = 0;
     up.y = 0;
-    
+    up = up.normalized();
+
     this.pos = this.pos.add(fwd.multiply(fwdAmt));
     this.pos = this.pos.add(right.multiply(rightAmt));
     this.pos = this.pos.add(up.multiply(upAmt));
   }
-  
+
   rotate(pitch, yaw, roll) {
     var right = this.right;
     var fwd = this.lookDir;
@@ -318,12 +321,16 @@ class Camera {
     var pitchRotation = QuatFromAxisAngle(right.x, right.y, right.z, pitch);
     var yawRotation = QuatFromAxisAngle(0, 0, 1, yaw);
     var rollRotation = QuatFromAxisAngle(fwd.x, fwd.y, fwd.z, roll);
-    
-    yawRotation.multiplyVector3(this.lookDir);
+
     pitchRotation.multiplyVector3(this.lookDir);
+    yawRotation.multiplyVector3(this.lookDir);
     rollRotation.multiplyVector3(this.lookDir);
+
+    pitchRotation.multiplyVector3(this.up);
+    yawRotation.multiplyVector3(this.up);
+    rollRotation.multiplyVector3(this.up);
   }
-  
+
   get right() {
     var lookDirVector = new Vector3([this.lookDir.x, this.lookDir.y, this.lookDir.z]);
     var upVector = new Vector3([this.up.x, this.up.y, this.up.z]);
@@ -339,7 +346,7 @@ class Viewport {
   width;
   height;
   mode;
-  
+
   constructor() {
     this.x = 0;
     this.y = 0;
@@ -360,7 +367,7 @@ function buildBuffer(graphNode, currBuffer) {
   if (currBuffer === undefined) {
     currBuffer = [];
   }
-  
+
   if (graphNode) {
     if (graphNode.mesh && graphNode.mesh.vboStart === undefined) {
       graphNode.mesh.vboStart = currBuffer.length / Vertex.primsPerVertex;
@@ -430,7 +437,7 @@ function drawAll() {
 
   // Now clear and draw
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  
+
   for (camera of Context.cameras) {
     var camWidth;
     var camHeight;
@@ -449,13 +456,13 @@ function drawAll() {
     } else {
       throw "Invalid viewport mode: " + camera.viewport.mode;
     }
-    
+
     gl.viewport(camX, camY, camWidth, camHeight);
     modelMatrix = new Matrix4();
     if (camera.applyProjection) {
       camera.applyProjection(modelMatrix, camWidth, camHeight);
     }
-    
+
     var lookAt = new Vec3(camera.pos.x + camera.lookDir.x, camera.pos.y + camera.lookDir.y, camera.pos.z + camera.lookDir.z);
     modelMatrix.lookAt(camera.pos.x,    camera.pos.y,    camera.pos.z,
                        lookAt.x,        lookAt.y,        lookAt.z,
@@ -485,21 +492,21 @@ var gl;
  */
 function init(canvas) {
   Context.canvas = canvas;
-  
+
   gl = getWebGLContext(Context.canvas);
   Vertex.primType = gl.FLOAT;
   if (!gl) {
     console.log('Failed to get the rendering context for WebGL');
     return false;
   }
-  
+
   if (!initShaders(gl, RenderProgram.vertShader, RenderProgram.fragShader)) {
     console.log('Failed to intialize shaders.');
     return;
   }
-  
+
   gl.enable(gl.DEPTH_TEST);
-  
+
   return true;
 }
 
@@ -518,10 +525,10 @@ function getNameGraph(topNode) {
  */
 function getNameGraphHelper(topNode) {
   var currNode = {};
-  
+
   for (child of topNode.children) {
     currNode[child.name] = getNameGraphHelper(child);
   }
-  
+
   return currNode;
 }
