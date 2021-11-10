@@ -283,7 +283,7 @@ function initSceneGraph() {
   var armTipAxesNode = new SceneGraphNode("armTipAxes", new Pos(), new Quaternion(), new Scale(32.0, 32.0, 0.5), axesMesh);
   var housesAxesNode = new SceneGraphNode("housesAxes", new Pos(), new Quaternion(), new Scale(3.0, 3.0, 3.0), axesMesh);
   
-  var planeNode = new SceneGraphNode("plane", new Pos(), new Quaternion(), new Scale(1.0, 1.0, 1.0), planeMesh);
+  var planeNode = new SceneGraphNode("plane", new Pos(3.0, 3.0, 1.0), new Quaternion(), new Scale(1.0, 1.0, 1.0), planeMesh);
   var propConnectorNode = new SceneGraphNode("propConnector", new Pos(0.5, 0.5, 0.55), new Quaternion(), new Scale(0.01, 0.01, 0.15), blackBoxMesh);
   planeNode.children.push(propConnectorNode);
   
