@@ -32,6 +32,7 @@ function main() {
   }
 
   initSceneGraph();
+  initCameras();
 
   var maxVerts = initVertexBuffer(gl);
   if (maxVerts < 0) {
@@ -263,6 +264,32 @@ function initHouseMesh() {
     new Vertex(new Pos( 0.0,  0.75, 0.0), new Color(1.0, 1.0, 1.0)),
   ];
   return houseMesh;
+}
+
+function initCameras() {
+  var cam1 = new Camera();
+  cam1.viewport = new Viewport();
+  cam1.viewport.x = 0;
+  cam1.viewport.y = 0;
+  cam1.viewport.width = 0.5;
+  cam1.viewport.height = 1;
+  cam1.viewport.mode = "relative";
+  cam1.applyProjection = function(modelMatrix, width, height) {
+    applyPerspectiveProjection(modelMatrix, 35, width / height, 0.001, 1000);
+  }
+  
+  var cam2 = new Camera();
+  cam2.viewport = new Viewport();
+  cam2.viewport.x = 0.5;
+  cam2.viewport.y = 0;
+  cam2.viewport.width = 0.5;
+  cam2.viewport.height = 1;
+  cam2.viewport.mode = "relative";
+  cam2.applyProjection = function(modelMatrix, width, height) {
+    applyOrthoProjection(modelMatrix, -1, 1, -1, 1, 1, -1);
+  }
+  
+  Context.cameras = [cam1, cam2];
 }
 
 function initVertexBuffer() {

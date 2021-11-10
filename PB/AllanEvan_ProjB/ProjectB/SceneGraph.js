@@ -187,6 +187,7 @@ class Context {
   static renderProgram = new RenderProgram();
   static fps = 30;
   static lastAnimationTick = Date.now();
+  static cameras = [];
 }
 
 /**
@@ -197,6 +198,19 @@ class Context {
  */
 class Animation {
   static nodes = {};
+}
+
+class Camera {
+  viewport;
+  applyProjection;
+}
+
+class Viewport {
+  x;
+  y;
+  width;
+  height;
+  mode;
 }
 
 /**
@@ -280,8 +294,45 @@ function drawAll() {
 
   // Now clear and draw
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  modelMatrix = new Matrix4();
-  drawNode(modelMatrix, Context.sceneGraph);
+  
+  for (camera of Context.cameras) {
+    var camWidth;
+    var camHeight;
+    var camX;
+    var camY;
+    if (camera.viewport.mode == "absolute") {
+      camX = camera.viewport.x;
+      camY = camera.viewport.y;
+      camWidth = camera.viewport.width;
+      camHeight = camera.viewport.height;
+    } else if (camera.viewport.mode == "relative") {
+      camX = camera.viewport.x * canvas.width;
+      camY = camera.viewport.y * canvas.height;
+      camWidth = camera.viewport.width * canvas.width;
+      camHeight = camera.viewport.height * canvas.height;
+    } else {
+      throw "Invalid viewport mode: " + camera.viewport.mode;
+    }
+    
+    gl.viewport(camX, camY, camWidth, camHeight);
+    modelMatrix = new Matrix4();
+    if (camera.applyProjection) {
+      camera.applyProjection(modelMatrix, camWidth, camHeight);
+    }
+    drawNode(modelMatrix, Context.sceneGraph);
+  }
+}
+
+function applyOrthoProjection(modelMatrix, left, right, bottom, top, near, far) {
+  modelMatrix.ortho(left, right, bottom, top, near, far);
+}
+
+function applyFrustumProjection(modelMatrix, left, right, bottom, top, near, far) {
+  modelMatrix.frustum(left, right, bottom, top, near, far);
+}
+
+function applyPerspectiveProjection(modelMatrix, fovy, aspect, near, far) {
+  modelMatrix.perspective(fovy, aspect, near, far);
 }
 
 // Allowing 1 global bc it makes things so much easier and gl is more of a namespace than a variable anyway
@@ -306,8 +357,6 @@ function init(canvas) {
     return;
   }
   
-  gl.depthFunc(gl.GREATER);
-  gl.clearDepth(0.0);
   gl.enable(gl.DEPTH_TEST);
   
   return true;
