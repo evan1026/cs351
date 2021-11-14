@@ -296,9 +296,15 @@ class Camera {
     this.pos.z += z;
   }
 
-  move(fwdAmt, rightAmt, upAmt) {
+  move(fwdAmt, rightAmt, upAmt, lockForward) {
+    if (lockForward === undefined) {
+      lockForward = true;
+    }
+    
     var fwd = new Vec3(this.lookDir);
-    fwd.z = 0;
+    if (lockForward) {
+      fwd.z = 0;
+    }
     fwd = fwd.normalized();
 
     var right = new Vec3(this.right);

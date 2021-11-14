@@ -172,12 +172,15 @@ function updateFramerate(elapsed) {
  */
 function translateCamera(elapsed) {
   speed = 0.05 * elapsed / 15;
+  
+  var lockForward = document.getElementById("lockForward").checked;
+  
   if (Animation.moveFwd) {
-    Context.cameras[0].move(speed, 0, 0);
-    Context.cameras[1].move(speed, 0, 0);
+    Context.cameras[0].move(speed, 0, 0, lockForward);
+    Context.cameras[1].move(speed, 0, 0, lockForward);
   } else if (Animation.moveBack) {
-    Context.cameras[0].move(-speed, 0, 0);
-    Context.cameras[1].move(-speed, 0, 0);
+    Context.cameras[0].move(-speed, 0, 0, lockForward);
+    Context.cameras[1].move(-speed, 0, 0, lockForward);
   }
 
   if (Animation.moveLeft) {
