@@ -314,7 +314,11 @@ class Camera {
     this.pos = this.pos.add(up.multiply(upAmt));
   }
 
-  rotate(pitch, yaw, roll) {
+  rotate(pitch, yaw, roll, constrainPitch) {
+    if (constrainPitch === undefined) {
+      constrainPitch = true;
+    }
+    
     var right = this.right;
     var fwd = this.lookDir;
 
@@ -322,13 +326,25 @@ class Camera {
     var yawRotation = QuatFromAxisAngle(0, 0, 1, yaw);
     var rollRotation = QuatFromAxisAngle(fwd.x, fwd.y, fwd.z, roll);
 
-    pitchRotation.multiplyVector3(this.lookDir);
-    yawRotation.multiplyVector3(this.lookDir);
-    rollRotation.multiplyVector3(this.lookDir);
+    var prevLookDir = new Pos(this.lookDir);
+    var prevUp = new Pos(this.up);
 
+    pitchRotation.multiplyVector3(this.lookDir);
     pitchRotation.multiplyVector3(this.up);
+    
+    if (constrainPitch && this.up.z < 0) {
+      this.lookDir = prevLookDir;
+      this.up = prevUp;
+    }
+    
+    yawRotation.multiplyVector3(this.lookDir);
     yawRotation.multiplyVector3(this.up);
+    
+    rollRotation.multiplyVector3(this.lookDir);
     rollRotation.multiplyVector3(this.up);
+    
+    
+    
   }
 
   get right() {
