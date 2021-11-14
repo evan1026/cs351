@@ -3,6 +3,7 @@
  */
 
 Matrix4.prototype.rotateFromQuat = function(quat) {
+  quat.normalize();
   return this.concat(new Matrix4().setFromQuat(quat.x, quat.y, quat.z, quat.w));
 };
 
@@ -463,7 +464,7 @@ function drawAll() {
       camera.applyProjection(modelMatrix, camWidth, camHeight);
     }
 
-    var lookAt = new Vec3(camera.pos.x + camera.lookDir.x, camera.pos.y + camera.lookDir.y, camera.pos.z + camera.lookDir.z);
+    var lookAt = camera.pos.add(camera.lookDir);
     modelMatrix.lookAt(camera.pos.x,    camera.pos.y,    camera.pos.z,
                        lookAt.x,        lookAt.y,        lookAt.z,
                        camera.up.x,     camera.up.y,     camera.up.z);

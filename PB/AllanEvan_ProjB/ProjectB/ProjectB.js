@@ -100,7 +100,7 @@ function animateArm(time) {
 
   var xRot = document.getElementById("armRotation").value;
   var waveAmount = document.getElementById("armWaveAmount").value;
-  Animation.nodes['l1'].rot = QuatFromEuler(xRot, 180 + waveAmount * Math.sin(armTime / 1000), 0.0);
+  //Animation.nodes['l1'].rot = QuatFromEuler(xRot, 180 + waveAmount * Math.sin(armTime / 1000), 0.0);
   Animation.nodes['l2'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 500), 0.0);
   Animation.nodes['l3'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 250), 0.0);
   Animation.nodes['l4'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 125), 0.0);
@@ -817,7 +817,10 @@ function getMouseEventCoords(ev) {
   var xp = ev.clientX - rect.left;
   var yp = Context.canvas.height - (ev.clientY - rect.top);
 
-  var x = (xp - Context.canvas.width/2) / (Context.canvas.width/2);
+  // Normally these are bot over 2, but since we have 2 renders side by side,
+  // 1/2 of a view in the x direction is actually 1/4 of the total canvas
+  // width
+  var x = (xp - Context.canvas.width/4) / (Context.canvas.width/4);
   var y = (yp - Context.canvas.height/2) / (Context.canvas.height/2);
 
   return {x: x, y: y};
@@ -840,14 +843,51 @@ function myMouseMove(ev) {
 
   var coords = getMouseEventCoords(ev);
 
+  dragQuat(coords.x - Event.mouseDrag.x, coords.y - Event.mouseDrag.y);
+
   Event.mouseDrag.x = coords.x;
   Event.mouseDrag.y = coords.y;
 }
 
 function myMouseUp(ev) {
-  var coords = getMouseEventCoords(ev);
-
+  myMouseMove(ev);
   Event.mouseDrag.currentlyDragging = false;
+}
+
+function dragQuat(x, y) {
+  var res = 5;
+  var dist = Math.sqrt(x*x + y*y);
+  var axis = new Vector3([-y + 0.0001, x + 0.0001, 0.0]);
+
+  var viewMatrix = new Matrix4();
+  var mainCam = Context.cameras[0];
+
+  // Basic idea here: we want to undo the camera transformation to figure out
+  // the world coordinates for the axis of rotation. But, we only want to undo
+  // the rotation - since translation happens after rotation, we need to ignore
+  // translation entirely. Thus, we can find the camera rotation by applying the
+  // lookAt function with position = (0,0,0):
+  var basePos = new Vec3();
+  var lookAt = basePos.add(camera.lookDir);
+  viewMatrix.lookAt(basePos.x,   basePos.y,   basePos.z,
+		    lookAt.x,    lookAt.y,    lookAt.z,
+		    camera.up.x, camera.up.y, camera.up.z);
+
+  // Now, we have the camera's rotation matrix. BUT, this matrix doesn't actually
+  // transform the camera, it transforms the world in the opposite way, so really
+  // we have a matrix that transforms from world to camera coordinates. Since we
+  // want to transform from camera to world coordinates, we just take the inverse
+  // of the transform.
+  viewMatrix.invert();
+
+  // Now the transformation matrix will take our axis which is in camera coords
+  // and transform it into world coords
+  axis = viewMatrix.multiplyVector3(axis);
+
+  // And then we just do the rotation, same as before
+  var quat = QuatFromAxisAngle(axis.elements[0], axis.elements[1], axis.elements[2], dist * 150);
+  quat.multiplySelf(Animation.nodes["l1"].rot);
+  Animation.nodes["l1"].rot = quat;
 }
 
 function myKeyDown(kev) {
