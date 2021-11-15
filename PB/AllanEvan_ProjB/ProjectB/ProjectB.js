@@ -250,6 +250,8 @@ function initSceneGraph() {
   var axesMesh = initAxesMesh();
   var planeMesh = initPlaneMesh();
   var blackBoxMesh = initBlackBoxMesh();
+  
+  var buildingMeshes = [initBuildingMesh(3), initBuildingMesh(4), initBuildingMesh(5), initBuildingMesh(6), initBuildingMesh(7), initBuildingMesh(8)];
 
   var makeCyllinder = function(name, parent, height, pos, rot, scale) {
     cylNode =       new SceneGraphNode(name,             parent,  pos,                       rot,              scale,                       null);
@@ -281,11 +283,13 @@ function initSceneGraph() {
   var armTipAxesNode = new SceneGraphNode("armTipAxes", l7Node,    new Pos(),          new Quaternion(), new Scale(32.0, 32.0, 0.5), axesMesh);
   var housesAxesNode = new SceneGraphNode("housesAxes", houseNode, new Pos(),          new Quaternion(), new Scale(3.0, 3.0, 3.0), axesMesh);
 
-  var planeNode         = new SceneGraphNode("plane",         topNode,           new Pos(3.0, 3.0, 1.0),  new Quaternion(),          new Scale(1.0, 1.0, 1.0),    planeMesh);
-  /*var propConnectorNode = new SceneGraphNode("propConnector", planeNode,         new Pos(0.5, 0.5, 0.55), new Quaternion(),          new Scale(0.01, 0.01, 0.15), blackBoxMesh);
-  var prop1             = new SceneGraphNode("prop1",         propConnectorNode, new Pos(0.0, 0.0, 0.5),  QuatFromEuler(90, 0, 0),   new Scale(1.0, 1.0, 10.0),   blackBoxMesh);
-  var prop2             = new SceneGraphNode("prop2",         propConnectorNode, new Pos(0.0, 0.0, 0.5),  QuatFromEuler(90, 60, 0),  new Scale(1.0, 1.0, 10.0),   blackBoxMesh);
-  var prop3             = new SceneGraphNode("prop3",         propConnectorNode, new Pos(0.0, 0.0, 0.5),  QuatFromEuler(90, 120, 0), new Scale(1.0, 1.0, 10.0),   blackBoxMesh);*/
+  var planeNode = new SceneGraphNode("plane", topNode, new Pos(3.0, 3.0, 1.0), new Quaternion(), new Scale(1.0, 1.0, 1.0), planeMesh);
+  
+  for (var x = -3; x < 0; ++x) {
+    for (var y = 0; y < 3; ++y) {
+      buildingNode = new SceneGraphNode("building" + x + "_" + y, topNode, new Pos(x, y, 0), QuatFromEuler(0, 0, Math.floor(Math.random() * 4) * 90), new Scale(0.25, 0.25, 0.25), buildingMeshes[Math.floor(Math.random() * buildingMeshes.length)]);
+    }
+  }
 
   Context.sceneGraph = topNode;
   console.log("Full Graph: ",topNode);
@@ -610,6 +614,13 @@ function initPlaneMesh() {
 }
 
 /**
+ * Quick util to make a vertex with a color that is based on the position.
+ */
+function planeVertex(pos) {
+  return new Vertex(pos, new Color(pos.add(new Vec3(0.5, 0.5, 0.5))));
+}
+
+/**
  * Creates a black box mesh.
  */
 function initBlackBoxMesh() {
@@ -662,11 +673,142 @@ function initBlackBoxMesh() {
   return boxMesh;
 }
 
-/**
- * Quick util to make a vertex with a color that is based on the position.
- */
-function planeVertex(pos) {
-  return new Vertex(pos, new Color(pos.add(new Vec3(0.5, 0.5, 0.5))));
+function initBuildingMesh(numFloors) {
+  var buildingMesh = new Mesh(gl.TRIANGLES);
+  
+  buildingMesh.verts = [
+    // Bottom face
+    new Vertex(new Pos(-1, -1, 0), getGrey()),
+    new Vertex(new Pos(-1,  1, 0), getGrey()),
+    new Vertex(new Pos( 1, -1, 0), getGrey()),
+    new Vertex(new Pos(-1,  1, 0), getGrey()),
+    new Vertex(new Pos( 1, -1, 0), getGrey()),
+    new Vertex(new Pos( 1,  1, 0), getGrey()),
+    
+    // Top face
+    new Vertex(new Pos(-1, -1, numFloors), getGrey()),
+    new Vertex(new Pos(-1,  1, numFloors), getGrey()),
+    new Vertex(new Pos( 1, -1, numFloors), getGrey()),
+    new Vertex(new Pos(-1,  1, numFloors), getGrey()),
+    new Vertex(new Pos( 1, -1, numFloors), getGrey()),
+    new Vertex(new Pos( 1,  1, numFloors), getGrey()),
+    
+    // -X face
+    new Vertex(new Pos(-1, -1, 0),         getGrey()),
+    new Vertex(new Pos(-1,  1, 0),         getGrey()),
+    new Vertex(new Pos(-1, -1, numFloors), getGrey()),
+    new Vertex(new Pos(-1,  1, 0),         getGrey()),
+    new Vertex(new Pos(-1, -1, numFloors), getGrey()),
+    new Vertex(new Pos(-1,  1, numFloors), getGrey()),
+    
+    // +X face
+    new Vertex(new Pos(1, -1, 0),         getGrey()),
+    new Vertex(new Pos(1,  1, 0),         getGrey()),
+    new Vertex(new Pos(1, -1, numFloors), getGrey()),
+    new Vertex(new Pos(1,  1, 0),         getGrey()),
+    new Vertex(new Pos(1, -1, numFloors), getGrey()),
+    new Vertex(new Pos(1,  1, numFloors), getGrey()),
+    
+    // -Y face
+    new Vertex(new Pos(-1, -1, 0),         getGrey()),
+    new Vertex(new Pos( 1, -1, 0),         getGrey()),
+    new Vertex(new Pos(-1, -1, numFloors), getGrey()),
+    new Vertex(new Pos( 1, -1, 0),         getGrey()),
+    new Vertex(new Pos(-1, -1, numFloors), getGrey()),
+    new Vertex(new Pos( 1, -1, numFloors), getGrey()),
+    
+    // +Y face
+    new Vertex(new Pos(-1, 1, 0),         getGrey()),
+    new Vertex(new Pos( 1, 1, 0),         getGrey()),
+    new Vertex(new Pos(-1, 1, numFloors), getGrey()),
+    new Vertex(new Pos( 1, 1, 0),         getGrey()),
+    new Vertex(new Pos(-1, 1, numFloors), getGrey()),
+    new Vertex(new Pos( 1, 1, numFloors), getGrey())
+  ];
+  
+  var centers = [
+    new Pos( 0.76, -0.65, 0), new Pos( 0.76, 0,    0), new Pos( 0.76,  0.65, 0),
+    new Pos(-0.76, -0.65, 0), new Pos(-0.76, 0,    0), new Pos(-0.76,  0.65, 0),
+    new Pos(-0.65, -0.76, 0), new Pos( 0,   -0.76, 0), new Pos( 0.65, -0.76, 0),
+    new Pos(-0.65,  0.76, 0), new Pos( 0,    0.76, 0), new Pos( 0.65,  0.76, 0)
+  ];
+  for (var i = 0; i < numFloors; ++i) {
+    for (center of centers) {
+      var colorFunc;
+      if (Math.random() > 0.9) {
+        colorFunc = getYellow;
+      } else {
+        colorFunc = getBlack;
+      }
+      
+      buildingMesh.verts.push(
+        // Bottom face
+        new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.05)), colorFunc()),
+        new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.05)), colorFunc()),
+        new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.05)), colorFunc()),
+        new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.05)), colorFunc()),
+        new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.05)), colorFunc()),
+        new Vertex(center.add(new Pos( 0.25,  0.25, i + 0.05)), colorFunc()),
+        
+        // Top face
+        new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos( 0.25,  0.25, i + 0.95)), colorFunc()),
+        
+        // -X face
+        new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.95)), colorFunc()),
+        
+        // +X face
+        new Vertex(center.add(new Pos(0.25, -0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos(0.25,  0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos(0.25, -0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos(0.25,  0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos(0.25, -0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos(0.25,  0.25, i + 0.95)), colorFunc()),
+        
+        // -Y face
+        new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.95)), colorFunc()),
+        
+        // +Y face
+        new Vertex(center.add(new Pos(-0.25, 0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos( 0.25, 0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos(-0.25, 0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos( 0.25, 0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos(-0.25, 0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos( 0.25, 0.25, i + 0.95)), colorFunc())
+      )
+    }
+  }    
+  
+  return buildingMesh;
+}
+
+function getGrey() {
+  var greyAmount = 0.65 + Math.random() / 10;
+  return new Color(greyAmount, greyAmount, greyAmount);
+}
+
+function getYellow() {
+  var yellowAmount = 0.9 + Math.random() / 10;
+  return new Color(yellowAmount, yellowAmount, 0.0);
+}
+
+function getBlack() {
+  var greyAmount = 0.0 + Math.random() / 10;
+  return new Color(greyAmount, greyAmount, greyAmount);
 }
 
 /**
