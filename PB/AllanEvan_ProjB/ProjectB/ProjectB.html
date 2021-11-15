@@ -44,7 +44,7 @@
         <div class="aligned"><input type="checkbox" id="propAnimation" checked><label for="propAnimation">Animate Propeller</label></div>
         <div class="aligned"><input type="checkbox" id="armShown" checked><label for="armShown">Show Arm</label></div>
         <div class="aligned"><input type="checkbox" id="boxShown" checked><label for="boxShown">Show Boxes</label></div>
-        <div class="aligned"><input type="checkbox" id="propShown" checked><label for="propShown">Show Heli</label></div>
+        <div class="aligned"><input type="checkbox" id="propShown" checked><label for="propShown">Show Plane</label></div>
         <div class="aligned"><input type="checkbox" id="lockForward" checked><label for="lockForward">Lock Forward Movement to Horizontal Plane</label></div>
         <div class="aligned"><input type="checkbox" id="perspectiveOnArm"><label for="perspectiveOnArm">Attach Perspective Camera To Jointed Arm</label></div>
     </div>
@@ -58,6 +58,16 @@
     
     <div class="controlarea">
         <div class="aligned"><input type="range" min="0" max="90" value="45" class="slider" id="armWaveAmount"><label for="armWaveAmount">Arm Wave Amount</label></div>
+        <div class="aligned"><input type="range" min="-10" max="10" value="0" class="slider" id="planeThrottle" oninput="this.nextElementSibling.value = this.value"><output>0</output><label for="planeThrottle">&emsp;Plane Throttle</label></div>
+        <div class="aligned"><input type="range" min="-10" max="10" value="0" class="slider" id="planePitch" oninput="this.nextElementSibling.value = this.value"><output>0</output><label for="planePitch">&emsp;Plane Elevator (pitch)</label></div>
+        <div class="aligned"><input type="range" min="-10" max="10" value="0" class="slider" id="planeYaw" oninput="this.nextElementSibling.value = this.value"><output>0</output><label for="planeYaw">&emsp;Plane Rudder (yaw)</label></div>
+        <div class="aligned"><input type="range" min="-10" max="10" value="0" class="slider" id="planeRoll" oninput="this.nextElementSibling.value = this.value"><output>0</output><label for="planeRoll">&emsp;Plane Alieron (roll)</label></div>
+        <script>
+            document.getElementById("planeThrottle").value = 0;
+            document.getElementById("planePitch").value = 0;
+            document.getElementById("planeYaw").value = 0;
+            document.getElementById("planeRoll").value = 0;
+        </script>
     </div>
 
   </body>

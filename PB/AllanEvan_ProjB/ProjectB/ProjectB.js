@@ -151,15 +151,23 @@ function animateBoxes(time) {
 function animateProp(time) {
   var propShown = document.getElementById("propShown").checked;
   var propAnimate = document.getElementById("propAnimation").checked;
+  
+  var planeThrottle = document.getElementById("planeThrottle").value / 100;
+  var planePitch = document.getElementById("planePitch").value / 10;
+  var planeYaw = document.getElementById("planeYaw").value / 10;
+  var planeRoll = document.getElementById("planeRoll").value / 10;
 
-  Animation.nodes["plane"].enabled = propShown;
+  var planeNode = Animation.nodes["plane"];
+  planeNode.enabled = propShown;
 
   if (propAnimate) {
-    Animation.propTime = time / 3;
+    var planeForward = new Vec3(0, -1, 0);
+    planeForward = planeForward.multiply(planeThrottle);
+    
+    planeNode.rot.rotateFromEuler(planePitch, planeRoll, planeYaw);
+    planeNode.rot.multiplyVector3(planeForward);
+    planeNode.pos = planeNode.pos.add(planeForward);
   }
-  propTime = Animation.propTime;
-
-  Animation.nodes["propConnector"].rot = QuatFromEuler(0, 0, propTime);
 }
 
 /**
@@ -272,10 +280,10 @@ function initSceneGraph() {
   var housesAxesNode = new SceneGraphNode("housesAxes", houseNode, new Pos(),          new Quaternion(), new Scale(3.0, 3.0, 3.0), axesMesh);
 
   var planeNode         = new SceneGraphNode("plane",         topNode,           new Pos(3.0, 3.0, 1.0),  new Quaternion(),          new Scale(1.0, 1.0, 1.0),    planeMesh);
-  var propConnectorNode = new SceneGraphNode("propConnector", planeNode,         new Pos(0.5, 0.5, 0.55), new Quaternion(),          new Scale(0.01, 0.01, 0.15), blackBoxMesh);
+  /*var propConnectorNode = new SceneGraphNode("propConnector", planeNode,         new Pos(0.5, 0.5, 0.55), new Quaternion(),          new Scale(0.01, 0.01, 0.15), blackBoxMesh);
   var prop1             = new SceneGraphNode("prop1",         propConnectorNode, new Pos(0.0, 0.0, 0.5),  QuatFromEuler(90, 0, 0),   new Scale(1.0, 1.0, 10.0),   blackBoxMesh);
   var prop2             = new SceneGraphNode("prop2",         propConnectorNode, new Pos(0.0, 0.0, 0.5),  QuatFromEuler(90, 60, 0),  new Scale(1.0, 1.0, 10.0),   blackBoxMesh);
-  var prop3             = new SceneGraphNode("prop3",         propConnectorNode, new Pos(0.0, 0.0, 0.5),  QuatFromEuler(90, 120, 0), new Scale(1.0, 1.0, 10.0),   blackBoxMesh);
+  var prop3             = new SceneGraphNode("prop3",         propConnectorNode, new Pos(0.0, 0.0, 0.5),  QuatFromEuler(90, 120, 0), new Scale(1.0, 1.0, 10.0),   blackBoxMesh);*/
 
   Context.sceneGraph = topNode;
   console.log("Full Graph: ",topNode);
@@ -425,175 +433,175 @@ function initPlaneMesh() {
    * Fuselage
    */
   {
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5, -0.1)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.5)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.1)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.5)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.1)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.1)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.1)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.5)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.5)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.1)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.2, 0.5)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.5)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.1)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.2, 0.5)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.5)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.5)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.5)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.0, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 1.0, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.0, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 1.0, 0.3)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5, -0.1)));
   }
 
   /*
    * Right wing
    */
   {
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.4, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.35)));
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.1, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1, -0.05)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.4, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.4, 0.45)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.1, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.1,  0.05)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.35)));
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.1, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1, -0.05)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.45)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.1, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.1,  0.05)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.4, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.35)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.1, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.1, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1, -0.05)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.35)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.35)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1, -0.05)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.1, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1, -0.05)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.35)));
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.35)));
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1, -0.05)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1, -0.05)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.35)));
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1, -0.05)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.6, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.45)));
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.1,  0.05)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.0, 0.4, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.6, 0.45)));
-    planeMesh.verts.push(planeVertex(new Pos(0.4, 0.4, 0.45)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.1,  0.05)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.1,  0.05)));
   }
 
   /*
    * Left wing
    */
   {
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.4, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.35)));
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.1, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5, -0.1, -0.05)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5, -0.1,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.4, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.4, 0.45)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.1, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5, -0.1,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.1,  0.05)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.35)));
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.1, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5,  0.1, -0.05)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5,  0.1,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.45)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.1, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5,  0.1,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.1,  0.05)));
 
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.4, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.35)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.1, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.1, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5, -0.1, -0.05)));
 
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.35)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.3)));
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.35)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5, -0.1, -0.05)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.1, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5,  0.1, -0.05)));
 
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.35)));
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.35)));
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5, -0.1, -0.05)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5,  0.1, -0.05)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5, -0.1,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.35)));
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5, -0.1,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5,  0.1, -0.05)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5,  0.1,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.6, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.45)));
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5,  0.1,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.1,  0.05)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5, -0.1,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(1.0, 0.4, 0.4)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.6, 0.45)));
-    planeMesh.verts.push(planeVertex(new Pos(0.6, 0.4, 0.45)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5, -0.1,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.1,  0.05)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.1,  0.05)));
   }
 
   return planeMesh;
@@ -656,7 +664,7 @@ function initBlackBoxMesh() {
  * Quick util to make a vertex with a color that is based on the position.
  */
 function planeVertex(pos) {
-  return new Vertex(pos, new Color(pos));
+  return new Vertex(pos, new Color(pos.add(new Vec3(0.5, 0.5, 0.5))));
 }
 
 /**
