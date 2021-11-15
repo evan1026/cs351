@@ -78,6 +78,14 @@ function animate() {
   animateArm(time);
   animateBoxes(time);
   animateProp(time);
+  
+  if (!document.getElementById("perspectiveOnArm").checked) {
+    Context.cameras[0].pos = new Pos(Context.cameras[1].pos);
+    Context.cameras[0].lookDir = new Pos(Context.cameras[1].lookDir);
+    Context.cameras[0].up = new Pos(Context.cameras[1].up);
+  } else {
+    attachCameraToNode(Context.cameras[0], Animation.nodes['l7']);
+  }
 
   updateFramerate(elapsed);
 
@@ -98,15 +106,13 @@ function animateArm(time) {
   }
   armTime = Animation.armTime;
 
-  var xRot = document.getElementById("armRotation").value;
   var waveAmount = document.getElementById("armWaveAmount").value;
-  //Animation.nodes['l1'].rot = QuatFromEuler(xRot, 180 + waveAmount * Math.sin(armTime / 1000), 0.0);
   Animation.nodes['l2'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 500), 0.0);
-  Animation.nodes['l3'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 250), 0.0);
-  Animation.nodes['l4'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 125), 0.0);
-  Animation.nodes['l5'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 62.5), 0.0);
-  Animation.nodes['l6'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 31.25), 0.0);
-  Animation.nodes['l7'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 15.625), 0.0);
+  Animation.nodes['l3'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 500), 0.0);
+  Animation.nodes['l4'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 500), 0.0);
+  Animation.nodes['l5'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 500), 0.0);
+  Animation.nodes['l6'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 500), 0.0);
+  Animation.nodes['l7'].rot = QuatFromEuler(0.0, waveAmount * Math.sin(armTime / 500), 0.0);
 }
 
 /**
@@ -176,26 +182,20 @@ function translateCamera(elapsed) {
   var lockForward = document.getElementById("lockForward").checked;
   
   if (Animation.moveFwd) {
-    Context.cameras[0].move(speed, 0, 0, lockForward);
     Context.cameras[1].move(speed, 0, 0, lockForward);
   } else if (Animation.moveBack) {
-    Context.cameras[0].move(-speed, 0, 0, lockForward);
     Context.cameras[1].move(-speed, 0, 0, lockForward);
   }
 
   if (Animation.moveLeft) {
-    Context.cameras[0].move(0, -speed, 0);
     Context.cameras[1].move(0, -speed, 0);
   } else if (Animation.moveRight) {
-    Context.cameras[0].move(0, speed, 0);
     Context.cameras[1].move(0, speed, 0);
   }
 
   if (Animation.moveUp) {
-    Context.cameras[0].move(0, 0, speed);
     Context.cameras[1].move(0, 0, speed);
   } else if (Animation.moveDown) {
-    Context.cameras[0].move(0, 0, -speed);
     Context.cameras[1].move(0, 0, -speed);
   }
 }
@@ -207,18 +207,14 @@ function rotateCamera(elapsed) {
   degPerTick = elapsed / 15;
 
   if (Animation.lookUp) {
-    Context.cameras[0].rotate(degPerTick / 2, 0, 0);
     Context.cameras[1].rotate(degPerTick / 2, 0, 0);
   } else if (Animation.lookDown) {
-    Context.cameras[0].rotate(-degPerTick / 2, 0, 0);
     Context.cameras[1].rotate(-degPerTick / 2, 0, 0);
   }
 
   if (Animation.lookLeft) {
-    Context.cameras[0].rotate(0, degPerTick, 0);
     Context.cameras[1].rotate(0, degPerTick, 0);
   } else if (Animation.lookRight) {
-    Context.cameras[0].rotate(0, -degPerTick, 0);
     Context.cameras[1].rotate(0, -degPerTick, 0);
   }
 }
@@ -229,7 +225,7 @@ function rotateCamera(elapsed) {
 function tick() {
   animate();
   drawAll();
-  requestAnimationFrame(tick, Context.canvas);
+  window.requestAnimationFrame(tick, Context.canvas);
 }
 
 /**
@@ -240,70 +236,46 @@ function initSceneGraph() {
   var circleMesh = initCircleMesh(numCircleParts);
   var cyllinderMesh = initCyllinderSideMesh(numCircleParts);
   var houseMesh = initHouseMesh();
-  var gridMesh = initGridMesh(-5, 5, -5, 5, 50);
+  var gridMesh = initGridMesh(-20, 20, -20, 20, 200);
   var axesMesh = initAxesMesh();
   var planeMesh = initPlaneMesh();
   var blackBoxMesh = initBlackBoxMesh();
 
-  var makeCyllinder = function(height, pos, rot, scale, name) {
-    cylNode =       new SceneGraphNode(name,             pos,                       rot,              scale,                       null);
-    cylTopNode =    new SceneGraphNode(name + "_Top",    new Pos(),                 new Quaternion(), new Scale(1.0, 1.0, 1.0),    circleMesh);
-    cylBotNode =    new SceneGraphNode(name + "_Bot",    new Pos(0.0, 0.0, height), new Quaternion(), new Scale(0.5, 0.5, 1.0),    circleMesh);
-    cylMiddleNode = new SceneGraphNode(name + "_Middle", new Pos(),                 new Quaternion(), new Scale(1.0, 1.0, height), cyllinderMesh);
-    cylNode.children = [cylTopNode, cylBotNode, cylMiddleNode];
+  var makeCyllinder = function(name, parent, height, pos, rot, scale) {
+    cylNode =       new SceneGraphNode(name,             parent,  pos,                       rot,              scale,                       null);
+    cylTopNode =    new SceneGraphNode(name + "_Top",    cylNode, new Pos(),                 new Quaternion(), new Scale(1.0, 1.0, 1.0),    circleMesh);
+    cylBotNode =    new SceneGraphNode(name + "_Bot",    cylNode, new Pos(0.0, 0.0, height), new Quaternion(), new Scale(0.5, 0.5, 1.0),    circleMesh);
+    cylMiddleNode = new SceneGraphNode(name + "_Middle", cylNode, new Pos(),                 new Quaternion(), new Scale(1.0, 1.0, height), cyllinderMesh);
     return cylNode;
   };
 
   var topNode = new SceneGraph("root");
-  var l1Node = makeCyllinder(4, new Pos(0.0, -2.0, 0.0), QuatFromEuler(90, 180, 0), new Scale(0.1, 0.1, 0.1), "l1");
-  var l2Node = makeCyllinder(2, new Pos(0.0, 0.0, 4.0), new Quaternion(), new Scale(0.5, 0.5, 1.0), "l2");
-  l1Node.children.push(l2Node);
-  var l3Node = makeCyllinder(1, new Pos(0.0, 0.0, 2.0), new Quaternion(), new Scale(0.5, 0.5, 1.0), "l3");
-  l2Node.children.push(l3Node);
-  var l4Node = makeCyllinder(0.5, new Pos(0.0, 0.0, 1.0), new Quaternion(), new Scale(0.5, 0.5, 1.0), "l4");
-  l3Node.children.push(l4Node);
-  var l5Node = makeCyllinder(0.25, new Pos(0.0, 0.0, 0.5), new Quaternion(), new Scale(0.5, 0.5, 1.0), "l5");
-  l4Node.children.push(l5Node);
-  var l6Node = makeCyllinder(0.125, new Pos(0.0, 0.0, 0.25), new Quaternion(), new Scale(0.5, 0.5, 1.0), "l6");
-  l5Node.children.push(l6Node);
-  var l7Node = makeCyllinder(0.0625, new Pos(0.0, 0.0, 0.125), new Quaternion(), new Scale(0.5, 0.5, 1.0), "l7");
-  l6Node.children.push(l7Node);
+  var l1Node = makeCyllinder("l1", topNode, 4,      new Pos(3.0, -2.0, 0.0),  QuatFromEuler(90, 180, 0), new Scale(0.1, 0.1, 0.1));
+  var l2Node = makeCyllinder("l2", l1Node,  2,      new Pos(0.0, 0.0, 4.0),   new Quaternion(),          new Scale(0.5, 0.5, 1.0));
+  var l3Node = makeCyllinder("l3", l2Node,  1,      new Pos(0.0, 0.0, 2.0),   new Quaternion(),          new Scale(0.5, 0.5, 1.0));
+  var l4Node = makeCyllinder("l4", l3Node,  0.5,    new Pos(0.0, 0.0, 1.0),   new Quaternion(),          new Scale(0.5, 0.5, 1.0));
+  var l5Node = makeCyllinder("l5", l4Node,  0.25,   new Pos(0.0, 0.0, 0.5),   new Quaternion(),          new Scale(0.5, 0.5, 1.0));
+  var l6Node = makeCyllinder("l6", l5Node,  0.125,  new Pos(0.0, 0.0, 0.25),  new Quaternion(),          new Scale(0.5, 0.5, 1.0));
+  var l7Node = makeCyllinder("l7", l6Node,  0.0625, new Pos(0.0, 0.0, 0.125), new Quaternion(),          new Scale(0.5, 0.5, 1.0));
 
-  var houseNode = new SceneGraphNode("house", new Pos(0.5, 0.5, 0.0), new Quaternion(), new Scale(0.15, 0.15, 0.15), houseMesh);
-  var houseNode2 = new SceneGraphNode("house2", new Pos(0.0, 1.5, 0.0), QuatFromEuler(180, 0, 0), new Scale(1.0, 1.0, 1.0), houseMesh);
-  houseNode.children.push(houseNode2);
-  var houseNode3 = new SceneGraphNode("house3", new Pos(0.0, 0.0, 1.25), QuatFromEuler(270, 0, 0), new Scale(1.0, 1.0, 1.0), houseMesh);
-  houseNode.children.push(houseNode3);
-  var houseNode4 = new SceneGraphNode("house4", new Pos(0.0, 0.0, -1.25), QuatFromEuler(90, 0, 0), new Scale(1.0, 1.0, 1.0), houseMesh);
-  houseNode.children.push(houseNode4);
-  var houseNode5 = new SceneGraphNode("house5", new Pos(0.0, -1.25, 0.0), new Quaternion(), new Scale(1.0, 1.0, 1.0), houseMesh);
-  houseNode.children.push(houseNode5);
+  var houseNode  = new SceneGraphNode("house",  topNode,   new Pos(0.5, 0.5, 0.0),   new Quaternion(),         new Scale(0.15, 0.15, 0.15), houseMesh);
+  var houseNode2 = new SceneGraphNode("house2", houseNode, new Pos(0.0, 1.5, 0.0),   QuatFromEuler(180, 0, 0), new Scale(1.0, 1.0, 1.0),    houseMesh);
+  var houseNode3 = new SceneGraphNode("house3", houseNode, new Pos(0.0, 0.0, 1.25),  QuatFromEuler(270, 0, 0), new Scale(1.0, 1.0, 1.0),    houseMesh);
+  var houseNode4 = new SceneGraphNode("house4", houseNode, new Pos(0.0, 0.0, -1.25), QuatFromEuler(90, 0, 0),  new Scale(1.0, 1.0, 1.0),    houseMesh);
+  var houseNode5 = new SceneGraphNode("house5", houseNode, new Pos(0.0, -1.25, 0.0), new Quaternion(),         new Scale(1.0, 1.0, 1.0),    houseMesh);
 
-  var gridNode = new SceneGraphNode("grid", new Pos(), new Quaternion(), new Scale(1.0, 1.0, 1.0), gridMesh);
+  var gridNode = new SceneGraphNode("grid", topNode, new Pos(), new Quaternion(), new Scale(1.0, 1.0, 1.0), gridMesh);
 
-  var axesNode = new SceneGraphNode("axes", new Pos(), new Quaternion(), new Scale(1.0, 1.0, 1.0), axesMesh);
-  var armAxesNode = new SceneGraphNode("armAxes", new Pos(-1, -1, 0), new Quaternion(), new Scale(3.0, 3.0, 3.0), axesMesh);
-  var armTipAxesNode = new SceneGraphNode("armTipAxes", new Pos(), new Quaternion(), new Scale(32.0, 32.0, 0.5), axesMesh);
-  var housesAxesNode = new SceneGraphNode("housesAxes", new Pos(), new Quaternion(), new Scale(3.0, 3.0, 3.0), axesMesh);
+  var axesNode       = new SceneGraphNode("axes",       topNode,   new Pos(),          new Quaternion(), new Scale(1.0, 1.0, 1.0), axesMesh);
+  var armAxesNode    = new SceneGraphNode("armAxes",    l1Node,    new Pos(-1, -1, 0), new Quaternion(), new Scale(3.0, 3.0, 3.0), axesMesh);
+  var armTipAxesNode = new SceneGraphNode("armTipAxes", l7Node,    new Pos(),          new Quaternion(), new Scale(32.0, 32.0, 0.5), axesMesh);
+  var housesAxesNode = new SceneGraphNode("housesAxes", houseNode, new Pos(),          new Quaternion(), new Scale(3.0, 3.0, 3.0), axesMesh);
 
-  var planeNode = new SceneGraphNode("plane", new Pos(3.0, 3.0, 1.0), new Quaternion(), new Scale(1.0, 1.0, 1.0), planeMesh);
-  var propConnectorNode = new SceneGraphNode("propConnector", new Pos(0.5, 0.5, 0.55), new Quaternion(), new Scale(0.01, 0.01, 0.15), blackBoxMesh);
-  planeNode.children.push(propConnectorNode);
-
-  var prop1 = new SceneGraphNode("prop1", new Pos(0.0, 0.0, 0.5), QuatFromEuler(90, 0, 0), new Scale(1.0, 1.0, 10.0), blackBoxMesh);
-  var prop2 = new SceneGraphNode("prop2", new Pos(0.0, 0.0, 0.5), QuatFromEuler(90, 60, 0), new Scale(1.0, 1.0, 10.0), blackBoxMesh);
-  var prop3 = new SceneGraphNode("prop3", new Pos(0.0, 0.0, 0.5), QuatFromEuler(90, 120, 0), new Scale(1.0, 1.0, 10.0), blackBoxMesh);
-  propConnectorNode.children.push(prop1, prop2, prop3);
-
-  l1Node.children.push(armAxesNode);
-  l7Node.children.push(armTipAxesNode);
-  houseNode.children.push(housesAxesNode);
-
-  topNode.children.push(l1Node);
-  topNode.children.push(houseNode);
-  topNode.children.push(gridNode);
-  topNode.children.push(axesNode);
-  topNode.children.push(planeNode);
+  var planeNode         = new SceneGraphNode("plane",         topNode,           new Pos(3.0, 3.0, 1.0),  new Quaternion(),          new Scale(1.0, 1.0, 1.0),    planeMesh);
+  var propConnectorNode = new SceneGraphNode("propConnector", planeNode,         new Pos(0.5, 0.5, 0.55), new Quaternion(),          new Scale(0.01, 0.01, 0.15), blackBoxMesh);
+  var prop1             = new SceneGraphNode("prop1",         propConnectorNode, new Pos(0.0, 0.0, 0.5),  QuatFromEuler(90, 0, 0),   new Scale(1.0, 1.0, 10.0),   blackBoxMesh);
+  var prop2             = new SceneGraphNode("prop2",         propConnectorNode, new Pos(0.0, 0.0, 0.5),  QuatFromEuler(90, 60, 0),  new Scale(1.0, 1.0, 10.0),   blackBoxMesh);
+  var prop3             = new SceneGraphNode("prop3",         propConnectorNode, new Pos(0.0, 0.0, 0.5),  QuatFromEuler(90, 120, 0), new Scale(1.0, 1.0, 10.0),   blackBoxMesh);
 
   Context.sceneGraph = topNode;
   console.log("Full Graph: ",topNode);
@@ -825,6 +797,8 @@ function getMouseEventCoords(ev) {
   // width
   var x = (xp - Context.canvas.width/4) / (Context.canvas.width/4);
   var y = (yp - Context.canvas.height/2) / (Context.canvas.height/2);
+  
+  console.log({x: x, y: y});
 
   return {x: x, y: y};
 }
@@ -871,10 +845,10 @@ function dragQuat(x, y) {
   // translation entirely. Thus, we can find the camera rotation by applying the
   // lookAt function with position = (0,0,0):
   var basePos = new Vec3();
-  var lookAt = basePos.add(camera.lookDir);
+  var lookAt = basePos.add(mainCam.lookDir);
   viewMatrix.lookAt(basePos.x,   basePos.y,   basePos.z,
 		    lookAt.x,    lookAt.y,    lookAt.z,
-		    camera.up.x, camera.up.y, camera.up.z);
+		    mainCam.up.x, mainCam.up.y, mainCam.up.z);
 
   // Now, we have the camera's rotation matrix. BUT, this matrix doesn't actually
   // transform the camera, it transforms the world in the opposite way, so really

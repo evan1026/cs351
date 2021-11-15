@@ -196,8 +196,13 @@ class SceneGraphNode {
   children = [];
   mesh;
   enabled = true;
+  parent;
 
-  constructor(name, pos, rot, scale, mesh) {
+  constructor(name, parent, pos, rot, scale, mesh) {
+    this.parent = parent;
+    if (parent) {
+      parent.children.push(this);
+    }
     if (name === undefined || name === null) {
       throw 'Name for a SceneGraphNode is required!'
     }
@@ -274,7 +279,7 @@ class Camera {
   viewport;
   applyProjection;
   pos;
-  lookAt;
+  lookDir;
   up;
 
   constructor() {
@@ -349,8 +354,6 @@ class Camera {
     
     rollRotation.multiplyVector3(this.lookDir);
     rollRotation.multiplyVector3(this.up);
-    
-    
     
   }
 
@@ -554,4 +557,57 @@ function getNameGraphHelper(topNode) {
   }
 
   return currNode;
+}
+
+function getTransform(targetNode) {
+  var nodePath = getNodePath(targetNode);
+  
+  var currNode = Context.sceneGraph;
+  var modelMatrix = new Matrix4();
+  var scale = new Scale(1.0, 1.0, 1.0);
+  for (index of nodePath) {
+    var node = currNode.children[index];
+    modelMatrix.translate(scale.x * node.pos.x, scale.y * node.pos.y, scale.z * node.pos.z);
+    modelMatrix.rotateFromQuat(node.rot);
+    scale = new Scale(scale.x * node.scale.x, scale.y * node.scale.y, scale.z * node.scale.z);
+
+    currNode = node;
+  }
+  modelMatrix.scale(scale.x, scale.y, scale.z);
+  return modelMatrix;
+}
+
+function getNodePath(targetNode) {
+  var currNode = targetNode;
+  var path = [];
+  while(currNode.parent) {
+    var parent = currNode.parent;
+    var index = parent.children.indexOf(currNode);
+    path.unshift(index);
+    currNode = parent;
+  }
+  return path;
+}
+
+function attachCameraToNode(camera, node) {
+  var l7Transform = getTransform(node);
+  
+  var pos = new Vector4([0, 0, 0, 1]);
+  var lookAt = new Vector4([1, 0, 0, 1]);
+  var upPos = new Vector4([0, 0, 1, 1]);
+  
+  pos = l7Transform.multiplyVector4(pos);
+  lookAt = l7Transform.multiplyVector4(lookAt);
+  upPos = l7Transform.multiplyVector4(upPos);
+  
+  pos = new Pos(pos.elements[0], pos.elements[1], pos.elements[2]);
+  lookAt = new Pos(lookAt.elements[0], lookAt.elements[1], lookAt.elements[2]);
+  upPos = new Pos(upPos.elements[0], upPos.elements[1], upPos.elements[2]);
+  
+  var lookDir = lookAt.subtract(pos);
+  var up = upPos.subtract(pos);
+  
+  camera.pos = pos;
+  camera.lookDir = lookDir;
+  camera.up = up;
 }
