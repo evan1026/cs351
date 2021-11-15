@@ -264,7 +264,7 @@ function initSceneGraph() {
     return cylNode;
   };
 
-  var topNode = new SceneGraph("root");
+  var topNode = new SceneGraph("CVV");
   var l1Node = makeCyllinder("l1", topNode, 4,      new Pos(3.0, -2.0, 0.0),  QuatFromEuler(90, 180, 0), new Scale(0.1, 0.1, 0.1));
   var l2Node = makeCyllinder("l2", l1Node,  2,      new Pos(0.0, 0.0, 4.0),   new Quaternion(),          new Scale(0.5, 0.5, 1.0));
   var l3Node = makeCyllinder("l3", l2Node,  1,      new Pos(0.0, 0.0, 2.0),   new Quaternion(),          new Scale(0.5, 0.5, 1.0));
