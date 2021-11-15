@@ -301,9 +301,15 @@ class Camera {
     this.pos.z += z;
   }
 
-  move(fwdAmt, rightAmt, upAmt, lockForward) {
+  move(fwdAmt, rightAmt, upAmt, lockForward, lockRight, lockUp) {
     if (lockForward === undefined) {
       lockForward = true;
+    }
+    if (lockRight === undefined) {
+      lockRight = true;
+    }
+    if (lockUp === undefined) {
+      lockUp = true;
     }
     
     var fwd = new Vec3(this.lookDir);
@@ -313,12 +319,16 @@ class Camera {
     fwd = fwd.normalized();
 
     var right = new Vec3(this.right);
-    right.z = 0;
+    if (lockRight) {
+      right.z = 0;
+    }
     right = right.normalized();
 
     var up = new Vec3(this.up);
-    up.x = 0;
-    up.y = 0;
+    if (lockUp) {
+      up.x = 0;
+      up.y = 0;
+    }
     up = up.normalized();
 
     this.pos = this.pos.add(fwd.multiply(fwdAmt));
@@ -589,12 +599,17 @@ function getNodePath(targetNode) {
   return path;
 }
 
-function attachCameraToNode(camera, node) {
+function attachCameraToNode(camera, node, extraMove, extraRot) {
   var l7Transform = getTransform(node);
   
   var pos = new Vector4([0, 0, 0, 1]);
   var lookAt = new Vector4([1, 0, 0, 1]);
   var upPos = new Vector4([0, 0, 1, 1]);
+  
+  if (extraRot) {
+    var quat = QuatFromEuler(extraRot.pitch, extraRot.roll, extraRot.yaw);
+    l7Transform.rotateFromQuat(quat);
+  }
   
   pos = l7Transform.multiplyVector4(pos);
   lookAt = l7Transform.multiplyVector4(lookAt);
@@ -610,4 +625,9 @@ function attachCameraToNode(camera, node) {
   camera.pos = pos;
   camera.lookDir = lookDir;
   camera.up = up;
+  
+  if (extraMove) {
+    camera.move(extraMove.fwd, extraMove.right, extraMove.up, false, false, false);
+  }
+
 }

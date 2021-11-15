@@ -79,12 +79,14 @@ function animate() {
   animateBoxes(time);
   animateProp(time);
   
-  if (!document.getElementById("perspectiveOnArm").checked) {
+  if (document.getElementById("perspectiveOnArm").checked) {
+    attachCameraToNode(Context.cameras[0], Animation.nodes['l7']);
+  } else if (document.getElementById("perspectiveOnPlane").checked) {
+    attachCameraToNode(Context.cameras[0], Animation.nodes['plane'], {fwd: 0.4, right: 0, up: 0.1}, {pitch:0, yaw: -90, roll:0});
+  } else {
     Context.cameras[0].pos = new Pos(Context.cameras[1].pos);
     Context.cameras[0].lookDir = new Pos(Context.cameras[1].lookDir);
     Context.cameras[0].up = new Pos(Context.cameras[1].up);
-  } else {
-    attachCameraToNode(Context.cameras[0], Animation.nodes['l7']);
   }
 
   updateFramerate(elapsed);
@@ -153,9 +155,9 @@ function animateProp(time) {
   var propAnimate = document.getElementById("propAnimation").checked;
   
   var planeThrottle = document.getElementById("planeThrottle").value / 100;
-  var planePitch = document.getElementById("planePitch").value / 10;
-  var planeYaw = document.getElementById("planeYaw").value / 10;
-  var planeRoll = document.getElementById("planeRoll").value / 10;
+  var planePitch = document.getElementById("planePitch").value / -10;
+  var planeYaw = document.getElementById("planeYaw").value / -10;
+  var planeRoll = document.getElementById("planeRoll").value / -10;
 
   var planeNode = Animation.nodes["plane"];
   planeNode.enabled = propShown;
@@ -805,8 +807,6 @@ function getMouseEventCoords(ev) {
   // width
   var x = (xp - Context.canvas.width/4) / (Context.canvas.width/4);
   var y = (yp - Context.canvas.height/2) / (Context.canvas.height/2);
-  
-  console.log({x: x, y: y});
 
   return {x: x, y: y};
 }
