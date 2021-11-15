@@ -166,6 +166,7 @@ class Vertex {
  * This corresponds to the drawn objects in the scene graph.
  */
 class Mesh {
+  name = "";
   verts = [];
   renderType;
 
@@ -173,8 +174,9 @@ class Mesh {
   vboStart;
   vboCount;
 
-  constructor(renderType) {
+  constructor(renderType, name) {
     this.renderType = renderType;
+    this.name = name;
   }
 }
 
@@ -630,4 +632,63 @@ function attachCameraToNode(camera, node, extraMove, extraRot) {
     camera.move(extraMove.fwd, extraMove.right, extraMove.up, false, false, false);
   }
 
+}
+
+function getSceneGraphDotString(topNode) {
+  var dotString = "digraph G {\n    graph [pad=\"0.5\", nodesep=\"1\", ranksep=\"5\"];\n";
+  var output = getSceneGraphDotStringSubGraph(topNode, 0, 1);
+  dotString += output.dotString;
+  dotString += getSceneGraphDotStringMeshes(topNode);
+  dotString += "}\n";
+  
+  return dotString;
+}
+
+function getSceneGraphDotStringSubGraph(topNode, clusterCount, indent) {
+  var dotString = "";
+  var thisNodeTransform = topNode.name.replace("-", "_") + "Transform";
+  if (topNode.children.length > 0) {
+    var thisNodeGroup = topNode.name.replace("-", "_") + "Group";
+    dotString += "    ".repeat(indent) + thisNodeTransform + " -> " + thisNodeGroup + " [color=darkgreen];\n";
+    dotString += "    ".repeat(indent) + thisNodeGroup + " [label=\"'" + topNode.name.replace("-", "_") + "' Group\", style=filled, fillcolor=darkgreen];\n";
+    dotString += "    ".repeat(indent) + "subgraph cluster_" + clusterCount++ + " {\n";
+    dotString += "    ".repeat(indent + 1) + "style=invis;\n";
+    for (child of topNode.children) {
+      var output = getSceneGraphDotStringSubGraph(child, clusterCount, indent + 1);
+      dotString += output.dotString;
+      clusterCount = output.clusterCount;
+    }
+    for (child of topNode.children) {
+      dotString += "    ".repeat(indent) + thisNodeGroup + " -> " + child.name.replace("-", "_") + "Transform" + " [color=darkgoldenrod4];\n";
+    }
+    dotString += "    ".repeat(indent) + "}\n";
+
+  }
+  dotString += "    ".repeat(indent) + thisNodeTransform + " [label=\"'" + topNode.name.replace("-", "_") + "' Transform\", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];\n"
+  return {dotString: dotString, clusterCount: clusterCount};
+}
+
+function getSceneGraphDotStringMeshes(topNode, coveredMeshes) {
+  var dotString = "";
+  
+  if (coveredMeshes === undefined) {
+    coveredMeshes = new Set();
+  }
+  
+  if (topNode.mesh) {
+    coveredMeshes.add(topNode.mesh);
+    dotString += "    " + topNode.name.replace("-", "_") + "Transform" + " -> " + topNode.mesh.name.replace("-", "_") + "Mesh [color=firebrick4];\n";
+  }
+  
+  for (child of topNode.children) {
+    dotString += getSceneGraphDotStringMeshes(child, coveredMeshes);
+  }
+  
+  if (topNode.parent === undefined) {
+    for (mesh of coveredMeshes) {
+      dotString += "    " + mesh.name.replace("-", "_") + "Mesh [fillcolor=firebrick4, shape=trapezium, style=filled];\n";
+    }
+  }
+  
+  return dotString;
 }

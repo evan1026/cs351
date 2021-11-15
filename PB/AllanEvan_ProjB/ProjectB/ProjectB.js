@@ -79,6 +79,9 @@ function animate() {
   animateBoxes(time);
   animateProp(time);
   
+  var buildingsShown = document.getElementById("buildingsShown").checked;
+  Animation.nodes["buildings"].enabled = buildingsShown;
+  
   if (document.getElementById("perspectiveOnArm").checked) {
     attachCameraToNode(Context.cameras[0], Animation.nodes['l7']);
   } else if (document.getElementById("perspectiveOnPlane").checked) {
@@ -285,22 +288,24 @@ function initSceneGraph() {
 
   var planeNode = new SceneGraphNode("plane", topNode, new Pos(3.0, 3.0, 1.0), new Quaternion(), new Scale(1.0, 1.0, 1.0), planeMesh);
   
+  var buildingsNode = new SceneGraphNode("buildings", topNode, new Pos(), new Quaternion(), new Scale(1.0, 1.0, 1.0));
   for (var x = -3; x < 0; ++x) {
     for (var y = 0; y < 3; ++y) {
-      buildingNode = new SceneGraphNode("building" + x + "_" + y, topNode, new Pos(x, y, 0), QuatFromEuler(0, 0, Math.floor(Math.random() * 4) * 90), new Scale(0.25, 0.25, 0.25), buildingMeshes[Math.floor(Math.random() * buildingMeshes.length)]);
+      buildingNode = new SceneGraphNode("building" + x + "_" + y, buildingsNode, new Pos(x, y, 0), QuatFromEuler(0, 0, Math.floor(Math.random() * 4) * 90), new Scale(0.25, 0.25, 0.25), buildingMeshes[Math.floor(Math.random() * buildingMeshes.length)]);
     }
   }
 
   Context.sceneGraph = topNode;
   console.log("Full Graph: ",topNode);
   console.log("Name Graph: ", getNameGraph(topNode));
+  console.log("Dot string: ", getSceneGraphDotString(topNode));
 }
 
 /**
  * Creates a mesh for a circle. Used for the top and bottom of arm parts.
  */
 function initCircleMesh(numCircleParts) {
-  var circleMesh = new Mesh(gl.TRIANGLE_FAN);
+  var circleMesh = new Mesh(gl.TRIANGLE_FAN, "Circle");
   circleMesh.verts = [new Vertex(new Pos(), new Color(1.0, 1.0, 1.0))];
   for (i = 0; i <= numCircleParts; ++i) {
     rads = 2.0 * Math.PI / numCircleParts * i;
@@ -318,7 +323,7 @@ function initCircleMesh(numCircleParts) {
  * Creates a mesh for the side of a cyllinder. Used for the sides of arm parts.
  */
 function initCyllinderSideMesh(numCircleParts) {
-  var cyllinderMesh = new Mesh(gl.TRIANGLE_STRIP);
+  var cyllinderMesh = new Mesh(gl.TRIANGLE_STRIP, "CyllinderSide");
   for (i = 0; i <= numCircleParts; ++i) {
     rads = 2.0 * Math.PI / numCircleParts * i;
     rgb = HSVtoRGB(i / numCircleParts, 1, 1);
@@ -336,7 +341,7 @@ function initCyllinderSideMesh(numCircleParts) {
  * Creates the pointy box mesh.
  */
 function initHouseMesh() {
-  var houseMesh = new Mesh(gl.TRIANGLES);
+  var houseMesh = new Mesh(gl.TRIANGLES, "House");
   houseMesh.verts = [
     new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(0.0, 1.0, 1.0)),
     new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 1.0, 1.0)),
@@ -396,7 +401,7 @@ function initHouseMesh() {
  * Creates a mesh for the grid on the ground.
  */
 function initGridMesh(xmin, xmax, ymin, ymax, numlines) {
-  var gridMesh = new Mesh(gl.LINES);
+  var gridMesh = new Mesh(gl.LINES, "Grid");
 
   for (x = xmin; x <= xmax; x += (xmax - xmin) / (numlines - 1)) {
     gridMesh.verts.push(new Vertex(new Pos(x, ymin, 0.0), new Color(1.0, 1.0, 0.3)));
@@ -415,7 +420,7 @@ function initGridMesh(xmin, xmax, ymin, ymax, numlines) {
  * Creates a mesh for the x,y,z axes.
  */
 function initAxesMesh() {
-  var axesMesh = new Mesh(gl.LINES);
+  var axesMesh = new Mesh(gl.LINES, "Axes");
 
   axesMesh.verts.push(new Vertex(new Pos(0.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0)));
   axesMesh.verts.push(new Vertex(new Pos(1.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0)));
@@ -433,7 +438,7 @@ function initAxesMesh() {
  * Creates the plane mesh.
  */
 function initPlaneMesh() {
-  var planeMesh = new Mesh(gl.TRIANGLES);
+  var planeMesh = new Mesh(gl.TRIANGLES, "Plane");
 
   /*
    * Fuselage
@@ -624,7 +629,7 @@ function planeVertex(pos) {
  * Creates a black box mesh.
  */
 function initBlackBoxMesh() {
-   var boxMesh = new Mesh(gl.TRIANGLES);
+   var boxMesh = new Mesh(gl.TRIANGLES, "BlackBox");
 
    boxMesh.verts = [
     new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
@@ -674,7 +679,7 @@ function initBlackBoxMesh() {
 }
 
 function initBuildingMesh(numFloors) {
-  var buildingMesh = new Mesh(gl.TRIANGLES);
+  var buildingMesh = new Mesh(gl.TRIANGLES, "Building" + numFloors);
   
   buildingMesh.verts = [
     // Bottom face
