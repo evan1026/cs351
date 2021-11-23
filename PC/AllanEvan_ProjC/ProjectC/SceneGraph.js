@@ -1,20 +1,33 @@
-/**
- * Additions to cuon-matrix-quat library
- */
+/*****************************************
+ * Additions to cuon-matrix-quat library *
+ *****************************************/
 
+/**
+ * Creates a rotation matrix from the quaternion and then
+ * concatenates it with the given matrix.
+ */
 Matrix4.prototype.rotateFromQuat = function(quat) {
   quat.normalize();
   return this.concat(new Matrix4().setFromQuat(quat.x, quat.y, quat.z, quat.w));
 };
 
+/**
+ * Rotates a quaternion by a given angle around an axis.
+ */
 Quaternion.prototype.rotateFromAxisAngle = function(ax, ay, az, angle) {
   return this.multiplySelf(new Quaternion().setFromAxisAngle(ax, ay, az, angle));
 };
 
-Quaternion.prototype.rotateFromEuler = function(a1, a2, a3) {
-  return this.multiplySelf(new Quaternion().setFromEuler(a1, a2, a3));
+/**
+ * Uses pitch, yaw, and roll to rotate a quaternion.
+ */
+Quaternion.prototype.rotateFromEuler = function(pitch, yaw, roll) {
+  return this.multiplySelf(new Quaternion().setFromEuler(pitch, yaw, roll));
 };
 
+/**
+ * Calculates pitch, yaw, and roll in radians from a quaternion.
+ */
 Quaternion.prototype.toEulerRad = function() {
   var out = new Vec3(0, 0, 0);
 
@@ -38,6 +51,9 @@ Quaternion.prototype.toEulerRad = function() {
   return out;
 }
 
+/**
+ * Calculates pitch, yaw, and roll in degrees from a quaternion.
+ */
 Quaternion.prototype.toEulerDeg = function() {
   var out = this.toEulerRad();
   out.x *= 180 / Math.PI;
@@ -46,11 +62,14 @@ Quaternion.prototype.toEulerDeg = function() {
   return out;
 }
 
-Quaternion.prototype.setFromEuler = function(alpha, beta, gamma) {
+/**
+ * Sets a quaternion's rotate from pitch, yaw, and roll.
+ */
+Quaternion.prototype.setFromEuler = function(pitch, yaw, roll) {
   var quat = new Quaternion();
-  quat.rotateFromAxisAngle(1, 0, 0, alpha);
-  quat.rotateFromAxisAngle(0, 1, 0, beta);
-  quat.rotateFromAxisAngle(0, 0, 1, gamma);
+  quat.rotateFromAxisAngle(1, 0, 0, pitch);
+  quat.rotateFromAxisAngle(0, 1, 0, yaw);
+  quat.rotateFromAxisAngle(0, 0, 1, roll);
 
   this.x = quat.x;
   this.y = quat.y;
@@ -60,17 +79,27 @@ Quaternion.prototype.setFromEuler = function(alpha, beta, gamma) {
   return this;
 };
 
+/**
+ * Constructs a new quaternion from a given axis and angle.
+ */
 function QuatFromAxisAngle(ax, ay, az, angle) {
   var quat = new Quaternion();
   quat.setFromAxisAngle(ax, ay, az, angle);
   return quat;
 }
 
-function QuatFromEuler(a1, a2, a3) {
+/**
+ * Constructs a new quaternion from pitch, yaw, and roll.
+ */
+function QuatFromEuler(pitch, yaw, roll) {
   var quat = new Quaternion();
-  quat.setFromEuler(a1, a2, a3);
+  quat.setFromEuler(pitch, yaw, roll);
   return quat;
 }
+
+/**************
+ * Other Code *
+ **************/
 
 /**
  * Basic 3-tuple
@@ -80,6 +109,9 @@ class Vec3 {
   y;
   z;
 
+  /**
+   * Can either pass another vector; values for x, y, and z; or nothing.
+   */
   constructor(x, y, z) {
     if (y === undefined && z === undefined) {
       if (x === undefined) {
@@ -98,36 +130,66 @@ class Vec3 {
     }
   }
 
+  /**
+   * Create alias r for colors
+   */
   get r() {
     return this.x;
   }
 
+  /**
+   * Create alias g for colors
+   */
   get g() {
     return this.y;
   }
 
+  /**
+   * Create alias b for colors
+   */
   get b() {
     return this.z;
   }
 
+  /**
+   * Adds two vectors together and returns a new vector with the result
+   */
   add(other) {
     return new Vec3(this.x + other.x, this.y + other.y, this.z + other.z);
   }
 
+  /**
+   * Subtracts two vectors from eachother and returns a new vector with the result
+   */
   subtract(other) {
     return this.add(new Vec3(-other.x, -other.y, -other.z));
   }
 
+  /**
+   * Returns a new vector pointing in the same direction as this one but with a magnitude of 1
+   */
   normalized() {
     return this.multiply(1 / this.magnitude);
   }
 
+  /**
+   * Scales this vector by a given amount
+   */
   multiply(amount) {
     return new Vec3(this.x * amount, this.y * amount, this.z * amount);
   }
 
+  /**
+   * Gets the magnitude of the vector
+   */
   get magnitude() {
     return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+  }
+
+  cross(vector) {
+    return new Vec3(this.y * vector.z - this.z * vector.y,
+                    this.z * vector.x - this.x * vector.z,
+                    this.x * vector.y - this.y * vector.x);
   }
 }
 
@@ -215,13 +277,13 @@ class SceneGraphNode {
     Animation.nodes[name] = this;
 
     if (pos === undefined || pos === null) {
-      this.pos = new Pos(0, 0, 0);
+      this.pos = new Pos();
     } else {
       this.pos = pos;
     }
 
     if (rot === undefined || rot === null) {
-      this.rot = new Quaternion(0, 0, 0, 1);
+      this.rot = new Quaternion();
     } else {
       this.rot = rot;
     }
@@ -245,6 +307,9 @@ var SceneGraph = SceneGraphNode;
  * are loaded onto the GPU.
  *
  * TODO: Support for multiple render programs
+ * TODO: Retrieve attributes automatically
+ *          - Also correlate with Vertex object
+ *          - Maybe use it to build the vertex object? But then can I guarantee the order of attributes?
  */
 class RenderProgram {
   static vertShader;
@@ -260,10 +325,9 @@ class RenderProgram {
 class Context {
   static canvas;
   static sceneGraph;
-  static vboId;
+  static vboId;  // TODO should I support multiple VBOs? Maybe each mesh keeps track of which one it is in/should be in?
   static renderProgram = new RenderProgram();
   static fps = 30;
-  static lastAnimationTick = Date.now();
   static cameras = [];
 }
 
@@ -275,18 +339,22 @@ class Context {
  */
 class Animation {
   static nodes = {};
+  static lastTick = Date.now();
 }
 
+/**
+ * Data related to a camera
+ */
 class Camera {
   viewport;
-  applyProjection;
+  applyProjection; // This is a function which takes in a matrix and applies the projection to it
   pos;
   lookDir;
   up;
 
   constructor() {
     this.viewport = new Viewport();
-    this.pos = new Pos(0, 0, 0);
+    this.pos = new Pos();
     this.lookDir = new Pos(1, 0, 0);
     this.up = new Pos(0, 0, 1);
   }
@@ -313,7 +381,7 @@ class Camera {
     if (lockUp === undefined) {
       lockUp = true;
     }
-    
+
     var fwd = new Vec3(this.lookDir);
     if (lockForward) {
       fwd.z = 0;
@@ -342,12 +410,12 @@ class Camera {
     if (constrainPitch === undefined) {
       constrainPitch = true;
     }
-    
+
     var right = this.right;
     var fwd = this.lookDir;
 
     var pitchRotation = QuatFromAxisAngle(right.x, right.y, right.z, pitch);
-    var yawRotation = QuatFromAxisAngle(0, 0, 1, yaw);
+    var yawRotation = QuatFromAxisAngle(0, 0, 1, yaw); // TODO if we're in a free cam/plane mode, this might work better around the up vector?
     var rollRotation = QuatFromAxisAngle(fwd.x, fwd.y, fwd.z, roll);
 
     var prevLookDir = new Pos(this.lookDir);
@@ -355,29 +423,50 @@ class Camera {
 
     pitchRotation.multiplyVector3(this.lookDir);
     pitchRotation.multiplyVector3(this.up);
-    
+
     if (constrainPitch && this.up.z < 0) {
       this.lookDir = prevLookDir;
       this.up = prevUp;
     }
-    
+
     yawRotation.multiplyVector3(this.lookDir);
     yawRotation.multiplyVector3(this.up);
-    
+
     rollRotation.multiplyVector3(this.lookDir);
     rollRotation.multiplyVector3(this.up);
-    
+
+    this.fixVectors();
+
   }
 
   get right() {
-    var lookDirVector = new Vector3([this.lookDir.x, this.lookDir.y, this.lookDir.z]);
-    var upVector = new Vector3([this.up.x, this.up.y, this.up.z]);
-    var rightVector = lookDirVector.cross(upVector);
-    var right = new Vec3(rightVector.elements[0], rightVector.elements[1], rightVector.elements[2]);
-    return right;
+    return this.lookDir.cross(this.up);
+  }
+
+  /**
+   * Floating point errors can make it so lookDir and up aren't at right angles, which would lead to
+   * weirdness if it accumulates enough. This recalculates them by first using the cross product to
+   * find the right vector, and then crossing that with the forward vector to get the new up vector.
+   * If this is done frequently, it won't make big enough changes for the user to notice, but it
+   * will ensure the vectors are always at right angles.
+   */
+  fixVectors() {
+    this.up = this.right.cross(this.lookDir);
   }
 }
 
+/**
+ * A viewport is a rectangle on the screen that gets drawn into in some way. Each
+ * camera has a viewport. In most cases, the default constructor will be
+ * sufficient (this is a viewport that takes up the whole screen). For other cases,
+ * x, y, width, height, and mode can be set. x and y choose the screen space
+ * coordinates of the top left corner of the viewport. Width and height are
+ * the width and height of the viewport. Mode determines how these values are
+ * interpreted. If mode == "relative", then x, y, width, and height are considered
+ * to be values from 0 to 1 representing the percentage of the total screen size in
+ * that direction. If mode == "absolute", then they are considered to be exact pixel
+ * values.
+ */
 class Viewport {
   x;
   y;
@@ -388,8 +477,8 @@ class Viewport {
   constructor() {
     this.x = 0;
     this.y = 0;
-    this.width = 0;
-    this.height = 0;
+    this.width = 1;
+    this.height = 1;
     this.mode = "relative";
   }
 }
@@ -450,7 +539,7 @@ function drawNode(modelMatrix, node, scale) {
   if (node.mesh) {
     pushMatrix(modelMatrix);
     modelMatrix.scale(scale.x, scale.y, scale.z);
-    gl.uniformMatrix4fv(Context.renderProgram.attribIds['u_ModelMatrix'], false, modelMatrix.elements);
+    gl.uniformMatrix4fv(Context.renderProgram.attribIds['u_ModelMatrix'], false, modelMatrix.elements);  // TODO probably shouldn't specify the name of a uniform in a library
     gl.drawArrays(node.mesh.renderType, node.mesh.vboStart, node.mesh.vboCount);
     modelMatrix = popMatrix();
   }
@@ -509,14 +598,23 @@ function drawAll() {
   }
 }
 
+/**
+ * An applyProjection candidate (see the Camera class) which applies an orthographic projection
+ */
 function applyOrthoProjection(modelMatrix, left, right, bottom, top, near, far) {
   modelMatrix.ortho(left, right, bottom, top, near, far);
 }
 
+/**
+ * An applyProjection candidate (see the Camera class) which applies an perspective projection given frustum values
+ */
 function applyFrustumProjection(modelMatrix, left, right, bottom, top, near, far) {
   modelMatrix.frustum(left, right, bottom, top, near, far);
 }
 
+/**
+ * An applyProjection candidate (see the Camera class) which applies an perspective projection given fov and aspect ratio
+ */
 function applyPerspectiveProjection(modelMatrix, fovy, aspect, near, far) {
   modelMatrix.perspective(fovy, aspect, near, far);
 }
@@ -571,9 +669,13 @@ function getNameGraphHelper(topNode) {
   return currNode;
 }
 
+/**
+ * Calculates the transformation matrix that transforms from model coords to world coords for a given node
+ * TODO or is it the other way? gotta think
+ */
 function getTransform(targetNode) {
   var nodePath = getNodePath(targetNode);
-  
+
   var currNode = Context.sceneGraph;
   var modelMatrix = new Matrix4();
   var scale = new Scale(1.0, 1.0, 1.0);
@@ -589,6 +691,9 @@ function getTransform(targetNode) {
   return modelMatrix;
 }
 
+/**
+ * Finds the path from the root node to the given node
+ */
 function getNodePath(targetNode) {
   var currNode = targetNode;
   var path = [];
@@ -601,49 +706,64 @@ function getNodePath(targetNode) {
   return path;
 }
 
+/**
+ * Moves the camera to the location of a node.
+ *
+ * extraMove - An object with values {fwd, right, up} that describes how to move after the camera has been moved to
+ *             the object's origin, rotated to the object's orientation, and then rotated by the amount specified
+ *             by extraRot
+ * extraRot - An objet with values {pitch, yaw, roll} that describes how much to rotate the camera by after it has
+ *            been moved to the object's origin and rotated to the object's orientation
+ */
 function attachCameraToNode(camera, node, extraMove, extraRot) {
   var l7Transform = getTransform(node);
-  
+
   var pos = new Vector4([0, 0, 0, 1]);
   var lookAt = new Vector4([1, 0, 0, 1]);
   var upPos = new Vector4([0, 0, 1, 1]);
-  
+
   if (extraRot) {
     var quat = QuatFromEuler(extraRot.pitch, extraRot.roll, extraRot.yaw);
     l7Transform.rotateFromQuat(quat);
   }
-  
+
   pos = l7Transform.multiplyVector4(pos);
   lookAt = l7Transform.multiplyVector4(lookAt);
   upPos = l7Transform.multiplyVector4(upPos);
-  
+
   pos = new Pos(pos.elements[0], pos.elements[1], pos.elements[2]);
   lookAt = new Pos(lookAt.elements[0], lookAt.elements[1], lookAt.elements[2]);
   upPos = new Pos(upPos.elements[0], upPos.elements[1], upPos.elements[2]);
-  
+
   var lookDir = lookAt.subtract(pos);
   var up = upPos.subtract(pos);
-  
+
   camera.pos = pos;
   camera.lookDir = lookDir;
   camera.up = up;
-  
+
   if (extraMove) {
     camera.move(extraMove.fwd, extraMove.right, extraMove.up, false, false, false);
   }
 
 }
 
+/**
+ * Calculates a dot graph for the scene graph and returns the code for it as a string
+ */
 function getSceneGraphDotString(topNode) {
   var dotString = "digraph G {\n    graph [pad=\"0.5\", nodesep=\"1\", ranksep=\"5\"];\n";
   var output = getSceneGraphDotStringSubGraph(topNode, 0, 1);
   dotString += output.dotString;
   dotString += getSceneGraphDotStringMeshes(topNode);
   dotString += "}\n";
-  
+
   return dotString;
 }
 
+/**
+ * Helper function for getSceneGraphDotString which can recursively handle nodes
+ */
 function getSceneGraphDotStringSubGraph(topNode, clusterCount, indent) {
   var dotString = "";
   var thisNodeTransform = topNode.name.replace("-", "_") + "Transform";
@@ -668,27 +788,30 @@ function getSceneGraphDotStringSubGraph(topNode, clusterCount, indent) {
   return {dotString: dotString, clusterCount: clusterCount};
 }
 
+/**
+ * Helper function for getSceneGraphDotString which outputs mesh nodes in the dot graph
+ */
 function getSceneGraphDotStringMeshes(topNode, coveredMeshes) {
   var dotString = "";
-  
+
   if (coveredMeshes === undefined) {
     coveredMeshes = new Set();
   }
-  
+
   if (topNode.mesh) {
     coveredMeshes.add(topNode.mesh);
     dotString += "    " + topNode.name.replace("-", "_") + "Transform" + " -> " + topNode.mesh.name.replace("-", "_") + "Mesh [color=firebrick4];\n";
   }
-  
+
   for (child of topNode.children) {
     dotString += getSceneGraphDotStringMeshes(child, coveredMeshes);
   }
-  
+
   if (topNode.parent === undefined) {
     for (mesh of coveredMeshes) {
       dotString += "    " + mesh.name.replace("-", "_") + "Mesh [fillcolor=firebrick4, shape=trapezium, style=filled];\n";
     }
   }
-  
+
   return dotString;
 }
