@@ -207,15 +207,23 @@ var Color = Vec3;
 class Vertex {
   pos;
   color;
+  normal;
 
-  constructor(pos, color) {
+  constructor(pos, color, normal) {
     this.pos = pos;
     this.color = color;
+
+    if (normal) {
+      this.normal = normal;
+    } else {
+      this.normal = new Pos(1, 0, 0);
+    }
   }
 
-  static primsPerVertex = 7;
+  static primsPerVertex = 10;
   static primsPerPos = 4;
   static primsPerColor = 3;
+  static primsPerNormal = 3;
   static primSize;
   static primType;
   static get stride() {
@@ -502,7 +510,7 @@ function buildBuffer(graphNode, currBuffer) {
         if (vertex.color === undefined) {
           console.log(vertex);
         }
-        currBuffer.push(vertex.pos.x, vertex.pos.y, vertex.pos.z, 1.0, vertex.color.r, vertex.color.g, vertex.color.b);
+        currBuffer.push(vertex.pos.x, vertex.pos.y, vertex.pos.z, 1.0, vertex.color.r, vertex.color.g, vertex.color.b, vertex.normal.x, vertex.normal.y, vertex.normal.z);
       }
       graphNode.mesh.vboCount = currBuffer.length / Vertex.primsPerVertex - graphNode.mesh.vboStart;
     }
@@ -540,6 +548,11 @@ function drawNode(modelMatrix, node, scale) {
     pushMatrix(modelMatrix);
     modelMatrix.scale(scale.x, scale.y, scale.z);
     gl.uniformMatrix4fv(Context.renderProgram.attribIds['u_ModelMatrix'], false, modelMatrix.elements);  // TODO probably shouldn't specify the name of a uniform in a library
+
+    var normalMatrix = new Matrix4(modelMatrix);
+    normalMatrix.invert().transpose();
+    gl.uniformMatrix4fv(Context.renderProgram.attribIds['u_NormalMatrix'], false, normalMatrix.elements);
+
     gl.drawArrays(node.mesh.renderType, node.mesh.vboStart, node.mesh.vboCount);
     modelMatrix = popMatrix();
   }
@@ -586,14 +599,18 @@ function drawAll() {
 
     gl.viewport(camX, camY, camWidth, camHeight);
     modelMatrix = new Matrix4();
+    projectionMatrix = new Matrix4();
     if (camera.applyProjection) {
-      camera.applyProjection(modelMatrix, camWidth, camHeight);
+      camera.applyProjection(projectionMatrix, camWidth, camHeight);
     }
 
     var lookAt = camera.pos.add(camera.lookDir);
-    modelMatrix.lookAt(camera.pos.x,    camera.pos.y,    camera.pos.z,
-                       lookAt.x,        lookAt.y,        lookAt.z,
-                       camera.up.x,     camera.up.y,     camera.up.z);
+    projectionMatrix.lookAt(camera.pos.x,    camera.pos.y,    camera.pos.z,
+                            lookAt.x,        lookAt.y,        lookAt.z,
+                            camera.up.x,     camera.up.y,     camera.up.z);
+
+    gl.uniformMatrix4fv(Context.renderProgram.attribIds['u_ProjectionMatrix'], false, projectionMatrix.elements);
+
     drawNode(modelMatrix, Context.sceneGraph);
   }
 }

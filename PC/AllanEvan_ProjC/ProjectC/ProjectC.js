@@ -1,14 +1,23 @@
 RenderProgram.vertShader = `
     uniform mat4 u_ModelMatrix;
+    uniform mat4 u_ProjectionMatrix;
+    uniform mat4 u_NormalMatrix;
     uniform vec4 u_ColorOverride;
     attribute vec4 a_Position;
     attribute vec3 a_Color;
+    attribute vec3 a_Normal;
     varying vec4 v_Color;
     void main() {
-      gl_Position = u_ModelMatrix * a_Position;
+      vec3 transformedNormal = normalize(vec3(u_NormalMatrix * vec4(a_Normal, 0.0)));
+      gl_Position = u_ProjectionMatrix * u_ModelMatrix * a_Position + 0.03 * vec4(transformedNormal, 0.0);
       gl_PointSize = 10.0;
 
-      vec4 a_Color4 = vec4(a_Color.r, a_Color.g, a_Color.b, 1.0);
+      //vec4 a_Color4 = vec4(a_Color.r, a_Color.g, a_Color.b, 1.0);
+      vec3 normalColor = abs(transformedNormal);
+      vec4 a_Color4 = vec4(normalColor + 0.001 * a_Color, 1.0);
+      if (all(equal(transformedNormal, vec3(0.0, 0.0, 0.0)))) {
+        a_Color4 = vec4(1, 1, 1, 1);
+      }
       v_Color = mix(u_ColorOverride, a_Color4, 1.0 - u_ColorOverride.a);
     }`;
 
@@ -245,7 +254,7 @@ function tick() {
  * Creates the full scene graph.
  */
 function initSceneGraph() {
-  var numCircleParts = 100;
+  var numCircleParts = 10;
   var circleMesh = initCircleMesh(numCircleParts);
   var cyllinderMesh = initCyllinderSideMesh(numCircleParts);
   var houseMesh = initHouseMesh();
@@ -306,14 +315,15 @@ function initSceneGraph() {
  */
 function initCircleMesh(numCircleParts) {
   var circleMesh = new Mesh(gl.TRIANGLE_FAN, "Circle");
-  circleMesh.verts = [new Vertex(new Pos(), new Color(1.0, 1.0, 1.0))];
+  circleMesh.verts = [new Vertex(new Pos(), new Color(1.0, 1.0, 1.0), new Vec3(0, 0, 1))];
   for (i = 0; i <= numCircleParts; ++i) {
     rads = 2.0 * Math.PI / numCircleParts * i;
     rgb = HSVtoRGB(i / numCircleParts, 1, 1);
 
     pos = new Pos(Math.cos(rads), Math.sin(rads), 0.0);
     color = new Color(rgb.r, rgb.g, rgb.b);
-    circleMesh.verts.push(new Vertex(pos, color));
+    normal = new Vec3(0, 0, 1);
+    circleMesh.verts.push(new Vertex(pos, color, normal));
   }
 
   return circleMesh;
@@ -323,7 +333,7 @@ function initCircleMesh(numCircleParts) {
  * Creates a mesh for the side of a cyllinder. Used for the sides of arm parts.
  */
 function initCyllinderSideMesh(numCircleParts) {
-  var cyllinderMesh = new Mesh(gl.TRIANGLE_STRIP, "CyllinderSide");
+  var cyllinderMesh = new Mesh(gl.TRIANGLES, "CyllinderSide");
   for (i = 0; i <= numCircleParts; ++i) {
     rads = 2.0 * Math.PI / numCircleParts * i;
     rgb = HSVtoRGB(i / numCircleParts, 1, 1);
@@ -331,10 +341,22 @@ function initCyllinderSideMesh(numCircleParts) {
     pos1 = new Pos(Math.cos(rads), Math.sin(rads), 0.0);
     pos2 = new Pos(0.5 * Math.cos(rads), 0.5 * Math.sin(rads), 1.0);
     color = new Color(rgb.r, rgb.g, rgb.b);
-    cyllinderMesh.verts.push(new Vertex(pos1, color), new Vertex(pos2, color));
+    normal = new Vec3(Math.cos(rads), Math.sin(rads), 0.0);
+    pushTriangleStrip(cyllinderMesh.verts, new Vertex(pos1, color, normal));
+    pushTriangleStrip(cyllinderMesh.verts, new Vertex(pos2, color, normal));
   }
 
   return cyllinderMesh;
+}
+
+function pushTriangleStrip(verts, vert) {
+  var length = verts.length;
+  if (length > 2) {
+    var prev1 = verts[length - 2];
+    var prev2 = verts[length - 1];
+    verts.push(prev1, prev2);
+  }
+  verts.push(vert);
 }
 
 /**
@@ -900,10 +922,33 @@ function initVertexBuffer() {
   gl.vertexAttribPointer(a_Color, Vertex.primsPerColor, Vertex.primType, false /* Normalize */, Vertex.stride, Vertex.primSize * Vertex.primsPerPos);
   gl.enableVertexAttribArray(a_Color);
 
+  var a_Normal = gl.getAttribLocation(gl.program, 'a_Normal');
+  Context.renderProgram.attribIds['a_Normal'] = a_Normal;
+  if(a_Normal < 0) {
+    console.log('Failed to get the storage location of a_Normal');
+    return -1;
+  }
+  gl.vertexAttribPointer(a_Normal, Vertex.primsPerNormal, Vertex.primType, false /* Normalize */, Vertex.stride, Vertex.primSize * Vertex.primsPerPos + Vertex.primSize * Vertex.primsPerColor);
+  gl.enableVertexAttribArray(a_Normal);
+
   modelMatrixId = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
   Context.renderProgram.attribIds['u_ModelMatrix'] = modelMatrixId;
   if (!modelMatrixId) {
     console.log('Failed to get the storage location of u_ModelMatrix');
+    return -1;
+  }
+
+  projectionMatrixId = gl.getUniformLocation(gl.program, 'u_ProjectionMatrix');
+  Context.renderProgram.attribIds['u_ProjectionMatrix'] = projectionMatrixId;
+  if (!projectionMatrixId) {
+    console.log('Failed to get the storage location of u_ProjectionMatrix');
+    return -1;
+  }
+
+  normalMatrixId = gl.getUniformLocation(gl.program, 'u_NormalMatrix');
+  Context.renderProgram.attribIds['u_NormalMatrix'] = normalMatrixId;
+  if (!normalMatrixId) {
+    console.log('Failed to get the storage location of u_NormalMatrix');
     return -1;
   }
 
