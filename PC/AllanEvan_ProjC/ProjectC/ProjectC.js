@@ -64,7 +64,7 @@ function main() {
  */
 function animate() {
   var time = Date.now();
-  var elapsed = time - Context.lastAnimationTick;
+  var elapsed = time - Animation.lastTick;
 
   translateCamera(elapsed);
   rotateCamera(elapsed);
@@ -94,7 +94,7 @@ function animate() {
 
   updateFramerate(elapsed);
 
-  Context.lastAnimationTick = time;
+  Animation.lastTick = time;
 }
 
 /**
@@ -107,7 +107,7 @@ function animateArm(time) {
   Animation.nodes["l1"].enabled = armShown;
 
   if (armAnimate) {
-    Animation.armTime += (time - Context.lastAnimationTick);
+    Animation.armTime += (time - Animation.lastTick);
   }
   armTime = Animation.armTime;
 
@@ -131,8 +131,8 @@ function animateBoxes(time) {
 
   Animation.boxStep = 0;
   if (boxAnimate) {
-    Animation.boxTime += (time - Context.lastAnimationTick);
-    Animation.boxStep = time - Context.lastAnimationTick;
+    Animation.boxTime += (time - Animation.lastTick);
+    Animation.boxStep = time - Animation.lastTick;
   }
 
   boxTime = Animation.boxTime;
