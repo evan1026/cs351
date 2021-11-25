@@ -1,4 +1,4 @@
-RenderProgram.vertShader = `
+vertShader = `
     uniform mat4 u_ModelMatrix;
     uniform mat4 u_ProjectionMatrix;
     uniform mat4 u_NormalMatrix;
@@ -24,13 +24,14 @@ RenderProgram.vertShader = `
       v_Color = mix(u_ColorOverride, a_Color4, 1.0 - u_ColorOverride.a);
     }`;
 
-RenderProgram.fragShader = `
+fragShader = `
     precision mediump float;
     varying vec4 v_Color;
     void main() {
       gl_FragColor = v_Color;
     }`;
 
+attribs = ['a_Position', 'a_Color', 'a_Normal', 'u_ModelMatrix', 'u_ProjectionMatrix', 'u_NormalMatrix', 'u_ColorOverride', 'u_ShowNormals'];
 
 class Event {
   static mouseDrag = {x: 0, y: 0, currentlyDragging: false};
@@ -42,9 +43,11 @@ class Event {
 function main() {
   var canvas = document.getElementById('webgl');
 
-  if (!init(canvas, false /* debug mode */)) {
+  if (!init(canvas, false /* debug mode */, vertShader, fragShader)) {
     return;
   }
+  
+  Context.renderProgram.verifyAttribs(attribs);
 
   initSceneGraph();
   initCameras();
@@ -910,67 +913,14 @@ function initVertexBuffer() {
 
   Vertex.primSize = buffer.BYTES_PER_ELEMENT;
 
-  var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-  Context.renderProgram.attribIds['a_Position'] = a_Position;
-  if (a_Position < 0) {
-    console.log('Failed to get the storage location of a_Position');
-    return -1;
-  }
-  gl.vertexAttribPointer(a_Position, Vertex.primsPerPos, Vertex.primType, false /* Normalize */, Vertex.stride, 0);
-  gl.enableVertexAttribArray(a_Position);
+  gl.vertexAttribPointer(Context.renderProgram.attribIds['a_Position'], Vertex.primsPerPos, Vertex.primType, false /* Normalize */, Vertex.stride, 0);
+  gl.enableVertexAttribArray(Context.renderProgram.attribIds['a_Position']);
 
-  var a_Color = gl.getAttribLocation(gl.program, 'a_Color');
-  Context.renderProgram.attribIds['a_Color'] = a_Color;
-  if(a_Color < 0) {
-    console.log('Failed to get the storage location of a_Color');
-    return -1;
-  }
-  gl.vertexAttribPointer(a_Color, Vertex.primsPerColor, Vertex.primType, false /* Normalize */, Vertex.stride, Vertex.primSize * Vertex.primsPerPos);
-  gl.enableVertexAttribArray(a_Color);
+  gl.vertexAttribPointer(Context.renderProgram.attribIds['a_Color'], Vertex.primsPerColor, Vertex.primType, false /* Normalize */, Vertex.stride, Vertex.primSize * Vertex.primsPerPos);
+  gl.enableVertexAttribArray(Context.renderProgram.attribIds['a_Color']);
 
-  var a_Normal = gl.getAttribLocation(gl.program, 'a_Normal');
-  Context.renderProgram.attribIds['a_Normal'] = a_Normal;
-  if(a_Normal < 0) {
-    console.log('Failed to get the storage location of a_Normal');
-    return -1;
-  }
-  gl.vertexAttribPointer(a_Normal, Vertex.primsPerNormal, Vertex.primType, false /* Normalize */, Vertex.stride, Vertex.primSize * Vertex.primsPerPos + Vertex.primSize * Vertex.primsPerColor);
-  gl.enableVertexAttribArray(a_Normal);
-
-  modelMatrixId = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
-  Context.renderProgram.attribIds['u_ModelMatrix'] = modelMatrixId;
-  if (!modelMatrixId) {
-    console.log('Failed to get the storage location of u_ModelMatrix');
-    return -1;
-  }
-
-  projectionMatrixId = gl.getUniformLocation(gl.program, 'u_ProjectionMatrix');
-  Context.renderProgram.attribIds['u_ProjectionMatrix'] = projectionMatrixId;
-  if (!projectionMatrixId) {
-    console.log('Failed to get the storage location of u_ProjectionMatrix');
-    return -1;
-  }
-
-  normalMatrixId = gl.getUniformLocation(gl.program, 'u_NormalMatrix');
-  Context.renderProgram.attribIds['u_NormalMatrix'] = normalMatrixId;
-  if (!normalMatrixId) {
-    console.log('Failed to get the storage location of u_NormalMatrix');
-    return -1;
-  }
-
-  colorOverrideId = gl.getUniformLocation(gl.program, 'u_ColorOverride');
-  Context.renderProgram.attribIds['u_ColorOverride'] = colorOverrideId;
-  if (!colorOverrideId) {
-    console.log('Failed to get the storage location of u_ColorOverride');
-    return -1;
-  }
-  
-  showNormalsId = gl.getUniformLocation(gl.program, 'u_ShowNormals');
-  Context.renderProgram.attribIds['u_ShowNormals'] = showNormalsId;
-  if (!showNormalsId) {
-    console.log('Failed to get the storage location of u_ShowNormals');
-    return -1;
-  }
+  gl.vertexAttribPointer(Context.renderProgram.attribIds['a_Normal'], Vertex.primsPerNormal, Vertex.primType, false /* Normalize */, Vertex.stride, Vertex.primSize * Vertex.primsPerPos + Vertex.primSize * Vertex.primsPerColor);
+  gl.enableVertexAttribArray(Context.renderProgram.attribIds['a_Normal']);
 
   return bufferValues.length;
 }

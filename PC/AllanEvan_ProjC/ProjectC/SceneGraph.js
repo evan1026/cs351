@@ -315,15 +315,52 @@ var SceneGraph = SceneGraphNode;
  * are loaded onto the GPU.
  *
  * TODO: Support for multiple render programs
- * TODO: Retrieve attributes automatically
+ * TODO: Retrieve attributes automatically -- done
  *          - Also correlate with Vertex object
  *          - Maybe use it to build the vertex object? But then can I guarantee the order of attributes?
  */
 class RenderProgram {
-  static vertShader;
-  static fragShader;
+  vertShader;
+  fragShader;
 
   attribIds = {};
+  
+  constructor(vertShader, fragShader) {
+    this.vertShader = vertShader;
+    this.fragShader = fragShader;
+    
+    var program = createProgram(gl, vertShader, fragShader);
+    if (!program) {
+      throw 'Failed to create render program';
+    }
+
+    gl.useProgram(program);
+    
+    var numAttribs = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
+    for (var i = 0; i < numAttribs; ++i) {
+      var attribInfo = gl.getActiveAttrib(program, i);
+      var index = gl.getAttribLocation(program, attribInfo.name);
+      this.attribIds[attribInfo.name] = index;
+    }
+    
+    var numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+    for (var i = 0; i < numUniforms; ++i) {
+      var attribInfo = gl.getActiveUniform(program, i);
+      var index = gl.getUniformLocation(program, attribInfo.name);
+      this.attribIds[attribInfo.name] = index;
+    }
+  }
+  
+  /**
+   * Utility function to ensure that all of the expected attributes were found
+   */
+  verifyAttribs(attribList) {
+    for (var attrib of attribList) {
+      if (this.attribIds[attrib] === undefined) {
+        throw 'Could not find location of ' + attrib;
+      }
+    }
+  }
 }
 
 /**
@@ -334,7 +371,7 @@ class Context {
   static canvas;
   static sceneGraph;
   static vboId;  // TODO should I support multiple VBOs? Maybe each mesh keeps track of which one it is in/should be in?
-  static renderProgram = new RenderProgram();
+  static renderProgram;
   static fps = 30;
   static cameras = [];
 }
@@ -643,7 +680,7 @@ var gl;
  * Init the rendering library.
  * The canvas argument must be a canvas element on the webpage.
  */
-function init(canvas, debugMode) {
+function init(canvas, debugMode, vertShader, fragShader) {
   Context.canvas = canvas;
 
   gl = getWebGLContext(Context.canvas, debugMode);
@@ -653,9 +690,8 @@ function init(canvas, debugMode) {
     return false;
   }
 
-  if (!initShaders(gl, RenderProgram.vertShader, RenderProgram.fragShader)) {
-    console.log('Failed to intialize shaders.');
-    return;
+  if (vertShader && fragShader) {
+    Context.renderProgram = new RenderProgram(vertShader, fragShader);
   }
 
   gl.enable(gl.DEPTH_TEST);
