@@ -167,6 +167,9 @@ function animate() {
   
   var popOut = document.getElementById("popOut").checked;
   gl.uniform1i(Context.renderProgram.attribIds['u_PopOut'], popOut);
+  
+  var wireframe = document.getElementById("wireframe").checked;
+  Context.wireframe = wireframe;
 
   Animation.lastTick = time;
 }

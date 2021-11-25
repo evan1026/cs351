@@ -273,6 +273,8 @@ class Mesh {
   name = "";
   verts = [];
   renderType;
+  wireframeElementsIndex;
+  wireframeElementsSize;
 
   // These get filled in after the vbo generation
   vboStart;
@@ -413,6 +415,7 @@ class Context {
   static renderProgram; // TODO multiple render programs, and each mesh points to the render program it uses
   static fps = 30;
   static cameras = [];
+  static wireframe = false;
 }
 
 /**
@@ -589,6 +592,7 @@ function buildBuffer(graphNode, currBuffer) {
         currBuffer.push(vertex.pos.x, vertex.pos.y, vertex.pos.z, 1.0, vertex.color.r, vertex.color.g, vertex.color.b, vertex.normal.x, vertex.normal.y, vertex.normal.z);
       }
       graphNode.mesh.vboCount = currBuffer.length / Vertex.primsPerVertex - graphNode.mesh.vboStart;
+      calculateWireframeElements(graphNode.mesh);
     }
 
     for (child of graphNode.children) {
@@ -597,6 +601,28 @@ function buildBuffer(graphNode, currBuffer) {
   }
 
   return currBuffer;
+}
+
+function calculateWireframeElements(mesh) {
+  var wireframeElements;
+  if (mesh.renderType == gl.TRIANGLES) {
+    wireframeElements = [];
+    for (let i = mesh.vboStart; i < mesh.verts.length + mesh.vboStart; i+=3) {
+      wireframeElements.push(i, i + 1, i + 1, i + 2, i + 2, i);
+    }
+  } else if (mesh.renderType == gl.TRIANGLE_FAN) {
+    wireframeElements = [];
+    for (let i = mesh.vboStart + 1; i < mesh.verts.length + mesh.vboStart; ++i) {
+      wireframeElements.push(mesh.vboStart, i, i, i - 1);
+    }
+  }
+  
+  if (wireframeElements) {
+    mesh.wireframeElementsIndex = gl.createBuffer();
+    mesh.wireframeElementsSize = wireframeElements.length;
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.wireframeElementsIndex);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(wireframeElements), gl.STATIC_DRAW);
+  }
 }
 
 /**
@@ -730,7 +756,12 @@ function drawNode(modelMatrix, node, scale) {
       gl.uniformMatrix4fv(Context.renderProgram.attribIds[Context.renderProgram.normalMatrixAttrib], false, normalMatrix.elements);
     }
 
-    gl.drawArrays(node.mesh.renderType, node.mesh.vboStart, node.mesh.vboCount);
+    if (Context.wireframe && node.mesh.wireframeElementsIndex !== undefined) {
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, node.mesh.wireframeElementsIndex);
+      gl.drawElements(gl.LINES, node.mesh.wireframeElementsSize, gl.UNSIGNED_SHORT, 0);
+    } else {
+      gl.drawArrays(node.mesh.renderType, node.mesh.vboStart, node.mesh.vboCount);
+    }
     modelMatrix = popMatrix();
   }
 
