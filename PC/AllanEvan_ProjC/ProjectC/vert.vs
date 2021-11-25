@@ -29,8 +29,8 @@ void main() {
   vec4 a_Color4 = vec4(a_Color.r, a_Color.g, a_Color.b, 1.0);
   
   if (u_ShowNormals) {
-    vec3 normalColor = abs(transformedNormal);
-    a_Color4 = vec4(normalColor + 0.001 * a_Color, 1.0);
+    vec3 normalColor = transformedNormal * 0.5 + vec3(0.5, 0.5, 0.5);
+    a_Color4 = vec4(normalColor, 1.0);
     if (all(equal(transformedNormal, vec3(0.0, 0.0, 0.0)))) {
       a_Color4 = vec4(1, 1, 1, 1);
     }
