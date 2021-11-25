@@ -3,6 +3,7 @@ RenderProgram.vertShader = `
     uniform mat4 u_ProjectionMatrix;
     uniform mat4 u_NormalMatrix;
     uniform vec4 u_ColorOverride;
+    uniform bool u_ShowNormals;
     attribute vec4 a_Position;
     attribute vec3 a_Color;
     attribute vec3 a_Normal;
@@ -12,11 +13,13 @@ RenderProgram.vertShader = `
       gl_Position = u_ProjectionMatrix * u_ModelMatrix * a_Position;// + 0.03 * vec4(transformedNormal, 0.0);
       gl_PointSize = 10.0;
 
-      //vec4 a_Color4 = vec4(a_Color.r, a_Color.g, a_Color.b, 1.0);
-      vec3 normalColor = abs(transformedNormal);
-      vec4 a_Color4 = vec4(normalColor + 0.001 * a_Color, 1.0);
-      if (all(equal(transformedNormal, vec3(0.0, 0.0, 0.0)))) {
-        a_Color4 = vec4(1, 1, 1, 1);
+      vec4 a_Color4 = vec4(a_Color.r, a_Color.g, a_Color.b, 1.0);
+      if (u_ShowNormals) {
+        vec3 normalColor = abs(transformedNormal);
+        a_Color4 = vec4(normalColor + 0.001 * a_Color, 1.0);
+        if (all(equal(transformedNormal, vec3(0.0, 0.0, 0.0)))) {
+          a_Color4 = vec4(1, 1, 1, 1);
+        }
       }
       v_Color = mix(u_ColorOverride, a_Color4, 1.0 - u_ColorOverride.a);
     }`;
@@ -102,6 +105,9 @@ function animate() {
   }
 
   updateFramerate(elapsed);
+  
+  var normalsShown = document.getElementById("normalsShown").checked;
+  gl.uniform1i(Context.renderProgram.attribIds['u_ShowNormals'], normalsShown ? 1 : 0);
 
   Animation.lastTick = time;
 }
@@ -956,6 +962,13 @@ function initVertexBuffer() {
   Context.renderProgram.attribIds['u_ColorOverride'] = colorOverrideId;
   if (!colorOverrideId) {
     console.log('Failed to get the storage location of u_ColorOverride');
+    return -1;
+  }
+  
+  showNormalsId = gl.getUniformLocation(gl.program, 'u_ShowNormals');
+  Context.renderProgram.attribIds['u_ShowNormals'] = showNormalsId;
+  if (!showNormalsId) {
+    console.log('Failed to get the storage location of u_ShowNormals');
     return -1;
   }
 
