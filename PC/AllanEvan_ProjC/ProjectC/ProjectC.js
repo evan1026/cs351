@@ -1,9 +1,10 @@
+// TODO different render program for the grid/axes
+
 vertShader = `
 uniform mat4 u_ModelMatrix;
 uniform mat4 u_ProjectionMatrix;
 uniform mat4 u_NormalMatrix;
 uniform vec4 u_ColorOverride;
-uniform bool u_ShowNormals;
 uniform bool u_PopOut;
 
 attribute vec4 a_Position;
@@ -11,41 +12,75 @@ attribute vec3 a_Color;
 attribute vec3 a_Normal;
 
 varying vec4 v_Color;
+varying vec3 v_Pos;
+varying vec3 v_Normal;
 
 void main() {
-  vec4 position = a_Position;
+  vec4 position = u_ModelMatrix * a_Position;
   vec4 normal = normalize(vec4(a_Normal, 0.0));
-  
-  if (u_PopOut) {
-    position += 0.03 * normal;
-  }
-  
   vec3 transformedNormal = normalize(vec3(u_NormalMatrix * normal));
   
-  gl_Position = u_ProjectionMatrix * u_ModelMatrix * position;
+  if (u_PopOut) {
+    position += 0.03 * vec4(transformedNormal, 0.0);
+  }
+  
+  gl_Position = u_ProjectionMatrix * position;
   gl_PointSize = 10.0;
 
   vec4 a_Color4 = vec4(a_Color.r, a_Color.g, a_Color.b, 1.0);
   
-  if (u_ShowNormals) {
-    vec3 normalColor = transformedNormal * 0.5 + vec3(0.5, 0.5, 0.5);
-    a_Color4 = vec4(normalColor, 1.0);
-    if (all(equal(transformedNormal, vec3(0.0, 0.0, 0.0)))) {
-      a_Color4 = vec4(1, 1, 1, 1);
-    }
-  }
-  
   v_Color = mix(u_ColorOverride, a_Color4, 1.0 - u_ColorOverride.a);
+  v_Pos = vec3(position) / position.w;
+  v_Normal = transformedNormal;
 }`;
 
 fragShader = `
 precision mediump float;
+
+uniform vec3 u_CameraPos;
+uniform bool u_ShowNormals;
+
 varying vec4 v_Color;
+varying vec3 v_Pos;
+varying vec3 v_Normal;
+
 void main() {
-  gl_FragColor = v_Color;
+  if (!u_ShowNormals) {
+    vec3 lightPos = vec3(0.0, 0.0, 10.0);
+    vec3 ambientColor = vec3(0.5, 0.5, 0.5);
+    vec3 diffuseColor = vec3(0.5, 0.5, 0.5);
+    vec3 specularColor = vec3(1.0, 1.0, 1.0);
+    float shininess = 1000.0;
+    float Ka = 1.0;
+    float Kd = 1.0;
+    float Ks = 1.0;
+
+    vec3 N = normalize(v_Normal);
+    vec3 L = normalize(lightPos - v_Pos);
+
+    float diffuse = max(dot(N, L), 0.0);
+    float specular = 0.0;
+    if (diffuse > 0.0) {
+      vec3 R = reflect(-L, N);
+      vec3 V = normalize(u_CameraPos - v_Pos);
+      float specAngle = max(dot(R, V), 0.0);
+      specular = pow(specAngle, shininess);
+    }
+
+    vec4 lighting = vec4(Ka * ambientColor + Kd * diffuse * diffuseColor + Ks * specular * specularColor, 1.0);
+
+    gl_FragColor = v_Color * lighting;
+  } else {
+    vec3 normalColor = normalize(v_Normal) * 0.5 + vec3(0.5, 0.5, 0.5);
+    vec4 a_Color4 = vec4(normalColor, 1.0);
+    if (all(equal(v_Normal, vec3(0.0, 0.0, 0.0)))) {
+      a_Color4 = vec4(1, 1, 1, 1);
+    }
+    gl_FragColor = a_Color4;
+  }
 }`;
 
-attribs = ['a_Position', 'a_Color', 'a_Normal', 'u_ModelMatrix', 'u_ProjectionMatrix', 'u_NormalMatrix', 'u_ColorOverride', 'u_ShowNormals', 'u_PopOut'];
+attribs = ['a_Position', 'a_Color', 'a_Normal', 'u_ModelMatrix', 'u_ProjectionMatrix', 'u_NormalMatrix', 'u_ColorOverride', 'u_ShowNormals', 'u_PopOut', 'u_CameraPos'];
 
 class Event {
   static mouseDrag = {x: 0, y: 0, currentlyDragging: false};
@@ -65,6 +100,7 @@ function main() {
   Context.renderProgram.modelMatrixAttrib = 'u_ModelMatrix';
   Context.renderProgram.normalMatrixAttrib = 'u_NormalMatrix';
   Context.renderProgram.projectionMatrixAttrib = 'u_ProjectionMatrix';
+  Context.renderProgram.cameraPosAttrib = 'u_CameraPos';
 
   initSceneGraph();
   initCameras();
@@ -887,17 +923,17 @@ function initBuildingMesh(numFloors) {
 }
 
 function getGrey() {
-  var greyAmount = 0.65 + Math.random() / 10;
+  var greyAmount = 0.65;// + Math.random() / 10;
   return new Color(greyAmount, greyAmount, greyAmount);
 }
 
 function getYellow() {
-  var yellowAmount = 0.9 + Math.random() / 10;
+  var yellowAmount = 0.9;// + Math.random() / 10;
   return new Color(yellowAmount, yellowAmount, 0.0);
 }
 
 function getBlack() {
-  var greyAmount = 0.0 + Math.random() / 10;
+  var greyAmount = 0.05;// + Math.random() / 10;
   return new Color(greyAmount, greyAmount, greyAmount);
 }
 

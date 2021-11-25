@@ -342,6 +342,7 @@ class RenderProgram {
   modelMatrixAttrib;
   normalMatrixAttrib;
   projectionMatrixAttrib;
+  cameraPosAttrib;
 
   attribIds = {};
   
@@ -391,7 +392,7 @@ class Context {
   static canvas;
   static sceneGraph;
   static vboId;  // TODO should I support multiple VBOs? Maybe each mesh keeps track of which one it is in/should be in?
-  static renderProgram;
+  static renderProgram; // TODO multiple render programs, and each mesh points to the render program it uses
   static fps = 30;
   static cameras = [];
 }
@@ -749,8 +750,13 @@ function drawAll() {
                             lookAt.x,        lookAt.y,        lookAt.z,
                             camera.up.x,     camera.up.y,     camera.up.z);
 
-    if (Context.renderProgram.projectionMatrixAttrib) {
-      gl.uniformMatrix4fv(Context.renderProgram.attribIds[Context.renderProgram.projectionMatrixAttrib], false, projectionMatrix.elements);
+    var renderProgram = Context.renderProgram;
+    if (renderProgram.projectionMatrixAttrib) {
+      gl.uniformMatrix4fv(renderProgram.attribIds[renderProgram.projectionMatrixAttrib], false, projectionMatrix.elements);
+    }
+    
+    if (renderProgram.cameraPosAttrib) {
+      gl.uniform3f(renderProgram.attribIds[renderProgram.cameraPosAttrib], camera.pos.x, camera.pos.y, camera.pos.z);
     }
 
     drawNode(modelMatrix, Context.sceneGraph);
