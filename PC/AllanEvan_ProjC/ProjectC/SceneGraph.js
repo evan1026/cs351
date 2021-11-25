@@ -569,6 +569,46 @@ function buildBuffer(graphNode, currBuffer) {
 }
 
 /**
+ * Calculates normal vectors for all triangles in a mesh. Normals are calculated by
+ * creating vectors for 2 of the sides of the triangle and then taking the cross product
+ * and normalizing it.
+ *
+ * This function only works with meshes that use gl.TRIANGLES and it will throw if
+ * a mesh with a different render type is used.
+ *
+ * Triangles are assumed to have vertices given in counter clockwise order (consistent
+ * with gl.CULL_FACE).
+ */
+function calculateNormals(mesh) {
+  if (mesh.renderType != gl.TRIANGLES) {
+    throw 'Cannot calculate normals for ' + mesh.name + ' - Normals cannot be calculated for anything other than GL_TRIANGLES!';
+  }
+  
+  for (var i = 0; i < mesh.verts.length; i += 3) {
+    let side1 = mesh.verts[i];
+    let side2 = mesh.verts[i+1];
+    let side3 = mesh.verts[i+2];
+    
+    let side12Vec = side2.pos.subtract(side1.pos);
+    let side13Vec = side3.pos.subtract(side1.pos);
+    let normalVec = side12Vec.cross(side13Vec).normalized();
+    
+    side1.normal = new Vec3(normalVec);
+    side2.normal = new Vec3(normalVec);
+    side3.normal = new Vec3(normalVec);
+  }
+}
+
+/**
+ * Calls calculateNormals() on every mesh in the given list of meshes.
+ */
+function calculateAllNormals(meshes) {
+  for (mesh of meshes) {
+    calculateNormals(mesh);
+  }
+}
+
+/**
  * Draws a single graph node and its children. First applies transformations,
  * then renders the mesh if there is one, then calls this function recursively
  * on all of the node's children.

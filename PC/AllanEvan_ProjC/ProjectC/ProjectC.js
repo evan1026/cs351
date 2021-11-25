@@ -282,6 +282,9 @@ function initSceneGraph() {
   var blackBoxMesh = initBlackBoxMesh();
   
   var buildingMeshes = [initBuildingMesh(3), initBuildingMesh(4), initBuildingMesh(5), initBuildingMesh(6), initBuildingMesh(7), initBuildingMesh(8)];
+  
+  calculateAllNormals([cyllinderMesh, houseMesh, planeMesh, blackBoxMesh]);
+  calculateAllNormals(buildingMeshes);
 
   var makeCyllinder = function(name, parent, height, pos, rot, scale) {
     cylNode =       new SceneGraphNode(name,             parent,  pos,                       rot,                      scale,                       null);
@@ -347,8 +350,7 @@ function initCircleMesh(numCircleParts, invert) {
 
     pos = new Pos(Math.cos(rads), Math.sin(rads), 0.0);
     color = new Color(rgb.r, rgb.g, rgb.b);
-    normal = new Vec3(0, 0, 1);
-    circleMesh.verts.push(new Vertex(pos, color, normal));
+    circleMesh.verts.push(new Vertex(pos, color, new Vec3(0, 0, 1)));
   }
 
   return circleMesh;
@@ -368,14 +370,13 @@ function initCyllinderSideMesh(numCircleParts) {
     pos1 = new Pos(Math.cos(rads), Math.sin(rads), 0.0);
     pos2 = new Pos(0.5 * Math.cos(rads), 0.5 * Math.sin(rads), 1.0);
     color = new Color(rgb.r, rgb.g, rgb.b);
-    normal = new Vec3(Math.cos(rads), Math.sin(rads), 0.0);
     
     if (i != 0) {
-      cyllinderMesh.verts.push(prevVertZ0.copy(), new Vertex(pos1, color, normal), prevVertZ1.copy(), prevVertZ1.copy(), new Vertex(pos1, color, normal), new Vertex(pos2, color, normal));
+      cyllinderMesh.verts.push(prevVertZ0.copy(), new Vertex(pos1, color), prevVertZ1.copy(), prevVertZ1.copy(), new Vertex(pos1, color), new Vertex(pos2, color));
     }
     
-    prevVertZ0 = new Vertex(pos1, color, normal);
-    prevVertZ1 = new Vertex(pos2, color, normal);
+    prevVertZ0 = new Vertex(pos1, color);
+    prevVertZ1 = new Vertex(pos2, color);
   }
 
   return cyllinderMesh;
