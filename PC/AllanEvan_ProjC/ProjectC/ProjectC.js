@@ -48,6 +48,9 @@ function main() {
   }
   
   Context.renderProgram.verifyAttribs(attribs);
+  Context.renderProgram.modelMatrixAttrib = 'u_ModelMatrix';
+  Context.renderProgram.normalMatrixAttrib = 'u_NormalMatrix';
+  Context.renderProgram.projectionMatrixAttrib = 'u_ProjectionMatrix';
 
   initSceneGraph();
   initCameras();

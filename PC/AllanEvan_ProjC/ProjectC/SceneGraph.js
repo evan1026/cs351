@@ -322,6 +322,10 @@ var SceneGraph = SceneGraphNode;
 class RenderProgram {
   vertShader;
   fragShader;
+  
+  modelMatrixAttrib;
+  normalMatrixAttrib;
+  projectionMatrixAttrib;
 
   attribIds = {};
   
@@ -583,12 +587,16 @@ function drawNode(modelMatrix, node, scale) {
 
   if (node.mesh) {
     pushMatrix(modelMatrix);
-    modelMatrix.scale(scale.x, scale.y, scale.z);
-    gl.uniformMatrix4fv(Context.renderProgram.attribIds['u_ModelMatrix'], false, modelMatrix.elements);  // TODO probably shouldn't specify the name of a uniform in a library
+    if (Context.renderProgram.modelMatrixAttrib) {
+      modelMatrix.scale(scale.x, scale.y, scale.z);
+      gl.uniformMatrix4fv(Context.renderProgram.attribIds[Context.renderProgram.modelMatrixAttrib], false, modelMatrix.elements);
+    }
 
-    var normalMatrix = new Matrix4(modelMatrix);
-    normalMatrix.invert().transpose();
-    gl.uniformMatrix4fv(Context.renderProgram.attribIds['u_NormalMatrix'], false, normalMatrix.elements);
+    if (Context.renderProgram.normalMatrixAttrib) {
+      var normalMatrix = new Matrix4(modelMatrix);
+      normalMatrix.invert().transpose();
+      gl.uniformMatrix4fv(Context.renderProgram.attribIds[Context.renderProgram.normalMatrixAttrib], false, normalMatrix.elements);
+    }
 
     gl.drawArrays(node.mesh.renderType, node.mesh.vboStart, node.mesh.vboCount);
     modelMatrix = popMatrix();
@@ -646,7 +654,9 @@ function drawAll() {
                             lookAt.x,        lookAt.y,        lookAt.z,
                             camera.up.x,     camera.up.y,     camera.up.z);
 
-    gl.uniformMatrix4fv(Context.renderProgram.attribIds['u_ProjectionMatrix'], false, projectionMatrix.elements);
+    if (Context.renderProgram.projectionMatrixAttrib) {
+      gl.uniformMatrix4fv(Context.renderProgram.attribIds[Context.renderProgram.projectionMatrixAttrib], false, projectionMatrix.elements);
+    }
 
     drawNode(modelMatrix, Context.sceneGraph);
   }
