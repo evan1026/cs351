@@ -186,10 +186,28 @@ class Vec3 {
     return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
   }
 
+  /**
+   * Gets the cross product between vectors
+   */
   cross(vector) {
     return new Vec3(this.y * vector.z - this.z * vector.y,
                     this.z * vector.x - this.x * vector.z,
                     this.x * vector.y - this.y * vector.x);
+  }
+  
+  /**
+   * Gets the dot product between two vectors
+   */
+  dot(vector) {
+    return this.x * vector.x + this.y * vector.y + this.z * vector.z;
+  }
+  
+  /**
+   * Finds the angle between two vectors by taking the inverse cosine of
+   * the dot product of the normalized versions of the vectors
+   */
+  angle(vector) {
+    return Math.acos(this.normalized().dot(vector.normalized()));
   }
   
   toString() {
@@ -591,6 +609,9 @@ function buildBuffer(graphNode, currBuffer) {
  *
  * Triangles are assumed to have vertices given in counter clockwise order (consistent
  * with gl.CULL_FACE).
+ *
+ * Idea for calculating smooth normals from
+ * https://stackoverflow.com/questions/45477806/general-method-for-calculating-smooth-vertex-normals-with-100-smoothness
  */
 function calculateNormals(mesh, smooth) {
   if (mesh.renderType != gl.TRIANGLES) {
@@ -605,22 +626,34 @@ function calculateNormals(mesh, smooth) {
     let side1 = mesh.verts[i];
     let side2 = mesh.verts[i+1];
     let side3 = mesh.verts[i+2];
-    
+
     let side12Vec = side2.pos.subtract(side1.pos);
     let side13Vec = side3.pos.subtract(side1.pos);
     let normalVec = side12Vec.cross(side13Vec);
-    
+
     // if we are going to smooth later, then don't normalize the vector so that
     // the average of the vectors is automatically weighted by the area of the triangle
     if (!smooth) {
       normalVec = normalVec.normalized();
+      side1.normal = new Vec3(normalVec);
+      side2.normal = new Vec3(normalVec);
+      side3.normal = new Vec3(normalVec);
+    } else {
+      let side21Vec = side1.pos.subtract(side2.pos);
+      let side23Vec = side3.pos.subtract(side2.pos);
+      let side31Vec = side1.pos.subtract(side3.pos);
+      let side32Vec = side2.pos.subtract(side3.pos);
+
+      let angle1 = side12Vec.angle(side13Vec);
+      let angle2 = side21Vec.angle(side23Vec);
+      let angle3 = side31Vec.angle(side32Vec);
+
+      side1.normal = normalVec.multiply(angle1);
+      side2.normal = normalVec.multiply(angle2);
+      side3.normal = normalVec.multiply(angle3);
     }
-    
-    side1.normal = new Vec3(normalVec);
-    side2.normal = new Vec3(normalVec);
-    side3.normal = new Vec3(normalVec);
   }
-  
+
   if (smooth) {
     smoothNormals(mesh);
   }
@@ -635,6 +668,9 @@ function calculateAllNormals(meshes, smooth) {
   }
 }
 
+/**
+ * Finds all of the already calculated normals for each vertex and averages them
+ */
 function smoothNormals(mesh) {
   var vertsDict = {};
   for (var i = 0; i < mesh.verts.length; ++i) {
