@@ -191,6 +191,18 @@ class Vec3 {
                     this.z * vector.x - this.x * vector.z,
                     this.x * vector.y - this.y * vector.x);
   }
+  
+  toString() {
+    return `[${toFixed(this.x, 8)}, ${toFixed(this.y, 8)}, ${toFixed(this.z, 8)}]`;
+  }
+}
+
+function toFixed(value, precision) {
+  var stringVal = value.toFixed(precision);
+  if (parseFloat(stringVal) == 0 && stringVal.startsWith('-')) {
+    stringVal = (0.0).toFixed(precision);
+  }
+  return stringVal;
 }
 
 // Aliased versions of Vec3 to make code more self-documenting
@@ -579,9 +591,13 @@ function buildBuffer(graphNode, currBuffer) {
  * Triangles are assumed to have vertices given in counter clockwise order (consistent
  * with gl.CULL_FACE).
  */
-function calculateNormals(mesh) {
+function calculateNormals(mesh, smooth) {
   if (mesh.renderType != gl.TRIANGLES) {
     throw 'Cannot calculate normals for ' + mesh.name + ' - Normals cannot be calculated for anything other than GL_TRIANGLES!';
+  }
+  
+  if (smooth === undefined || smooth === null) {
+    smooth = false;
   }
   
   for (var i = 0; i < mesh.verts.length; i += 3) {
@@ -591,20 +607,55 @@ function calculateNormals(mesh) {
     
     let side12Vec = side2.pos.subtract(side1.pos);
     let side13Vec = side3.pos.subtract(side1.pos);
-    let normalVec = side12Vec.cross(side13Vec).normalized();
+    let normalVec = side12Vec.cross(side13Vec);
+    
+    // if we are going to smooth later, then don't normalize the vector so that
+    // the average of the vectors is automatically weighted by the area of the triangle
+    if (!smooth) {
+      normalVec = normalVec.normalized();
+    }
     
     side1.normal = new Vec3(normalVec);
     side2.normal = new Vec3(normalVec);
     side3.normal = new Vec3(normalVec);
+  }
+  
+  if (smooth) {
+    smoothNormals(mesh);
   }
 }
 
 /**
  * Calls calculateNormals() on every mesh in the given list of meshes.
  */
-function calculateAllNormals(meshes) {
+function calculateAllNormals(meshes, smooth) {
   for (mesh of meshes) {
-    calculateNormals(mesh);
+    calculateNormals(mesh, smooth);
+  }
+}
+
+function smoothNormals(mesh) {
+  var vertsDict = {};
+  for (var i = 0; i < mesh.verts.length; ++i) {
+    if (vertsDict[mesh.verts[i].pos] === undefined) {
+      vertsDict[mesh.verts[i].pos] = [];
+    }
+    vertsDict[mesh.verts[i].pos].push(mesh.verts[i]);
+  }
+  
+  for (var key in vertsDict) {
+    if (vertsDict.hasOwnProperty(key)) {
+      var vertList = vertsDict[key];
+      var cumSum = vertList[0].normal;
+      for (var i = 1; i < vertList.length; ++i) {
+        cumSum = cumSum.add(vertList[i].normal);
+      }
+      
+      cumSum = cumSum.normalized();
+      for (var vert of vertList) {
+        vert.normal = new Vec3(cumSum);
+      }
+    }
   }
 }
 

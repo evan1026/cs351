@@ -4,6 +4,7 @@ uniform mat4 u_ProjectionMatrix;
 uniform mat4 u_NormalMatrix;
 uniform vec4 u_ColorOverride;
 uniform bool u_ShowNormals;
+uniform bool u_PopOut;
 
 attribute vec4 a_Position;
 attribute vec3 a_Color;
@@ -12,8 +13,16 @@ attribute vec3 a_Normal;
 varying vec4 v_Color;
 
 void main() {
-  vec3 transformedNormal = normalize(vec3(u_NormalMatrix * vec4(a_Normal, 0.0)));
-  gl_Position = u_ProjectionMatrix * u_ModelMatrix * a_Position;// + 0.03 * vec4(transformedNormal, 0.0);
+  vec4 position = a_Position;
+  vec4 normal = normalize(vec4(a_Normal, 0.0));
+  
+  if (u_PopOut) {
+    position += 0.03 * normal;
+  }
+  
+  vec3 transformedNormal = normalize(vec3(u_NormalMatrix * normal));
+  
+  gl_Position = u_ProjectionMatrix * u_ModelMatrix * position;
   gl_PointSize = 10.0;
 
   vec4 a_Color4 = vec4(a_Color.r, a_Color.g, a_Color.b, 1.0);
@@ -36,7 +45,7 @@ void main() {
   gl_FragColor = v_Color;
 }`;
 
-attribs = ['a_Position', 'a_Color', 'a_Normal', 'u_ModelMatrix', 'u_ProjectionMatrix', 'u_NormalMatrix', 'u_ColorOverride', 'u_ShowNormals'];
+attribs = ['a_Position', 'a_Color', 'a_Normal', 'u_ModelMatrix', 'u_ProjectionMatrix', 'u_NormalMatrix', 'u_ColorOverride', 'u_ShowNormals', 'u_PopOut'];
 
 class Event {
   static mouseDrag = {x: 0, y: 0, currentlyDragging: false};
@@ -118,7 +127,10 @@ function animate() {
   updateFramerate(elapsed);
   
   var normalsShown = document.getElementById("normalsShown").checked;
-  gl.uniform1i(Context.renderProgram.attribIds['u_ShowNormals'], normalsShown ? 1 : 0);
+  gl.uniform1i(Context.renderProgram.attribIds['u_ShowNormals'], normalsShown);
+  
+  var popOut = document.getElementById("popOut").checked;
+  gl.uniform1i(Context.renderProgram.attribIds['u_PopOut'], popOut);
 
   Animation.lastTick = time;
 }
@@ -271,7 +283,7 @@ function tick() {
  * Creates the full scene graph.
  */
 function initSceneGraph() {
-  var numCircleParts = 10;
+  var numCircleParts = 100;
   var bottomCircleMesh = initCircleMesh(numCircleParts, false /* invert */);
   var topCircleMesh = initCircleMesh(numCircleParts, true /* invert */);
   var cyllinderMesh = initCyllinderSideMesh(numCircleParts);
@@ -283,8 +295,9 @@ function initSceneGraph() {
   
   var buildingMeshes = [initBuildingMesh(3), initBuildingMesh(4), initBuildingMesh(5), initBuildingMesh(6), initBuildingMesh(7), initBuildingMesh(8)];
   
-  calculateAllNormals([cyllinderMesh, houseMesh, planeMesh, blackBoxMesh]);
+  calculateAllNormals([houseMesh, blackBoxMesh, planeMesh]);
   calculateAllNormals(buildingMeshes);
+  calculateAllNormals([cyllinderMesh], true /* smooth */);
 
   var makeCyllinder = function(name, parent, height, pos, rot, scale) {
     cylNode =       new SceneGraphNode(name,             parent,  pos,                       rot,                      scale,                       null);
@@ -489,6 +502,7 @@ function initPlaneMesh() {
    * Fuselage
    */
   {
+    // Nose
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
@@ -497,14 +511,20 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
 
+    // -X bottom section
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
 
-    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.0)));
 
+    // -X top section
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.0)));
@@ -513,14 +533,20 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.1)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
 
+    // +X bottom section
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.0)));
+    
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
 
+    // +X top section
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
@@ -529,14 +555,17 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.1)));
 
+    // -X side window
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.1)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.0)));
 
+    // +X side window
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.1)));
 
+    // Windshield
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.1)));
@@ -545,6 +574,7 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.1)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.1)));
 
+    // Top
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.1)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
@@ -553,14 +583,24 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
 
+    // Back
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5, -0.1)));
 
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.0)));
+    
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.0)));
+
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
 
+    // Bottom
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5, -0.1)));
