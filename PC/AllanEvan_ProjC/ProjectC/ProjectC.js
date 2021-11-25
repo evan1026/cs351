@@ -9,7 +9,7 @@ RenderProgram.vertShader = `
     varying vec4 v_Color;
     void main() {
       vec3 transformedNormal = normalize(vec3(u_NormalMatrix * vec4(a_Normal, 0.0)));
-      gl_Position = u_ProjectionMatrix * u_ModelMatrix * a_Position + 0.03 * vec4(transformedNormal, 0.0);
+      gl_Position = u_ProjectionMatrix * u_ModelMatrix * a_Position;// + 0.03 * vec4(transformedNormal, 0.0);
       gl_PointSize = 10.0;
 
       //vec4 a_Color4 = vec4(a_Color.r, a_Color.g, a_Color.b, 1.0);
@@ -39,7 +39,7 @@ class Event {
 function main() {
   var canvas = document.getElementById('webgl');
 
-  if (!init(canvas)) {
+  if (!init(canvas, false /* debug mode */)) {
     return;
   }
 

@@ -643,10 +643,10 @@ var gl;
  * Init the rendering library.
  * The canvas argument must be a canvas element on the webpage.
  */
-function init(canvas) {
+function init(canvas, debugMode) {
   Context.canvas = canvas;
 
-  gl = getWebGLContext(Context.canvas);
+  gl = getWebGLContext(Context.canvas, debugMode);
   Vertex.primType = gl.FLOAT;
   if (!gl) {
     console.log('Failed to get the rendering context for WebGL');
