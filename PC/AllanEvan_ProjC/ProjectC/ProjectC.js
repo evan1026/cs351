@@ -272,7 +272,8 @@ function tick() {
  */
 function initSceneGraph() {
   var numCircleParts = 10;
-  var circleMesh = initCircleMesh(numCircleParts);
+  var bottomCircleMesh = initCircleMesh(numCircleParts, false /* invert */);
+  var topCircleMesh = initCircleMesh(numCircleParts, true /* invert */);
   var cyllinderMesh = initCyllinderSideMesh(numCircleParts);
   var houseMesh = initHouseMesh();
   var gridMesh = initGridMesh(-20, 20, -20, 20, 200);
@@ -283,10 +284,10 @@ function initSceneGraph() {
   var buildingMeshes = [initBuildingMesh(3), initBuildingMesh(4), initBuildingMesh(5), initBuildingMesh(6), initBuildingMesh(7), initBuildingMesh(8)];
 
   var makeCyllinder = function(name, parent, height, pos, rot, scale) {
-    cylNode =       new SceneGraphNode(name,             parent,  pos,                       rot,              scale,                       null);
-    cylTopNode =    new SceneGraphNode(name + "_Top",    cylNode, new Pos(),                 new Quaternion(), new Scale(1.0, 1.0, 1.0),    circleMesh);
-    cylBotNode =    new SceneGraphNode(name + "_Bot",    cylNode, new Pos(0.0, 0.0, height), new Quaternion(), new Scale(0.5, 0.5, 1.0),    circleMesh);
-    cylMiddleNode = new SceneGraphNode(name + "_Middle", cylNode, new Pos(),                 new Quaternion(), new Scale(1.0, 1.0, height), cyllinderMesh);
+    cylNode =       new SceneGraphNode(name,             parent,  pos,                       rot,                      scale,                       null);
+    cylTopNode =    new SceneGraphNode(name + "_Top",    cylNode, new Pos(),                 QuatFromEuler(180, 0, 0), new Scale(1.0, 1.0, 1.0),    topCircleMesh);
+    cylBotNode =    new SceneGraphNode(name + "_Bot",    cylNode, new Pos(0.0, 0.0, height), new Quaternion(),         new Scale(0.5, 0.5, 1.0),    bottomCircleMesh);
+    cylMiddleNode = new SceneGraphNode(name + "_Middle", cylNode, new Pos(),                 new Quaternion(),         new Scale(1.0, 1.0, height), cyllinderMesh);
     return cylNode;
   };
 
@@ -330,12 +331,19 @@ function initSceneGraph() {
 /**
  * Creates a mesh for a circle. Used for the top and bottom of arm parts.
  */
-function initCircleMesh(numCircleParts) {
+function initCircleMesh(numCircleParts, invert) {
   var circleMesh = new Mesh(gl.TRIANGLE_FAN, "Circle");
   circleMesh.verts = [new Vertex(new Pos(), new Color(1.0, 1.0, 1.0), new Vec3(0, 0, 1))];
   for (i = 0; i <= numCircleParts; ++i) {
     rads = 2.0 * Math.PI / numCircleParts * i;
-    rgb = HSVtoRGB(i / numCircleParts, 1, 1);
+    
+    let hue;
+    if (invert) {
+      hue = 1 - i / numCircleParts;
+    } else {
+      hue = i / numCircleParts;
+    }
+    rgb = HSVtoRGB(hue, 1, 1);
 
     pos = new Pos(Math.cos(rads), Math.sin(rads), 0.0);
     color = new Color(rgb.r, rgb.g, rgb.b);
@@ -351,7 +359,9 @@ function initCircleMesh(numCircleParts) {
  */
 function initCyllinderSideMesh(numCircleParts) {
   var cyllinderMesh = new Mesh(gl.TRIANGLES, "CyllinderSide");
-  for (i = 0; i <= numCircleParts; ++i) {
+  var prevVertZ1;
+  var prevVertZ0;
+  for (var i = 0; i <= numCircleParts; ++i) {
     rads = 2.0 * Math.PI / numCircleParts * i;
     rgb = HSVtoRGB(i / numCircleParts, 1, 1);
 
@@ -359,21 +369,16 @@ function initCyllinderSideMesh(numCircleParts) {
     pos2 = new Pos(0.5 * Math.cos(rads), 0.5 * Math.sin(rads), 1.0);
     color = new Color(rgb.r, rgb.g, rgb.b);
     normal = new Vec3(Math.cos(rads), Math.sin(rads), 0.0);
-    pushTriangleStrip(cyllinderMesh.verts, new Vertex(pos1, color, normal));
-    pushTriangleStrip(cyllinderMesh.verts, new Vertex(pos2, color, normal));
+    
+    if (i != 0) {
+      cyllinderMesh.verts.push(prevVertZ0.copy(), new Vertex(pos1, color, normal), prevVertZ1.copy(), prevVertZ1.copy(), new Vertex(pos1, color, normal), new Vertex(pos2, color, normal));
+    }
+    
+    prevVertZ0 = new Vertex(pos1, color, normal);
+    prevVertZ1 = new Vertex(pos2, color, normal);
   }
 
   return cyllinderMesh;
-}
-
-function pushTriangleStrip(verts, vert) {
-  var length = verts.length;
-  if (length > 2) {
-    var prev1 = verts[length - 2];
-    var prev2 = verts[length - 1];
-    verts.push(prev1, prev2);
-  }
-  verts.push(vert);
 }
 
 /**
@@ -383,11 +388,11 @@ function initHouseMesh() {
   var houseMesh = new Mesh(gl.TRIANGLES, "House");
   houseMesh.verts = [
     new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(0.0, 1.0, 1.0)),
-    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 1.0, 1.0)),
-    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 1.0, 1.0)),
     new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 1.0, 1.0)),
     new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 1.0, 1.0)),
+    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 1.0, 1.0)),
     new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 1.0, 1.0)),
+    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 1.0, 1.0)),
 
     new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(1.0, 1.0, 0.0)),
     new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(1.0, 1.0, 0.0)),
@@ -397,18 +402,18 @@ function initHouseMesh() {
     new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(1.0, 1.0, 0.0)),
 
     new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(1.0, 0.0, 1.0)),
-    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(1.0, 0.0, 1.0)),
-    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(1.0, 0.0, 1.0)),
     new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(1.0, 0.0, 1.0)),
     new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(1.0, 0.0, 1.0)),
+    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(1.0, 0.0, 1.0)),
     new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(1.0, 0.0, 1.0)),
+    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(1.0, 0.0, 1.0)),
 
     new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(0.0, 0.0, 1.0)),
-    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 1.0)),
-    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 1.0)),
     new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 1.0)),
     new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 1.0)),
+    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 1.0)),
     new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 1.0)),
+    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 1.0)),
 
     new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(0.0, 1.0, 0.0)),
     new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 1.0, 0.0)),
@@ -484,28 +489,28 @@ function initPlaneMesh() {
    */
   {
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
 
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
 
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
-
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.0)));
 
-    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.0)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
 
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.0)));
+
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
 
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5, -0.1)));
@@ -524,44 +529,44 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.1)));
 
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.0)));
 
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.1)));
 
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.1)));
-    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
-
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.1)));
+
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.1)));
 
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.1)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
 
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.1)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
 
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
 
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
 
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5, -0.1)));
 
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5, -0.1)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5, -0.1)));
   }
 
   /*
@@ -569,12 +574,12 @@ function initPlaneMesh() {
    */
   {
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.1, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1, -0.05)));
     planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1, -0.05)));
 
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.1, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.1,  0.05)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1,  0.0)));
 
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.1, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1, -0.05)));
@@ -585,28 +590,28 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.1,  0.05)));
 
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.1, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.1, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1, -0.05)));
-
     planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1, -0.05)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.1, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1, -0.05)));
 
     planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1, -0.05)));
     planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1, -0.05)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.1, -0.1)));
 
+    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1, -0.05)));
     planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1, -0.05)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1,  0.0)));
-
-    planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1,  0.0)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.1,  0.05)));
-    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1,  0.0)));
 
     planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1, -0.05)));
+
+    planeMesh.verts.push(planeVertex(new Pos(-0.5,  0.1,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.1,  0.05)));
+
+    planeMesh.verts.push(planeVertex(new Pos(-0.5, -0.1,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.1,  0.05)));
+    planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.1,  0.05)));
   }
 
   /*
@@ -622,12 +627,12 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.1,  0.05)));
 
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.1, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos( 0.5,  0.1, -0.05)));
     planeMesh.verts.push(planeVertex(new Pos( 0.5,  0.1,  0.0)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5,  0.1, -0.05)));
 
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.1, -0.1)));
-    planeMesh.verts.push(planeVertex(new Pos( 0.5,  0.1,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.1,  0.05)));
+    planeMesh.verts.push(planeVertex(new Pos( 0.5,  0.1,  0.0)));
 
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.1, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.1, -0.1)));
@@ -726,21 +731,21 @@ function initBuildingMesh(numFloors) {
     new Vertex(new Pos(-1,  1, 0), getGrey()),
     new Vertex(new Pos( 1, -1, 0), getGrey()),
     new Vertex(new Pos(-1,  1, 0), getGrey()),
-    new Vertex(new Pos( 1, -1, 0), getGrey()),
     new Vertex(new Pos( 1,  1, 0), getGrey()),
+    new Vertex(new Pos( 1, -1, 0), getGrey()),
     
     // Top face
     new Vertex(new Pos(-1, -1, numFloors), getGrey()),
-    new Vertex(new Pos(-1,  1, numFloors), getGrey()),
     new Vertex(new Pos( 1, -1, numFloors), getGrey()),
+    new Vertex(new Pos(-1,  1, numFloors), getGrey()),
     new Vertex(new Pos(-1,  1, numFloors), getGrey()),
     new Vertex(new Pos( 1, -1, numFloors), getGrey()),
     new Vertex(new Pos( 1,  1, numFloors), getGrey()),
     
     // -X face
     new Vertex(new Pos(-1, -1, 0),         getGrey()),
-    new Vertex(new Pos(-1,  1, 0),         getGrey()),
     new Vertex(new Pos(-1, -1, numFloors), getGrey()),
+    new Vertex(new Pos(-1,  1, 0),         getGrey()),
     new Vertex(new Pos(-1,  1, 0),         getGrey()),
     new Vertex(new Pos(-1, -1, numFloors), getGrey()),
     new Vertex(new Pos(-1,  1, numFloors), getGrey()),
@@ -750,21 +755,21 @@ function initBuildingMesh(numFloors) {
     new Vertex(new Pos(1,  1, 0),         getGrey()),
     new Vertex(new Pos(1, -1, numFloors), getGrey()),
     new Vertex(new Pos(1,  1, 0),         getGrey()),
-    new Vertex(new Pos(1, -1, numFloors), getGrey()),
     new Vertex(new Pos(1,  1, numFloors), getGrey()),
+    new Vertex(new Pos(1, -1, numFloors), getGrey()),
     
     // -Y face
     new Vertex(new Pos(-1, -1, 0),         getGrey()),
     new Vertex(new Pos( 1, -1, 0),         getGrey()),
     new Vertex(new Pos(-1, -1, numFloors), getGrey()),
     new Vertex(new Pos( 1, -1, 0),         getGrey()),
-    new Vertex(new Pos(-1, -1, numFloors), getGrey()),
     new Vertex(new Pos( 1, -1, numFloors), getGrey()),
+    new Vertex(new Pos(-1, -1, numFloors), getGrey()),
     
     // +Y face
     new Vertex(new Pos(-1, 1, 0),         getGrey()),
-    new Vertex(new Pos( 1, 1, 0),         getGrey()),
     new Vertex(new Pos(-1, 1, numFloors), getGrey()),
+    new Vertex(new Pos( 1, 1, 0),         getGrey()),
     new Vertex(new Pos( 1, 1, 0),         getGrey()),
     new Vertex(new Pos(-1, 1, numFloors), getGrey()),
     new Vertex(new Pos( 1, 1, numFloors), getGrey())
@@ -791,46 +796,46 @@ function initBuildingMesh(numFloors) {
         new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.05)), colorFunc()),
-        new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos( 0.25,  0.25, i + 0.05)), colorFunc()),
+        new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.05)), colorFunc()),
         
         // Top face
         new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.95)), colorFunc()),
-        new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.95)), colorFunc()),
         new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.95)), colorFunc()),
         new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.95)), colorFunc()),
         new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.95)), colorFunc()),
         new Vertex(center.add(new Pos( 0.25,  0.25, i + 0.95)), colorFunc()),
         
         // -X face
-        new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.05)),         colorFunc()),
-        new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.95)), colorFunc()),
-        new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.05)), colorFunc()),
+        new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.95)), colorFunc()),
         new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.95)), colorFunc()),
         
         // +X face
-        new Vertex(center.add(new Pos(0.25, -0.25, i + 0.05)),         colorFunc()),
-        new Vertex(center.add(new Pos(0.25,  0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos(0.25, -0.25, i + 0.05)), colorFunc()),
+        new Vertex(center.add(new Pos(0.25,  0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos(0.25, -0.25, i + 0.95)), colorFunc()),
-        new Vertex(center.add(new Pos(0.25,  0.25, i + 0.05)),         colorFunc()),
-        new Vertex(center.add(new Pos(0.25, -0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos(0.25,  0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos(0.25,  0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos(0.25, -0.25, i + 0.95)), colorFunc()),
         
         // -Y face
-        new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.05)),         colorFunc()),
-        new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.05)), colorFunc()),
+        new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.95)), colorFunc()),
-        new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.05)),         colorFunc()),
-        new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.95)), colorFunc()),
+        new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.95)), colorFunc()),
         
         // +Y face
-        new Vertex(center.add(new Pos(-0.25, 0.25, i + 0.05)),         colorFunc()),
-        new Vertex(center.add(new Pos( 0.25, 0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos(-0.25, 0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos(-0.25, 0.25, i + 0.95)), colorFunc()),
-        new Vertex(center.add(new Pos( 0.25, 0.25, i + 0.05)),         colorFunc()),
+        new Vertex(center.add(new Pos( 0.25, 0.25, i + 0.05)), colorFunc()),
+        new Vertex(center.add(new Pos( 0.25, 0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos(-0.25, 0.25, i + 0.95)), colorFunc()),
         new Vertex(center.add(new Pos( 0.25, 0.25, i + 0.95)), colorFunc())
       )

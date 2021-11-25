@@ -219,6 +219,10 @@ class Vertex {
       this.normal = new Pos(1, 0, 0);
     }
   }
+  
+  copy() {
+    return new Vertex(new Pos(this.pos), new Color(this.color), new Vec3(this.normal));
+  }
 
   static primsPerVertex = 10;
   static primsPerPos = 4;
@@ -705,6 +709,8 @@ function init(canvas, debugMode, vertShader, fragShader) {
   }
 
   gl.enable(gl.DEPTH_TEST);
+  gl.enable(gl.CULL_FACE);
+  gl.cullFace(gl.BACK);
 
   return true;
 }
