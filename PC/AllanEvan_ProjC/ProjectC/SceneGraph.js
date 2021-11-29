@@ -275,14 +275,28 @@ class Mesh {
   renderType;
   wireframeElementsIndex;
   wireframeElementsSize;
+  renderProgram;
 
   // These get filled in after the vbo generation
   vboStart;
   vboCount;
 
-  constructor(renderType, name) {
+  constructor(renderType, name, renderProgram) {
     this.renderType = renderType;
     this.name = name;
+    this.renderProgram = renderProgram;
+    
+    if (!name) {
+      throw 'Mesh missing name';
+    }
+    
+    if (!renderProgram) {
+      throw 'Mesh "' + name + '" missing render program';
+    }
+    
+    if (!renderType) {
+      throw 'Mesh "' + name + '" missing render type';
+    }
   }
 }
 
@@ -365,31 +379,38 @@ class RenderProgram {
   cameraPosAttrib;
 
   attribIds = {};
+  name;
+  program;
   
-  constructor(vertShader, fragShader) {
+  constructor(name, vertShader, fragShader) {
     this.vertShader = vertShader;
     this.fragShader = fragShader;
     
-    var program = createProgram(gl, vertShader, fragShader);
-    if (!program) {
+    this.program = createProgram(gl, vertShader, fragShader);
+    if (!this.program) {
       throw 'Failed to create render program';
     }
 
-    gl.useProgram(program);
+    gl.useProgram(this.program);
     
-    var numAttribs = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
+    var numAttribs = gl.getProgramParameter(this.program, gl.ACTIVE_ATTRIBUTES);
     for (var i = 0; i < numAttribs; ++i) {
-      var attribInfo = gl.getActiveAttrib(program, i);
-      var index = gl.getAttribLocation(program, attribInfo.name);
+      var attribInfo = gl.getActiveAttrib(this.program, i);
+      var index = gl.getAttribLocation(this.program, attribInfo.name);
       this.attribIds[attribInfo.name] = index;
     }
     
-    var numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+    var numUniforms = gl.getProgramParameter(this.program, gl.ACTIVE_UNIFORMS);
     for (var i = 0; i < numUniforms; ++i) {
-      var attribInfo = gl.getActiveUniform(program, i);
-      var index = gl.getUniformLocation(program, attribInfo.name);
+      var attribInfo = gl.getActiveUniform(this.program, i);
+      var index = gl.getUniformLocation(this.program, attribInfo.name);
       this.attribIds[attribInfo.name] = index;
     }
+    
+    Context.renderPrograms[name] = this;
+    this.name = name;
+    
+    console.log("Attribs for '" + this.name + "': ", this.attribIds);
   }
   
   /**
@@ -398,7 +419,7 @@ class RenderProgram {
   verifyAttribs(attribList) {
     for (var attrib of attribList) {
       if (this.attribIds[attrib] === undefined) {
-        throw 'Could not find location of ' + attrib;
+        throw 'Could not find location of ' + attrib + ' in shader ' + this.name;
       }
     }
   }
@@ -412,10 +433,11 @@ class Context {
   static canvas;
   static sceneGraph;
   static vboId;  // TODO should I support multiple VBOs? Maybe each mesh keeps track of which one it is in/should be in?
-  static renderProgram; // TODO multiple render programs, and each mesh points to the render program it uses
+  static renderPrograms = {};
   static fps = 30;
   static cameras = [];
   static wireframe = false;
+  static uniformValues = {};
 }
 
 /**
@@ -727,7 +749,7 @@ function smoothNormals(mesh) {
  * then renders the mesh if there is one, then calls this function recursively
  * on all of the node's children.
  */
-function drawNode(modelMatrix, node, scale) {
+function drawNode(modelMatrix, node, scale, projectionMatrix, cameraPos) {
   // Gotta do all these scaling hacks because scaling and rotation don't play nice
   if (scale === undefined) {
     scale = new Scale(1.0, 1.0, 1.0);
@@ -745,15 +767,26 @@ function drawNode(modelMatrix, node, scale) {
 
   if (node.mesh) {
     pushMatrix(modelMatrix);
-    if (Context.renderProgram.modelMatrixAttrib) {
+    
+    var renderProgram = node.mesh.renderProgram;
+    selectRenderProgram(renderProgram);
+    if (renderProgram.projectionMatrixAttrib) {
+      gl.uniformMatrix4fv(renderProgram.attribIds[renderProgram.projectionMatrixAttrib], false, projectionMatrix.elements);
+    }
+    
+    if (renderProgram.cameraPosAttrib) {
+      gl.uniform3f(renderProgram.attribIds[renderProgram.cameraPosAttrib], cameraPos.x, cameraPos.y, cameraPos.z);
+    }
+    
+    if (renderProgram.modelMatrixAttrib) {
       modelMatrix.scale(scale.x, scale.y, scale.z);
-      gl.uniformMatrix4fv(Context.renderProgram.attribIds[Context.renderProgram.modelMatrixAttrib], false, modelMatrix.elements);
+      gl.uniformMatrix4fv(renderProgram.attribIds[renderProgram.modelMatrixAttrib], false, modelMatrix.elements);
     }
 
-    if (Context.renderProgram.normalMatrixAttrib) {
+    if (renderProgram.normalMatrixAttrib) {
       var normalMatrix = new Matrix4(modelMatrix);
       normalMatrix.invert().transpose();
-      gl.uniformMatrix4fv(Context.renderProgram.attribIds[Context.renderProgram.normalMatrixAttrib], false, normalMatrix.elements);
+      gl.uniformMatrix4fv(renderProgram.attribIds[renderProgram.normalMatrixAttrib], false, normalMatrix.elements);
     }
 
     if (Context.wireframe && node.mesh.wireframeElementsIndex !== undefined) {
@@ -766,9 +799,19 @@ function drawNode(modelMatrix, node, scale) {
   }
 
   for (child of node.children) {
-    modelMatrix = drawNode(modelMatrix, child, scale);
+    modelMatrix = drawNode(modelMatrix, child, scale, projectionMatrix, cameraPos);
   }
   return popMatrix();
+}
+
+function selectRenderProgram(renderProgram) {
+  gl.useProgram(renderProgram.program);
+  
+  for (attr in Context.uniformValues) {
+    if (attr in renderProgram.attribIds) {
+      Context.uniformValues[attr](renderProgram.attribIds[attr]);
+    }
+  }
 }
 
 /**
@@ -817,16 +860,7 @@ function drawAll() {
                             lookAt.x,        lookAt.y,        lookAt.z,
                             camera.up.x,     camera.up.y,     camera.up.z);
 
-    var renderProgram = Context.renderProgram;
-    if (renderProgram.projectionMatrixAttrib) {
-      gl.uniformMatrix4fv(renderProgram.attribIds[renderProgram.projectionMatrixAttrib], false, projectionMatrix.elements);
-    }
-    
-    if (renderProgram.cameraPosAttrib) {
-      gl.uniform3f(renderProgram.attribIds[renderProgram.cameraPosAttrib], camera.pos.x, camera.pos.y, camera.pos.z);
-    }
-
-    drawNode(modelMatrix, Context.sceneGraph);
+    drawNode(modelMatrix, Context.sceneGraph, new Scale(1.0, 1.0, 1.0), projectionMatrix, camera.pos);
   }
 }
 
@@ -858,7 +892,7 @@ var gl;
  * Init the rendering library.
  * The canvas argument must be a canvas element on the webpage.
  */
-function init(canvas, debugMode, vertShader, fragShader) {
+function init(canvas, debugMode) {
   Context.canvas = canvas;
 
   gl = getWebGLContext(Context.canvas, debugMode);
@@ -866,10 +900,6 @@ function init(canvas, debugMode, vertShader, fragShader) {
   if (!gl) {
     console.log('Failed to get the rendering context for WebGL');
     return false;
-  }
-
-  if (vertShader && fragShader) {
-    Context.renderProgram = new RenderProgram(vertShader, fragShader);
   }
 
   gl.enable(gl.DEPTH_TEST);

@@ -1,86 +1,3 @@
-// TODO different render program for the grid/axes
-
-vertShader = `
-uniform mat4 u_ModelMatrix;
-uniform mat4 u_ProjectionMatrix;
-uniform mat4 u_NormalMatrix;
-uniform vec4 u_ColorOverride;
-uniform bool u_PopOut;
-
-attribute vec4 a_Position;
-attribute vec3 a_Color;
-attribute vec3 a_Normal;
-
-varying vec4 v_Color;
-varying vec3 v_Pos;
-varying vec3 v_Normal;
-
-void main() {
-  vec4 position = u_ModelMatrix * a_Position;
-  vec4 normal = normalize(vec4(a_Normal, 0.0));
-  vec3 transformedNormal = normalize(vec3(u_NormalMatrix * normal));
-  
-  if (u_PopOut) {
-    position += 0.03 * vec4(transformedNormal, 0.0);
-  }
-  
-  gl_Position = u_ProjectionMatrix * position;
-  gl_PointSize = 10.0;
-
-  vec4 a_Color4 = vec4(a_Color.r, a_Color.g, a_Color.b, 1.0);
-  
-  v_Color = mix(u_ColorOverride, a_Color4, 1.0 - u_ColorOverride.a);
-  v_Pos = vec3(position) / position.w;
-  v_Normal = transformedNormal;
-}`;
-
-fragShader = `
-precision mediump float;
-
-uniform vec3 u_CameraPos;
-uniform bool u_ShowNormals;
-
-varying vec4 v_Color;
-varying vec3 v_Pos;
-varying vec3 v_Normal;
-
-void main() {
-  if (!u_ShowNormals) {
-    vec3 lightPos = vec3(0.0, 0.0, 10.0);
-    vec3 ambientColor = vec3(0.5, 0.5, 0.5);
-    vec3 diffuseColor = vec3(0.5, 0.5, 0.5);
-    vec3 specularColor = vec3(1.0, 1.0, 1.0);
-    float shininess = 1000.0;
-    float Ka = 1.0;
-    float Kd = 1.0;
-    float Ks = 1.0;
-
-    vec3 N = normalize(v_Normal);
-    vec3 L = normalize(lightPos - v_Pos);
-
-    float diffuse = max(dot(N, L), 0.0);
-    float specular = 0.0;
-    if (diffuse > 0.0) {
-      vec3 R = reflect(-L, N);
-      vec3 V = normalize(u_CameraPos - v_Pos);
-      float specAngle = max(dot(R, V), 0.0);
-      specular = pow(specAngle, shininess);
-    }
-
-    vec4 lighting = vec4(Ka * ambientColor + Kd * diffuse * diffuseColor + Ks * specular * specularColor, 1.0);
-
-    gl_FragColor = v_Color * lighting;
-  } else {
-    vec3 normalColor = normalize(v_Normal) * 0.5 + vec3(0.5, 0.5, 0.5);
-    vec4 a_Color4 = vec4(normalColor, 1.0);
-    if (all(equal(v_Normal, vec3(0.0, 0.0, 0.0)))) {
-      a_Color4 = vec4(1, 1, 1, 1);
-    }
-    gl_FragColor = a_Color4;
-  }
-}`;
-
-attribs = ['a_Position', 'a_Color', 'a_Normal', 'u_ModelMatrix', 'u_ProjectionMatrix', 'u_NormalMatrix', 'u_ColorOverride', 'u_ShowNormals', 'u_PopOut', 'u_CameraPos'];
 
 class Event {
   static mouseDrag = {x: 0, y: 0, currentlyDragging: false};
@@ -92,15 +9,22 @@ class Event {
 function main() {
   var canvas = document.getElementById('webgl');
 
-  if (!init(canvas, false /* debug mode */, vertShader, fragShader)) {
+  if (!init(canvas, false /* debug mode */)) {
     return;
   }
   
-  Context.renderProgram.verifyAttribs(attribs);
-  Context.renderProgram.modelMatrixAttrib = 'u_ModelMatrix';
-  Context.renderProgram.normalMatrixAttrib = 'u_NormalMatrix';
-  Context.renderProgram.projectionMatrixAttrib = 'u_ProjectionMatrix';
-  Context.renderProgram.cameraPosAttrib = 'u_CameraPos';
+  var phongRenderer = new RenderProgram("phong", phongVertShader, phongFragShader);
+  var flatRenderer = new RenderProgram("flat", flatVertShader, flatFragShader);
+  phongRenderer.verifyAttribs(phongAttribs);
+  flatRenderer.verifyAttribs(flatAttribs);
+  
+  phongRenderer.modelMatrixAttrib = 'u_ModelMatrix';
+  phongRenderer.normalMatrixAttrib = 'u_NormalMatrix';
+  phongRenderer.projectionMatrixAttrib = 'u_ProjectionMatrix';
+  phongRenderer.cameraPosAttrib = 'u_CameraPos';
+  
+  flatRenderer.modelMatrixAttrib = 'u_ModelMatrix';
+  flatRenderer.projectionMatrixAttrib = 'u_ProjectionMatrix';
 
   initSceneGraph();
   initCameras();
@@ -143,7 +67,7 @@ function animate() {
   var g = document.getElementById("g").value / 255;
   var b = document.getElementById("b").value / 255;
   var a = document.getElementById("a").value / 255;
-  gl.uniform4f(Context.renderProgram.attribIds['u_ColorOverride'], r, g, b, a);
+  Context.uniformValues['u_ColorOverride'] = index => gl.uniform4f(index, r, g, b, a);
 
   animateArm(time);
   animateBoxes(time);
@@ -166,13 +90,13 @@ function animate() {
 
   updateFramerate(elapsed);
   
-  var normalsShown = document.getElementById("normalsShown").checked;
-  gl.uniform1i(Context.renderProgram.attribIds['u_ShowNormals'], normalsShown);
+  let normalsShown = document.getElementById("normalsShown").checked;
+  Context.uniformValues['u_ShowNormals'] = index => gl.uniform1i(index, normalsShown);
   
-  var popOut = document.getElementById("popOut").checked;
-  gl.uniform1i(Context.renderProgram.attribIds['u_PopOut'], popOut);
+  let popOut = document.getElementById("popOut").checked;
+  Context.uniformValues['u_PopOut'] = index => gl.uniform1i(index, popOut);
   
-  var wireframe = document.getElementById("wireframe").checked;
+  let wireframe = document.getElementById("wireframe").checked;
   Context.wireframe = wireframe;
 
   Animation.lastTick = time;
@@ -395,7 +319,7 @@ function initSceneGraph() {
  * Creates a mesh for a circle. Used for the top and bottom of arm parts.
  */
 function initCircleMesh(numCircleParts, invert) {
-  var circleMesh = new Mesh(gl.TRIANGLE_FAN, "Circle");
+  var circleMesh = new Mesh(gl.TRIANGLE_FAN, "Circle", Context.renderPrograms["phong"]);
   circleMesh.verts = [new Vertex(new Pos(), new Color(1.0, 1.0, 1.0), new Vec3(0, 0, 1))];
   for (i = 0; i <= numCircleParts; ++i) {
     rads = 2.0 * Math.PI / numCircleParts * i;
@@ -420,7 +344,7 @@ function initCircleMesh(numCircleParts, invert) {
  * Creates a mesh for the side of a cyllinder. Used for the sides of arm parts.
  */
 function initCyllinderSideMesh(numCircleParts) {
-  var cyllinderMesh = new Mesh(gl.TRIANGLES, "CyllinderSide");
+  var cyllinderMesh = new Mesh(gl.TRIANGLES, "CyllinderSide", Context.renderPrograms["phong"]);
   var prevVertZ1;
   var prevVertZ0;
   for (var i = 0; i <= numCircleParts; ++i) {
@@ -446,7 +370,7 @@ function initCyllinderSideMesh(numCircleParts) {
  * Creates the pointy box mesh.
  */
 function initHouseMesh() {
-  var houseMesh = new Mesh(gl.TRIANGLES, "House");
+  var houseMesh = new Mesh(gl.TRIANGLES, "House", Context.renderPrograms["phong"]);
   houseMesh.verts = [
     new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(0.0, 1.0, 1.0)),
     new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 1.0, 1.0)),
@@ -506,7 +430,7 @@ function initHouseMesh() {
  * Creates a mesh for the grid on the ground.
  */
 function initGridMesh(xmin, xmax, ymin, ymax, numlines) {
-  var gridMesh = new Mesh(gl.LINES, "Grid");
+  var gridMesh = new Mesh(gl.LINES, "Grid", Context.renderPrograms["flat"]);
 
   for (x = xmin; x <= xmax; x += (xmax - xmin) / (numlines - 1)) {
     gridMesh.verts.push(new Vertex(new Pos(x, ymin, 0.0), new Color(1.0, 1.0, 0.3)));
@@ -525,7 +449,7 @@ function initGridMesh(xmin, xmax, ymin, ymax, numlines) {
  * Creates a mesh for the x,y,z axes.
  */
 function initAxesMesh() {
-  var axesMesh = new Mesh(gl.LINES, "Axes");
+  var axesMesh = new Mesh(gl.LINES, "Axes", Context.renderPrograms["flat"]);
 
   axesMesh.verts.push(new Vertex(new Pos(0.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0)));
   axesMesh.verts.push(new Vertex(new Pos(1.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0)));
@@ -543,7 +467,7 @@ function initAxesMesh() {
  * Creates the plane mesh.
  */
 function initPlaneMesh() {
-  var planeMesh = new Mesh(gl.TRIANGLES, "Plane");
+  var planeMesh = new Mesh(gl.TRIANGLES, "Plane", Context.renderPrograms["phong"]);
 
   /*
    * Fuselage
@@ -761,7 +685,7 @@ function planeVertex(pos) {
  * Creates a black box mesh.
  */
 function initBlackBoxMesh() {
-   var boxMesh = new Mesh(gl.TRIANGLES, "BlackBox");
+   var boxMesh = new Mesh(gl.TRIANGLES, "BlackBox", Context.renderPrograms["phong"]);
 
    boxMesh.verts = [
     new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
@@ -811,7 +735,7 @@ function initBlackBoxMesh() {
 }
 
 function initBuildingMesh(numFloors) {
-  var buildingMesh = new Mesh(gl.TRIANGLES, "Building" + numFloors);
+  var buildingMesh = new Mesh(gl.TRIANGLES, "Building" + numFloors, Context.renderPrograms["phong"]);
   
   buildingMesh.verts = [
     // Bottom face
@@ -951,7 +875,7 @@ function getBlack() {
 function initSphereMesh(numDivisions) {
   // Basic idea for how to subdivide a sphere adapted from http://www.songho.ca/opengl/gl_sphere.html
   
-  var sphereMesh = new Mesh(gl.TRIANGLES, "Sphere");
+  var sphereMesh = new Mesh(gl.TRIANGLES, "Sphere", Context.renderPrograms["phong"]);
   
   var spherePoints = [];
   
@@ -1062,14 +986,14 @@ function initVertexBuffer() {
 
   Vertex.primSize = buffer.BYTES_PER_ELEMENT;
 
-  gl.vertexAttribPointer(Context.renderProgram.attribIds['a_Position'], Vertex.primsPerPos, Vertex.primType, false /* Normalize */, Vertex.stride, 0);
-  gl.enableVertexAttribArray(Context.renderProgram.attribIds['a_Position']);
+  gl.vertexAttribPointer(Context.renderPrograms["phong"].attribIds['a_Position'], Vertex.primsPerPos, Vertex.primType, false /* Normalize */, Vertex.stride, 0);
+  gl.enableVertexAttribArray(Context.renderPrograms["phong"].attribIds['a_Position']);
 
-  gl.vertexAttribPointer(Context.renderProgram.attribIds['a_Color'], Vertex.primsPerColor, Vertex.primType, false /* Normalize */, Vertex.stride, Vertex.primSize * Vertex.primsPerPos);
-  gl.enableVertexAttribArray(Context.renderProgram.attribIds['a_Color']);
+  gl.vertexAttribPointer(Context.renderPrograms["phong"].attribIds['a_Color'], Vertex.primsPerColor, Vertex.primType, false /* Normalize */, Vertex.stride, Vertex.primSize * Vertex.primsPerPos);
+  gl.enableVertexAttribArray(Context.renderPrograms["phong"].attribIds['a_Color']);
 
-  gl.vertexAttribPointer(Context.renderProgram.attribIds['a_Normal'], Vertex.primsPerNormal, Vertex.primType, false /* Normalize */, Vertex.stride, Vertex.primSize * Vertex.primsPerPos + Vertex.primSize * Vertex.primsPerColor);
-  gl.enableVertexAttribArray(Context.renderProgram.attribIds['a_Normal']);
+  gl.vertexAttribPointer(Context.renderPrograms["phong"].attribIds['a_Normal'], Vertex.primsPerNormal, Vertex.primType, false /* Normalize */, Vertex.stride, Vertex.primSize * Vertex.primsPerPos + Vertex.primSize * Vertex.primsPerColor);
+  gl.enableVertexAttribArray(Context.renderPrograms["phong"].attribIds['a_Normal']);
 
   return bufferValues.length;
 }
