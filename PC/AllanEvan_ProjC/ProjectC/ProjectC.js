@@ -110,6 +110,8 @@ function main() {
     console.log('Failed to set the vertex information');
     return;
   }
+  
+  console.log(maxVerts / Vertex.primsPerVertex + " verts in vbo");
 
   gl.clearColor(0.3, 0.3, 0.3, 1.0);
 
@@ -159,6 +161,8 @@ function animate() {
     Context.cameras[0].lookDir = new Pos(Context.cameras[1].lookDir);
     Context.cameras[0].up = new Pos(Context.cameras[1].up);
   }
+  
+  Animation.nodes["sphere"].rot.multiplySelf(QuatFromAxisAngle(0, 0, 1, elapsed / 30));
 
   updateFramerate(elapsed);
   
@@ -322,7 +326,8 @@ function tick() {
  * Creates the full scene graph.
  */
 function initSceneGraph() {
-  var numCircleParts = 100;
+  var numCircleParts = 30;
+  var numSphereParts = 30;
   var bottomCircleMesh = initCircleMesh(numCircleParts, false /* invert */);
   var topCircleMesh = initCircleMesh(numCircleParts, true /* invert */);
   var cyllinderMesh = initCyllinderSideMesh(numCircleParts);
@@ -331,6 +336,7 @@ function initSceneGraph() {
   var axesMesh = initAxesMesh();
   var planeMesh = initPlaneMesh();
   var blackBoxMesh = initBlackBoxMesh();
+  var sphereMesh = initSphereMesh(numSphereParts);
   
   var buildingMeshes = [initBuildingMesh(3), initBuildingMesh(4), initBuildingMesh(5), initBuildingMesh(6), initBuildingMesh(7), initBuildingMesh(8)];
   
@@ -370,12 +376,14 @@ function initSceneGraph() {
 
   var planeNode = new SceneGraphNode("plane", topNode, new Pos(3.0, 3.0, 1.0), new Quaternion(), new Scale(1.0, 1.0, 1.0), planeMesh);
   
-  var buildingsNode = new SceneGraphNode("buildings", topNode, new Pos(), new Quaternion(), new Scale(1.0, 1.0, 1.0));
+  var buildingsNode = new SceneGraphNode("buildings", topNode, new Pos(0, 3, 0), new Quaternion(), new Scale(1.0, 1.0, 1.0));
   for (var x = -3; x < 0; ++x) {
     for (var y = 0; y < 3; ++y) {
       buildingNode = new SceneGraphNode("building" + x + "_" + y, buildingsNode, new Pos(x, y, 0), QuatFromEuler(0, 0, Math.floor(Math.random() * 4) * 90), new Scale(0.25, 0.25, 0.25), buildingMeshes[Math.floor(Math.random() * buildingMeshes.length)]);
     }
   }
+  
+  var sphereMesh = new SceneGraphNode("sphere", topNode, new Pos(), new Quaternion(), new Scale(0.4, 0.4, 0.4), sphereMesh);
 
   Context.sceneGraph = topNode;
   console.log("Full Graph: ",topNode);
@@ -938,6 +946,54 @@ function getYellow() {
 function getBlack() {
   var greyAmount = 0.05;// + Math.random() / 10;
   return new Color(greyAmount, greyAmount, greyAmount);
+}
+
+function initSphereMesh(numDivisions) {
+  // Basic idea for how to subdivide a sphere adapted from http://www.songho.ca/opengl/gl_sphere.html
+  
+  var sphereMesh = new Mesh(gl.TRIANGLES, "Sphere");
+  
+  var spherePoints = [];
+  
+  for (let i = 0; i < numDivisions; ++i) {
+    let theta = i / numDivisions * 2 * Math.PI;
+    spherePoints.push([]);
+    for (let j = 0; j <= numDivisions; ++j) {
+      let phi = (j / numDivisions - 0.5) * Math.PI;
+      let x = Math.cos(theta) * Math.cos(phi);
+      let y = Math.sin(theta) * Math.cos(phi);
+      let z = Math.sin(phi);
+      spherePoints[i].push(new Vec3(x, y, z));
+    }
+  }
+  
+  for (let i = 0; i < numDivisions; ++i) {
+    for (let j = 0; j < numDivisions; ++j) {
+      let currentPoint = spherePoints[i][j];
+      let rightPoint;
+      let upPoint = spherePoints[i][j + 1];
+      let upRightPoint;
+      
+      if (i < numDivisions - 1) {
+        rightPoint = spherePoints[i + 1][j];
+        upRightPoint = spherePoints[i + 1][j + 1];
+      } else {
+        rightPoint = spherePoints[0][j];
+        upRightPoint = spherePoints[0][j + 1];
+      }
+      
+      sphereMesh.verts.push(new Vertex(new Pos(currentPoint), new Color(1.0, 1.0, 0.5), new Vec3(currentPoint)));
+      sphereMesh.verts.push(new Vertex(new Pos(upRightPoint), new Color(1.0, 1.0, 0.5), new Vec3(upRightPoint)));
+      sphereMesh.verts.push(new Vertex(new Pos(upPoint), new Color(1.0, 1.0, 0.5), new Vec3(upPoint)));
+      
+      sphereMesh.verts.push(new Vertex(new Pos(currentPoint), new Color(1.0, 1.0, 0.5), new Vec3(currentPoint)));
+      sphereMesh.verts.push(new Vertex(new Pos(rightPoint), new Color(1.0, 1.0, 0.5), new Vec3(rightPoint)));
+      sphereMesh.verts.push(new Vertex(new Pos(upRightPoint), new Color(1.0, 1.0, 0.5), new Vec3(upRightPoint)));
+    }
+  }
+  
+  console.log(spherePoints);
+  return sphereMesh;
 }
 
 /**
