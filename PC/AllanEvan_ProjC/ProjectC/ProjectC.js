@@ -83,16 +83,6 @@ function animate() {
   var buildingsShown = document.getElementById("buildingsShown").checked;
   Animation.nodes["buildings"].enabled = buildingsShown;
   
-  if (document.getElementById("perspectiveOnArm").checked) {
-    attachCameraToNode(Context.cameras[0], Animation.nodes['l7']);
-  } else if (document.getElementById("perspectiveOnPlane").checked) {
-    attachCameraToNode(Context.cameras[0], Animation.nodes['plane'], {fwd: 0.4, right: 0, up: 0.1}, {pitch:0, yaw: -90, roll:0});
-  } else {
-    Context.cameras[0].pos = new Pos(Context.cameras[1].pos);
-    Context.cameras[0].lookDir = new Pos(Context.cameras[1].lookDir);
-    Context.cameras[0].up = new Pos(Context.cameras[1].up);
-  }
-  
   Animation.nodes["sphere"].rot.multiplySelf(QuatFromAxisAngle(0, 0, 1, elapsed / 30));
 
   updateFramerate(elapsed);
@@ -209,21 +199,21 @@ function translateCamera(elapsed) {
   var lockForward = document.getElementById("lockForward").checked;
   
   if (Animation.moveFwd) {
-    Context.cameras[1].move(speed, 0, 0, lockForward);
+    Context.cameras[0].move(speed, 0, 0, lockForward);
   } else if (Animation.moveBack) {
-    Context.cameras[1].move(-speed, 0, 0, lockForward);
+    Context.cameras[0].move(-speed, 0, 0, lockForward);
   }
 
   if (Animation.moveLeft) {
-    Context.cameras[1].move(0, -speed, 0);
+    Context.cameras[0].move(0, -speed, 0);
   } else if (Animation.moveRight) {
-    Context.cameras[1].move(0, speed, 0);
+    Context.cameras[0].move(0, speed, 0);
   }
 
   if (Animation.moveUp) {
-    Context.cameras[1].move(0, 0, speed);
+    Context.cameras[0].move(0, 0, speed);
   } else if (Animation.moveDown) {
-    Context.cameras[1].move(0, 0, -speed);
+    Context.cameras[0].move(0, 0, -speed);
   }
 }
 
@@ -234,15 +224,15 @@ function rotateCamera(elapsed) {
   degPerTick = elapsed / 15;
 
   if (Animation.lookUp) {
-    Context.cameras[1].rotate(degPerTick / 2, 0, 0);
+    Context.cameras[0].rotate(degPerTick / 2, 0, 0);
   } else if (Animation.lookDown) {
-    Context.cameras[1].rotate(-degPerTick / 2, 0, 0);
+    Context.cameras[0].rotate(-degPerTick / 2, 0, 0);
   }
 
   if (Animation.lookLeft) {
-    Context.cameras[1].rotate(0, degPerTick, 0);
+    Context.cameras[0].rotate(0, degPerTick, 0);
   } else if (Animation.lookRight) {
-    Context.cameras[1].rotate(0, -degPerTick, 0);
+    Context.cameras[0].rotate(0, -degPerTick, 0);
   }
 }
 
@@ -1005,7 +995,7 @@ function initSphereMesh(numDivisions) {
 function initCameras() {
   near = 0.1;
   far = 30;
-  fovy = 35;
+  fovy = 30;
 
   startx = -7;
   starty = 7;
@@ -1018,7 +1008,7 @@ function initCameras() {
   var cam1 = new Camera();
   cam1.viewport.x = 0;
   cam1.viewport.y = 0;
-  cam1.viewport.width = 0.5;
+  cam1.viewport.width = 01;
   cam1.viewport.height = 1;
   cam1.viewport.mode = "relative";
   cam1.move(startx, starty, startz);
@@ -1027,22 +1017,7 @@ function initCameras() {
     applyPerspectiveProjection(modelMatrix, fovy, width / height, near, far);
   };
 
-  var cam2 = new Camera();
-  cam2.viewport.x = 0.5;
-  cam2.viewport.y = 0;
-  cam2.viewport.width = 0.5;
-  cam2.viewport.height = 1;
-  cam2.viewport.mode = "relative";
-  cam2.move(startx, starty, startz);
-  cam2.rotate(startPitch, startYaw, startRoll);
-  cam2.applyProjection = function(modelMatrix, width, height) {
-    targetPlane = (far - near) / 3;
-    targetTop = targetPlane * Math.sin(fovy / 2 * Math.PI / 180);
-    targetRight = targetTop * width / height;
-    applyOrthoProjection(modelMatrix, -targetRight, targetRight, -targetTop, targetTop, near, far);
-  };
-
-  Context.cameras = [cam1, cam2];
+  Context.cameras = [cam1];
 }
 
 /**
