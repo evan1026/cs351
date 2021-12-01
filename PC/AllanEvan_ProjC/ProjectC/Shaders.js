@@ -39,19 +39,23 @@ phongFragShader = `
 precision mediump float;
 
 struct Material {
-    vec3 ambientColor;
-    vec3 diffuseColor;
-    vec3 specularColor;
+    vec3 Ka;
+    vec3 Kd;
+    vec3 Ks;
     float shininess;
-    float Ka;
-    float Kd;
-    float Ks;
+};
+
+struct Light {
+    vec3 pos;
+    vec3 Ia;
+    vec3 Id;
+    vec3 Is;
 };
 
 uniform vec3 u_CameraPos;
-uniform vec3 u_LightPos;
 uniform bool u_ShowNormals;
 uniform Material u_Material;
+uniform Light u_Light;
 
 varying vec4 v_Color;
 varying vec3 v_Pos;
@@ -59,7 +63,7 @@ varying vec3 v_Normal;
 
 void getColorFromLighting() {
     vec3 N = normalize(v_Normal);
-    vec3 L = normalize(u_LightPos - v_Pos);
+    vec3 L = normalize(u_Light.pos - v_Pos);
 
     float diffuse = max(dot(N, L), 0.0);
     float specular = 0.0;
@@ -70,7 +74,7 @@ void getColorFromLighting() {
       specular = pow(specAngle, u_Material.shininess);
     }
 
-    vec4 lighting = vec4(u_Material.Ka * u_Material.ambientColor + u_Material.Kd * diffuse * u_Material.diffuseColor + u_Material.Ks * specular * u_Material.specularColor, 1.0);
+    vec4 lighting = vec4(u_Material.Ka * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
 
     gl_FragColor = v_Color * lighting;
 }
@@ -129,13 +133,17 @@ flatAttribs = ['a_Position', 'a_Color', 'u_ModelMatrix', 'u_ProjectionMatrix', '
 
 garaudVertShader = `
 struct Material {
-    vec3 ambientColor;
-    vec3 diffuseColor;
-    vec3 specularColor;
     float shininess;
-    float Ka;
-    float Kd;
-    float Ks;
+    vec3 Ka;
+    vec3 Kd;
+    vec3 Ks;
+};
+
+struct Light {
+    vec3 pos;
+    vec3 Ia;
+    vec3 Id;
+    vec3 Is;
 };
 
 uniform mat4 u_ModelMatrix;
@@ -144,9 +152,9 @@ uniform mat4 u_NormalMatrix;
 uniform vec4 u_ColorOverride;
 uniform bool u_PopOut;
 uniform vec3 u_CameraPos;
-uniform vec3 u_LightPos;
 uniform bool u_ShowNormals;
 uniform Material u_Material;
+uniform Light u_Light;
 
 attribute vec4 a_Position;
 attribute vec3 a_Color;
@@ -155,17 +163,8 @@ attribute vec3 a_Normal;
 varying vec4 v_Color;
 
 void getColorFromLighting(vec3 v_Pos, vec3 v_Normal) {
-    vec3 lightPos = vec3(0.0, 0.0, 10.0);
-    vec3 ambientColor = vec3(0.5, 0.5, 0.5);
-    vec3 diffuseColor = vec3(0.5, 0.5, 0.5);
-    vec3 specularColor = vec3(1.0, 1.0, 1.0);
-    float shininess = 80.0;
-    float Ka = 1.0;
-    float Kd = 1.0;
-    float Ks = 1.0;
-
     vec3 N = normalize(v_Normal);
-    vec3 L = normalize(u_LightPos - v_Pos);
+    vec3 L = normalize(u_Light.pos - v_Pos);
 
     float diffuse = max(dot(N, L), 0.0);
     float specular = 0.0;
@@ -176,7 +175,7 @@ void getColorFromLighting(vec3 v_Pos, vec3 v_Normal) {
         specular = pow(specAngle, u_Material.shininess);
     }
 
-    vec4 lighting = vec4(u_Material.Ka * u_Material.ambientColor + u_Material.Kd * diffuse * u_Material.diffuseColor + u_Material.Ks * specular * u_Material.specularColor, 1.0);
+    vec4 lighting = vec4(u_Material.Ka * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
 
     v_Color = v_Color * lighting;
 }

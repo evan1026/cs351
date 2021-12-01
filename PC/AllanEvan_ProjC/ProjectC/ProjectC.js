@@ -57,6 +57,10 @@ function main() {
   Event.mouseDrag.x = 0.0;
   Event.mouseDrag.y = -1.0;
 
+  Context.uniformValues['u_Light.Ia'] = index => gl.uniform3f(index, 1.0, 1.0, 1.0);
+  Context.uniformValues['u_Light.Id'] = index => gl.uniform3f(index, 1.0, 1.0, 1.0);
+  Context.uniformValues['u_Light.Is'] = index => gl.uniform3f(index, 1.0, 1.0, 1.0);
+
   tick();
 }
 
@@ -87,7 +91,7 @@ function animate() {
 
   updateFramerate(elapsed);
   
-  Context.uniformValues['u_LightPos'] = index => gl.uniform3f(index, 10 * Math.cos(time/200), 10 * Math.sin(time/200), 10);
+  Context.uniformValues['u_Light.pos'] = index => gl.uniform3f(index, 10 * Math.cos(time/200), 10 * Math.sin(time/200), 10);
   
   let normalsShown = document.getElementById("normalsShown").checked;
   Context.uniformValues['u_ShowNormals'] = index => gl.uniform1i(index, normalsShown);
@@ -337,13 +341,10 @@ function initCircleMesh(numCircleParts, invert) {
   }
   
   circleMesh.uniforms = {
-    "u_Material.Ka": index => gl.uniform1f(index, 1.0),
-    "u_Material.Kd": index => gl.uniform1f(index, 1.0),
-    "u_Material.Ks": index => gl.uniform1f(index, 1.0),
-    "u_Material.ambientColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.diffuseColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.Ka": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.Kd": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
     "u_Material.shininess": index => gl.uniform1f(index, 80),
-    "u_Material.specularColor": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
+    "u_Material.Ks": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
   };
 
   return circleMesh;
@@ -373,13 +374,10 @@ function initCyllinderSideMesh(numCircleParts) {
   }
   
   cyllinderMesh.uniforms = {
-    "u_Material.Ka": index => gl.uniform1f(index, 1.0),
-    "u_Material.Kd": index => gl.uniform1f(index, 1.0),
-    "u_Material.Ks": index => gl.uniform1f(index, 1.0),
-    "u_Material.ambientColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.diffuseColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.Ka": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.Kd": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
     "u_Material.shininess": index => gl.uniform1f(index, 80),
-    "u_Material.specularColor": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
+    "u_Material.Ks": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
   };
 
   return cyllinderMesh;
@@ -444,13 +442,10 @@ function initHouseMesh() {
   ];
   
   houseMesh.uniforms = {
-    "u_Material.Ka": index => gl.uniform1f(index, 1.0),
-    "u_Material.Kd": index => gl.uniform1f(index, 1.0),
-    "u_Material.Ks": index => gl.uniform1f(index, 1.0),
-    "u_Material.ambientColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.diffuseColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.Ka": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.Kd": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
     "u_Material.shininess": index => gl.uniform1f(index, 80),
-    "u_Material.specularColor": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
+    "u_Material.Ks": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
   };
   
   return houseMesh;
@@ -702,13 +697,10 @@ function initPlaneMesh() {
   }
   
   planeMesh.uniforms = {
-    "u_Material.Ka": index => gl.uniform1f(index, 1.0),
-    "u_Material.Kd": index => gl.uniform1f(index, 1.0),
-    "u_Material.Ks": index => gl.uniform1f(index, 1.0),
-    "u_Material.ambientColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.diffuseColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.Ka": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.Kd": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
     "u_Material.shininess": index => gl.uniform1f(index, 80),
-    "u_Material.specularColor": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
+    "u_Material.Ks": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
   };
 
   return planeMesh;
@@ -772,13 +764,10 @@ function initBlackBoxMesh() {
   ];
   
   boxMesh.uniforms = {
-    "u_Material.Ka": index => gl.uniform1f(index, 1.0),
-    "u_Material.Kd": index => gl.uniform1f(index, 1.0),
-    "u_Material.Ks": index => gl.uniform1f(index, 1.0),
-    "u_Material.ambientColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.diffuseColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.Ka": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.Kd": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
     "u_Material.shininess": index => gl.uniform1f(index, 80),
-    "u_Material.specularColor": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
+    "u_Material.Ks": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
   };
 
   return boxMesh;
@@ -905,13 +894,10 @@ function initBuildingMesh(numFloors) {
   }    
   
   buildingMesh.uniforms = {
-    "u_Material.Ka": index => gl.uniform1f(index, 1.0),
-    "u_Material.Kd": index => gl.uniform1f(index, 1.0),
-    "u_Material.Ks": index => gl.uniform1f(index, 1.0),
-    "u_Material.ambientColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.diffuseColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.Ka": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.Kd": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
     "u_Material.shininess": index => gl.uniform1f(index, 80),
-    "u_Material.specularColor": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
+    "u_Material.Ks": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
   };
   
   return buildingMesh;
@@ -977,13 +963,10 @@ function initSphereMesh(numDivisions) {
   }
   
   sphereMesh.uniforms = {
-    "u_Material.Ka": index => gl.uniform1f(index, 1.0),
-    "u_Material.Kd": index => gl.uniform1f(index, 1.0),
-    "u_Material.Ks": index => gl.uniform1f(index, 1.0),
-    "u_Material.ambientColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.diffuseColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.Ka": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.Kd": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
     "u_Material.shininess": index => gl.uniform1f(index, 80),
-    "u_Material.specularColor": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
+    "u_Material.Ks": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
   };
   
   return sphereMesh;
