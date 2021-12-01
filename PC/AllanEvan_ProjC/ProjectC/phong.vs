@@ -15,20 +15,20 @@ varying vec3 v_Pos;
 varying vec3 v_Normal;
 
 void main() {
-  vec4 position = u_ModelMatrix * a_Position;
-  vec4 normal = normalize(vec4(a_Normal, 0.0));
-  vec3 transformedNormal = normalize(vec3(u_NormalMatrix * normal));
-  
-  if (u_PopOut) {
-    position += 0.03 * vec4(transformedNormal, 0.0);
-  }
-  
-  gl_Position = u_ProjectionMatrix * position;
-  gl_PointSize = 10.0;
+    vec4 position = u_ModelMatrix * a_Position;
+    vec4 normal = normalize(vec4(a_Normal, 0.0));
+    vec3 transformedNormal = normalize(vec3(u_NormalMatrix * normal));
 
-  vec4 a_Color4 = vec4(a_Color.r, a_Color.g, a_Color.b, 1.0);
-  
-  v_Color = mix(u_ColorOverride, a_Color4, 1.0 - u_ColorOverride.a);
-  v_Pos = vec3(position) / position.w;
-  v_Normal = transformedNormal;
+    if (u_PopOut) {
+        position += 0.03 * vec4(transformedNormal, 0.0);
+    }
+
+    gl_Position = u_ProjectionMatrix * position;
+    gl_PointSize = 10.0;
+
+    vec4 a_Color4 = vec4(a_Color.r, a_Color.g, a_Color.b, 1.0);
+
+    v_Color = mix(u_ColorOverride, a_Color4, 1.0 - u_ColorOverride.a);
+    v_Pos = vec3(position) / position.w;
+    v_Normal = transformedNormal;
 }

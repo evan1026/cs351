@@ -2,26 +2,28 @@
 
 precision mediump float;
 
+struct Material {
+    vec3 ambientColor;
+    vec3 diffuseColor;
+    vec3 specularColor;
+    float shininess;
+    float Ka;
+    float Kd;
+    float Ks;
+};
+
 uniform vec3 u_CameraPos;
+uniform vec3 u_LightPos;
 uniform bool u_ShowNormals;
+uniform Material u_Material;
 
 varying vec4 v_Color;
 varying vec3 v_Pos;
 varying vec3 v_Normal;
 
-void main() {
-  if (!u_ShowNormals) {
-    vec3 lightPos = vec3(0.0, 0.0, 10.0);
-    vec3 ambientColor = vec3(0.5, 0.5, 0.5);
-    vec3 diffuseColor = vec3(0.5, 0.5, 0.5);
-    vec3 specularColor = vec3(1.0, 1.0, 1.0);
-    float shininess = 80.0;
-    float Ka = 1.0;
-    float Kd = 1.0;
-    float Ks = 1.0;
-
+void getColorFromLighting() {
     vec3 N = normalize(v_Normal);
-    vec3 L = normalize(lightPos - v_Pos);
+    vec3 L = normalize(u_LightPos - v_Pos);
 
     float diffuse = max(dot(N, L), 0.0);
     float specular = 0.0;
@@ -29,18 +31,27 @@ void main() {
       vec3 R = reflect(-L, N);
       vec3 V = normalize(u_CameraPos - v_Pos);
       float specAngle = max(dot(R, V), 0.0);
-      specular = pow(specAngle, shininess);
+      specular = pow(specAngle, u_Material.shininess);
     }
 
-    vec4 lighting = vec4(Ka * ambientColor + Kd * diffuse * diffuseColor + Ks * specular * specularColor, 1.0);
+    vec4 lighting = vec4(u_Material.Ka * u_Material.ambientColor + u_Material.Kd * diffuse * u_Material.diffuseColor + u_Material.Ks * specular * u_Material.specularColor, 1.0);
 
     gl_FragColor = v_Color * lighting;
-  } else {
+}
+
+void getColorFromNormals() {
     vec3 normalColor = normalize(v_Normal) * 0.5 + vec3(0.5, 0.5, 0.5);
     vec4 a_Color4 = vec4(normalColor, 1.0);
     if (all(equal(v_Normal, vec3(0.0, 0.0, 0.0)))) {
       a_Color4 = vec4(1, 1, 1, 1);
     }
     gl_FragColor = a_Color4;
-  }
+}
+
+void main() {
+    if (!u_ShowNormals) {
+        getColorFromLighting();
+    } else {
+        getColorFromNormals();
+    }
 }

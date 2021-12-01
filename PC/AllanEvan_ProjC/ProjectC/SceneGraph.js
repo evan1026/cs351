@@ -276,6 +276,7 @@ class Mesh {
   wireframeElementsIndex;
   wireframeElementsSize;
   renderProgram;
+  uniforms = {};
 
   // These get filled in after the vbo generation
   vboStart;
@@ -385,10 +386,10 @@ class RenderProgram {
   constructor(name, vertShader, fragShader) {
     this.vertShader = vertShader;
     this.fragShader = fragShader;
-    
+    this.name = name;
     this.program = createProgram(gl, vertShader, fragShader);
     if (!this.program) {
-      throw 'Failed to create render program';
+      throw 'Failed to create render program ' + this.name;
     }
 
     gl.useProgram(this.program);
@@ -408,7 +409,6 @@ class RenderProgram {
     }
     
     Context.renderPrograms[name] = this;
-    this.name = name;
     
     console.log("Attribs for '" + this.name + "': ", this.attribIds);
   }
@@ -607,7 +607,7 @@ function buildBuffer(graphNode, currBuffer) {
   if (graphNode) {
     if (graphNode.mesh && graphNode.mesh.vboStart === undefined) {
       graphNode.mesh.vboStart = currBuffer.length / Vertex.primsPerVertex;
-      for (vertex of graphNode.mesh.verts) {
+      for (let vertex of graphNode.mesh.verts) {
         if (vertex.color === undefined) {
           console.log(vertex);
         }
@@ -617,7 +617,7 @@ function buildBuffer(graphNode, currBuffer) {
       calculateWireframeElements(graphNode.mesh);
     }
 
-    for (child of graphNode.children) {
+    for (let child of graphNode.children) {
       buildBuffer(child, currBuffer);
     }
   }
@@ -711,7 +711,7 @@ function calculateNormals(mesh, smooth) {
  * Calls calculateNormals() on every mesh in the given list of meshes.
  */
 function calculateAllNormals(meshes, smooth) {
-  for (mesh of meshes) {
+  for (let mesh of meshes) {
     calculateNormals(mesh, smooth);
   }
 }
@@ -768,37 +768,50 @@ function drawNode(modelMatrix, node, scale, projectionMatrix, cameraPos) {
   if (node.mesh) {
     pushMatrix(modelMatrix);
     
+    // Select shaders for this mesh
     var renderProgram = node.mesh.renderProgram;
     selectRenderProgram(renderProgram);
     if (renderProgram.projectionMatrixAttrib) {
       gl.uniformMatrix4fv(renderProgram.attribIds[renderProgram.projectionMatrixAttrib], false, projectionMatrix.elements);
     }
     
+    // Push camera world-space position
     if (renderProgram.cameraPosAttrib) {
       gl.uniform3f(renderProgram.attribIds[renderProgram.cameraPosAttrib], cameraPos.x, cameraPos.y, cameraPos.z);
     }
     
+    // Push model matrix
     if (renderProgram.modelMatrixAttrib) {
       modelMatrix.scale(scale.x, scale.y, scale.z);
       gl.uniformMatrix4fv(renderProgram.attribIds[renderProgram.modelMatrixAttrib], false, modelMatrix.elements);
     }
 
+    // Push normal matrix
     if (renderProgram.normalMatrixAttrib) {
       var normalMatrix = new Matrix4(modelMatrix);
       normalMatrix.invert().transpose();
       gl.uniformMatrix4fv(renderProgram.attribIds[renderProgram.normalMatrixAttrib], false, normalMatrix.elements);
     }
+    
+    // Push uniforms for this mesh
+    for (let attr in node.mesh.uniforms) {
+      if (attr in renderProgram.attribIds) {
+        node.mesh.uniforms[attr](renderProgram.attribIds[attr]);
+      }
+    }
 
+    // Render object
     if (Context.wireframe && node.mesh.wireframeElementsIndex !== undefined) {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, node.mesh.wireframeElementsIndex);
       gl.drawElements(gl.LINES, node.mesh.wireframeElementsSize, gl.UNSIGNED_SHORT, 0);
     } else {
       gl.drawArrays(node.mesh.renderType, node.mesh.vboStart, node.mesh.vboCount);
     }
+    
     modelMatrix = popMatrix();
   }
 
-  for (child of node.children) {
+  for (let child of node.children) {
     modelMatrix = drawNode(modelMatrix, child, scale, projectionMatrix, cameraPos);
   }
   return popMatrix();
@@ -807,7 +820,7 @@ function drawNode(modelMatrix, node, scale, projectionMatrix, cameraPos) {
 function selectRenderProgram(renderProgram) {
   gl.useProgram(renderProgram.program);
   
-  for (attr in Context.uniformValues) {
+  for (let attr in Context.uniformValues) {
     if (attr in renderProgram.attribIds) {
       Context.uniformValues[attr](renderProgram.attribIds[attr]);
     }
@@ -829,7 +842,7 @@ function drawAll() {
   // Now clear and draw
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  for (camera of Context.cameras) {
+  for (let camera of Context.cameras) {
     var camWidth;
     var camHeight;
     var camX;
@@ -925,7 +938,7 @@ function getNameGraph(topNode) {
 function getNameGraphHelper(topNode) {
   var currNode = {};
 
-  for (child of topNode.children) {
+  for (let child of topNode.children) {
     currNode[child.name] = getNameGraphHelper(child);
   }
 
@@ -942,7 +955,7 @@ function getTransform(targetNode) {
   var currNode = Context.sceneGraph;
   var modelMatrix = new Matrix4();
   var scale = new Scale(1.0, 1.0, 1.0);
-  for (index of nodePath) {
+  for (let index of nodePath) {
     var node = currNode.children[index];
     modelMatrix.translate(scale.x * node.pos.x, scale.y * node.pos.y, scale.z * node.pos.z);
     modelMatrix.rotateFromQuat(node.rot);
@@ -1036,12 +1049,12 @@ function getSceneGraphDotStringSubGraph(topNode, clusterCount, indent) {
     dotString += "    ".repeat(indent) + thisNodeGroup + " [label=\"'" + topNode.name.replace("-", "_") + "' Group\", style=filled, fillcolor=darkgreen];\n";
     dotString += "    ".repeat(indent) + "subgraph cluster_" + clusterCount++ + " {\n";
     dotString += "    ".repeat(indent + 1) + "style=invis;\n";
-    for (child of topNode.children) {
+    for (let child of topNode.children) {
       var output = getSceneGraphDotStringSubGraph(child, clusterCount, indent + 1);
       dotString += output.dotString;
       clusterCount = output.clusterCount;
     }
-    for (child of topNode.children) {
+    for (let child of topNode.children) {
       dotString += "    ".repeat(indent) + thisNodeGroup + " -> " + child.name.replace("-", "_") + "Transform" + " [color=darkgoldenrod4];\n";
     }
     dotString += "    ".repeat(indent) + "}\n";
@@ -1066,12 +1079,12 @@ function getSceneGraphDotStringMeshes(topNode, coveredMeshes) {
     dotString += "    " + topNode.name.replace("-", "_") + "Transform" + " -> " + topNode.mesh.name.replace("-", "_") + "Mesh [color=firebrick4];\n";
   }
 
-  for (child of topNode.children) {
+  for (let child of topNode.children) {
     dotString += getSceneGraphDotStringMeshes(child, coveredMeshes);
   }
 
   if (topNode.parent === undefined) {
-    for (mesh of coveredMeshes) {
+    for (let mesh of coveredMeshes) {
       dotString += "    " + mesh.name.replace("-", "_") + "Mesh [fillcolor=firebrick4, shape=trapezium, style=filled];\n";
     }
   }

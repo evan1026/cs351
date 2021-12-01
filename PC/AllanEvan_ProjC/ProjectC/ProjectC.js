@@ -97,6 +97,8 @@ function animate() {
 
   updateFramerate(elapsed);
   
+  Context.uniformValues['u_LightPos'] = index => gl.uniform3f(index, 10 * Math.cos(time/200), 10 * Math.sin(time/200), 10);
+  
   let normalsShown = document.getElementById("normalsShown").checked;
   Context.uniformValues['u_ShowNormals'] = index => gl.uniform1i(index, normalsShown);
   
@@ -343,6 +345,16 @@ function initCircleMesh(numCircleParts, invert) {
     color = new Color(rgb.r, rgb.g, rgb.b);
     circleMesh.verts.push(new Vertex(pos, color, new Vec3(0, 0, 1)));
   }
+  
+  circleMesh.uniforms = {
+    "u_Material.Ka": index => gl.uniform1f(index, 1.0),
+    "u_Material.Kd": index => gl.uniform1f(index, 1.0),
+    "u_Material.Ks": index => gl.uniform1f(index, 1.0),
+    "u_Material.ambientColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.diffuseColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.shininess": index => gl.uniform1f(index, 80),
+    "u_Material.specularColor": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
+  };
 
   return circleMesh;
 }
@@ -369,6 +381,16 @@ function initCyllinderSideMesh(numCircleParts) {
     prevVertZ0 = new Vertex(pos1, color);
     prevVertZ1 = new Vertex(pos2, color);
   }
+  
+  cyllinderMesh.uniforms = {
+    "u_Material.Ka": index => gl.uniform1f(index, 1.0),
+    "u_Material.Kd": index => gl.uniform1f(index, 1.0),
+    "u_Material.Ks": index => gl.uniform1f(index, 1.0),
+    "u_Material.ambientColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.diffuseColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.shininess": index => gl.uniform1f(index, 80),
+    "u_Material.specularColor": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
+  };
 
   return cyllinderMesh;
 }
@@ -430,6 +452,17 @@ function initHouseMesh() {
     new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(1.0, 1.0, 0.0)),
     new Vertex(new Pos( 0.0,  0.75, 0.0), new Color(1.0, 1.0, 1.0)),
   ];
+  
+  houseMesh.uniforms = {
+    "u_Material.Ka": index => gl.uniform1f(index, 1.0),
+    "u_Material.Kd": index => gl.uniform1f(index, 1.0),
+    "u_Material.Ks": index => gl.uniform1f(index, 1.0),
+    "u_Material.ambientColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.diffuseColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.shininess": index => gl.uniform1f(index, 80),
+    "u_Material.specularColor": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
+  };
+  
   return houseMesh;
 }
 
@@ -677,6 +710,16 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.1,  0.05)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.1,  0.05)));
   }
+  
+  planeMesh.uniforms = {
+    "u_Material.Ka": index => gl.uniform1f(index, 1.0),
+    "u_Material.Kd": index => gl.uniform1f(index, 1.0),
+    "u_Material.Ks": index => gl.uniform1f(index, 1.0),
+    "u_Material.ambientColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.diffuseColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.shininess": index => gl.uniform1f(index, 80),
+    "u_Material.specularColor": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
+  };
 
   return planeMesh;
 }
@@ -737,6 +780,16 @@ function initBlackBoxMesh() {
     new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
     new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
   ];
+  
+  boxMesh.uniforms = {
+    "u_Material.Ka": index => gl.uniform1f(index, 1.0),
+    "u_Material.Kd": index => gl.uniform1f(index, 1.0),
+    "u_Material.Ks": index => gl.uniform1f(index, 1.0),
+    "u_Material.ambientColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.diffuseColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.shininess": index => gl.uniform1f(index, 80),
+    "u_Material.specularColor": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
+  };
 
   return boxMesh;
 }
@@ -861,6 +914,16 @@ function initBuildingMesh(numFloors) {
     }
   }    
   
+  buildingMesh.uniforms = {
+    "u_Material.Ka": index => gl.uniform1f(index, 1.0),
+    "u_Material.Kd": index => gl.uniform1f(index, 1.0),
+    "u_Material.Ks": index => gl.uniform1f(index, 1.0),
+    "u_Material.ambientColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.diffuseColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.shininess": index => gl.uniform1f(index, 80),
+    "u_Material.specularColor": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
+  };
+  
   return buildingMesh;
 }
 
@@ -923,7 +986,16 @@ function initSphereMesh(numDivisions) {
     }
   }
   
-  console.log(spherePoints);
+  sphereMesh.uniforms = {
+    "u_Material.Ka": index => gl.uniform1f(index, 1.0),
+    "u_Material.Kd": index => gl.uniform1f(index, 1.0),
+    "u_Material.Ks": index => gl.uniform1f(index, 1.0),
+    "u_Material.ambientColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.diffuseColor": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
+    "u_Material.shininess": index => gl.uniform1f(index, 80),
+    "u_Material.specularColor": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
+  };
+  
   return sphereMesh;
 }
 
