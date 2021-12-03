@@ -281,6 +281,8 @@ class Mesh {
   // These get filled in after the vbo generation
   vboStart;
   vboCount;
+  
+  static meshes = {};
 
   constructor(renderType, name, renderProgram) {
     this.renderType = renderType;
@@ -298,6 +300,8 @@ class Mesh {
     if (!renderType) {
       throw 'Mesh "' + name + '" missing render type';
     }
+    
+    Context.meshes[this.name] = this;
   }
 }
 
@@ -434,6 +438,7 @@ class Context {
   static sceneGraph;
   static vboId;  // TODO should I support multiple VBOs? Maybe each mesh keeps track of which one it is in/should be in?
   static renderPrograms = {};
+  static meshes = {};
   static fps = 30;
   static cameras = [];
   static wireframe = false;

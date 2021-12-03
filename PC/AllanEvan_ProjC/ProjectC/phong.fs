@@ -20,6 +20,7 @@ uniform vec3 u_CameraPos;
 uniform bool u_ShowNormals;
 uniform Material u_Material;
 uniform Light u_Light;
+uniform bool u_BlinnLighting;
 
 varying vec4 v_Color;
 varying vec3 v_Pos;
@@ -30,13 +31,17 @@ void getColorFromLighting() {
     vec3 L = normalize(u_Light.pos - v_Pos);
 
     float diffuse = max(dot(N, L), 0.0);
-    float specular = 0.0;
-    if (diffuse > 0.0) {
-      vec3 R = reflect(-L, N);
-      vec3 V = normalize(u_CameraPos - v_Pos);
-      float specAngle = max(dot(R, V), 0.0);
-      specular = pow(specAngle, u_Material.shininess);
+    
+    float specAngle;
+    vec3 V = normalize(u_CameraPos - v_Pos);
+    if (u_BlinnLighting) {
+        vec3 H = normalize(L + V);
+        specAngle = max(dot(N, H), 0.0);
+    } else {
+        vec3 R = reflect(-L, N);
+        specAngle = max(dot(R, V), 0.0);
     }
+    float specular = pow(specAngle, u_Material.shininess);
 
     vec4 lighting = vec4(u_Material.Ka * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
 

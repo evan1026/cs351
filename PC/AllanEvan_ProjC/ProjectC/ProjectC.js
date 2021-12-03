@@ -51,6 +51,23 @@ function main() {
   window.addEventListener("mouseup", myMouseUp);
   window.addEventListener("keydown", myKeyDown, false);
   window.addEventListener("keyup", myKeyUp, false);
+  
+  document.getElementById("shading").addEventListener('change', event => {
+    for (let meshName in Context.meshes) {
+      let mesh = Context.meshes[meshName];
+      if (mesh.renderProgram.name != 'flat') {
+        mesh.renderProgram = Context.renderPrograms[event.target.value];
+      }
+    }
+  });
+  
+  document.getElementById("lighting").addEventListener('change', event => {
+    if (event.target.value == 'blinnPhong') {
+      Context.uniformValues['u_BlinnLighting'] = index => gl.uniform1i(index, 1);
+    } else {
+      Context.uniformValues['u_BlinnLighting'] = index => gl.uniform1i(index, 0);
+    }
+  });
 
   Animation.armTime = Date.now();
   Animation.boxTime = Date.now();

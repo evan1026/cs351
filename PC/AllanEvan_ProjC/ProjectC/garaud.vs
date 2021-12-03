@@ -23,6 +23,9 @@ uniform vec3 u_CameraPos;
 uniform bool u_ShowNormals;
 uniform Material u_Material;
 uniform Light u_Light;
+uniform float u_WorldStretch;
+uniform float u_WorldStretchPhase;
+uniform bool u_BlinnLighting;
 
 attribute vec4 a_Position;
 attribute vec3 a_Color;
@@ -35,13 +38,17 @@ void getColorFromLighting(vec3 v_Pos, vec3 v_Normal) {
     vec3 L = normalize(u_Light.pos - v_Pos);
 
     float diffuse = max(dot(N, L), 0.0);
-    float specular = 0.0;
-    if (diffuse > 0.0) {
+
+    float specAngle;
+    vec3 V = normalize(u_CameraPos - v_Pos);
+    if (u_BlinnLighting) {
+        vec3 H = normalize(L + V);
+        specAngle = max(dot(N, H), 0.0);
+    } else {
         vec3 R = reflect(-L, N);
-        vec3 V = normalize(u_CameraPos - v_Pos);
-        float specAngle = max(dot(R, V), 0.0);
-        specular = pow(specAngle, u_Material.shininess);
+        specAngle = max(dot(R, V), 0.0);
     }
+    float specular = pow(specAngle, u_Material.shininess);
 
     vec4 lighting = vec4(u_Material.Ka * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
 
@@ -64,6 +71,7 @@ void main() {
     if (u_PopOut) {
         position += 0.03 * vec4(transformedNormal, 0.0);
     }
+    position += u_WorldStretch * vec4(0, 0, sin(position.x + u_WorldStretchPhase) + sin(position.y), 0);
 
     gl_Position = u_ProjectionMatrix * position;
     gl_PointSize = 10.0;

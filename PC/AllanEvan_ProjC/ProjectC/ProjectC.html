@@ -73,6 +73,24 @@
         <div class="aligned"><input type="checkbox" id="normalsShown"><label for="normalsShown">Show Normals as Colors</label></div>
         <div class="aligned"><input type="checkbox" id="popOut"><label for="popOut">Pop Out</label></div>
         <div class="aligned"><input type="checkbox" id="wireframe"><label for="wireframe">Wireframe</label></div>
+        <div class="aligned">
+            <label for="lighting" style="padding-right: 5px;">Lighting</label>
+            <select id="lighting">
+                <option value="phong">Phong</option>
+                <option value="blinnPhong">Blinn-Phong</option>
+            </select>
+        </div>
+        <div class="aligned">
+            <label for="shading" style="padding-right: 5px;">Shading</label>
+            <select id="shading">
+                <option value="phong">Phong</option>
+                <option value="garaud">Garaud</option>
+            </select>
+        </div>
+        <script>
+            document.getElementById("lighting").value = 'phong';
+            document.getElementById("shading").value = 'phong';
+        </script>
     </div>
 
   </body>
