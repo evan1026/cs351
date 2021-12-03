@@ -92,6 +92,8 @@ function animate() {
   updateFramerate(elapsed);
   
   Context.uniformValues['u_Light.pos'] = index => gl.uniform3f(index, 10 * Math.cos(time/200), 10 * Math.sin(time/200), 10);
+  Context.uniformValues['u_WorldStretch'] = index => gl.uniform1f(index, document.getElementById("worldStretch").value);
+  Context.uniformValues['u_WorldStretchPhase'] = index => gl.uniform1f(index, (time / 1000) % (Math.PI * 2));
   
   let normalsShown = document.getElementById("normalsShown").checked;
   Context.uniformValues['u_ShowNormals'] = index => gl.uniform1i(index, normalsShown);
@@ -259,7 +261,7 @@ function initSceneGraph() {
   var topCircleMesh = initCircleMesh(numCircleParts, true /* invert */);
   var cyllinderMesh = initCyllinderSideMesh(numCircleParts);
   var houseMesh = initHouseMesh();
-  var gridMesh = initGridMesh(-20, 20, -20, 20, 200);
+  var gridMesh = initGridMesh(-10, 10, -10, 10, 50);
   var axesMesh = initAxesMesh();
   var planeMesh = initPlaneMesh();
   var blackBoxMesh = initBlackBoxMesh();
@@ -303,7 +305,7 @@ function initSceneGraph() {
 
   var planeNode = new SceneGraphNode("plane", topNode, new Pos(3.0, 3.0, 1.0), new Quaternion(), new Scale(1.0, 1.0, 1.0), planeMesh);
   
-  var buildingsNode = new SceneGraphNode("buildings", topNode, new Pos(0, 3, 0), new Quaternion(), new Scale(1.0, 1.0, 1.0));
+  var buildingsNode = new SceneGraphNode("buildings", topNode, new Pos(0, 3, 0), QuatFromEuler(0, 0, 45), new Scale(1.0, 1.0, 1.0));
   for (var x = -3; x < 0; ++x) {
     for (var y = 0; y < 3; ++y) {
       buildingNode = new SceneGraphNode("building" + x + "_" + y, buildingsNode, new Pos(x, y, 0), QuatFromEuler(0, 0, Math.floor(Math.random() * 4) * 90), new Scale(0.25, 0.25, 0.25), buildingMeshes[Math.floor(Math.random() * buildingMeshes.length)]);
@@ -457,14 +459,21 @@ function initHouseMesh() {
 function initGridMesh(xmin, xmax, ymin, ymax, numlines) {
   var gridMesh = new Mesh(gl.LINES, "Grid", Context.renderPrograms["flat"]);
 
-  for (x = xmin; x <= xmax; x += (xmax - xmin) / (numlines - 1)) {
-    gridMesh.verts.push(new Vertex(new Pos(x, ymin, 0.0), new Color(1.0, 1.0, 0.3)));
-    gridMesh.verts.push(new Vertex(new Pos(x, ymax, 0.0), new Color(1.0, 1.0, 0.3)));
+  let xadd = (xmax - xmin) / (numlines - 1);
+  let yadd = (ymax - ymin) / (numlines - 1);
+  
+  for (let x = xmin; x <= xmax + xadd; x += xadd) {
+    for (let y = ymin; y <= ymax; y += yadd) {
+      gridMesh.verts.push(new Vertex(new Pos(x, y, 0.0), new Color(1.0, 1.0, 0.3)));
+      gridMesh.verts.push(new Vertex(new Pos(x, y + yadd, 0.0), new Color(1.0, 1.0, 0.3)));
+    }
   }
 
-  for (y = ymin; y <= ymax; y += (ymax - ymin) / (numlines - 1)) {
-    gridMesh.verts.push(new Vertex(new Pos(xmin, y, 0.0), new Color(0.5, 1.0, 0.5)));
-    gridMesh.verts.push(new Vertex(new Pos(xmax, y, 0.0), new Color(0.5, 1.0, 0.5)));
+  for (let y = ymin; y <= ymax + yadd; y += yadd) {
+    for (let x = xmin; x <= xmax; x += xadd) {
+      gridMesh.verts.push(new Vertex(new Pos(x, y, 0.0), new Color(0.5, 1.0, 0.5)));
+      gridMesh.verts.push(new Vertex(new Pos(x + xadd, y, 0.0), new Color(0.5, 1.0, 0.5)));
+    }
   }
 
   return gridMesh;
@@ -1067,10 +1076,7 @@ function getMouseEventCoords(ev) {
   var xp = ev.clientX - rect.left;
   var yp = Context.canvas.height - (ev.clientY - rect.top);
 
-  // Normally these are bot over 2, but since we have 2 renders side by side,
-  // 1/2 of a view in the x direction is actually 1/4 of the total canvas
-  // width
-  var x = (xp - Context.canvas.width/4) / (Context.canvas.width/4);
+  var x = (xp - Context.canvas.width/2) / (Context.canvas.width/2);
   var y = (yp - Context.canvas.height/2) / (Context.canvas.height/2);
 
   return {x: x, y: y};
