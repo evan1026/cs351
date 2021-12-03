@@ -45,7 +45,7 @@
         <div class="aligned"><input type="radio" id="perspectiveOnPlane" name="cameraAttachment"><label for="perspectiveOnPlane">Attach Perspective Camera To Plane</label></div>
     </div>
     
-    <div class="controlarea"> Color Override:
+    <div class="controlarea"> Albedo Override:
         <div class="aligned" style="padding-left: 20px;"><input type="range" min="0" max="255" value="255" class="slider" id="r"><label for="r">R</label></div>
         <div class="aligned" style="padding-left: 20px;"><input type="range" min="0" max="255" value="255" class="slider" id="g"><label for="g">G</label></div>
         <div class="aligned" style="padding-left: 20px;"><input type="range" min="0" max="255" value="255" class="slider" id="b"><label for="b">B</label></div>
@@ -87,10 +87,24 @@
                 <option value="garaud">Garaud</option>
             </select>
         </div>
+        <div style="display: grid;">
+            <div class="aligned" style="grid-column:1; grid-row:1"><input type="range" step="0.1" min="-10" max="10" value="0" class="slider" id="lightX" oninput="this.nextElementSibling.value = this.value"><output>0</output></div><div class="aligned" style="padding-left: 10px; grid-column:2; grid-row:1"><label for="lightX">Light Position (X)</label></div>
+            <div class="aligned" style="grid-column:1; grid-row:2"><input type="range" step="0.1" min="-10" max="10" value="0" class="slider" id="lightY" oninput="this.nextElementSibling.value = this.value"><output>0</output></div><div class="aligned" style="padding-left: 10px; grid-column:2; grid-row:2"><label for="lightY">Light Position (Y)</label></div>
+            <div class="aligned" style="grid-column:1; grid-row:3"><input type="range" step="0.1" min="-10" max="10" value="0" class="slider" id="lightZ" oninput="this.nextElementSibling.value = this.value"><output>10</output></div><div class="aligned" style="padding-left: 10px; grid-column:2; grid-row:3"><label for="lightZ">Light Position (Z)</label></div>
+        </div>
         <script>
             document.getElementById("lighting").value = 'phong';
             document.getElementById("shading").value = 'phong';
         </script>
+    </div>
+    
+    <div class="controlarea" >
+
+        <div style="display: grid;">
+            <div class="aligned"><input type="color" id="lightAlbedoColor" value="#ffffff"><label for="albedoColor" style="padding-left: 5px;">Light Albedo Color</label></div>
+            <div class="aligned"><input type="color" id="lightDiffuseColor" value="#ffffff"><label for="albedoColor" style="padding-left: 5px;">Light Diffuse Color</label></div>
+            <div class="aligned"><input type="color" id="lightSpecularColor" value="#ffffff"><label for="albedoColor" style="padding-left: 5px;">Light Specular Color</label></div>
+        </div>
     </div>
 
   </body>

@@ -60,23 +60,48 @@ function main() {
       }
     }
   });
-  
-  document.getElementById("lighting").addEventListener('change', event => {
-    if (event.target.value == 'blinnPhong') {
-      Context.uniformValues['u_BlinnLighting'] = index => gl.uniform1i(index, 1);
-    } else {
-      Context.uniformValues['u_BlinnLighting'] = index => gl.uniform1i(index, 0);
-    }
-  });
 
   Animation.armTime = Date.now();
   Animation.boxTime = Date.now();
   Event.mouseDrag.x = 0.0;
   Event.mouseDrag.y = -1.0;
+  
+  Context.uniformValues['u_BlinnLighting'] = index => gl.uniform1i(index, document.getElementById("lighting").value == 'blinnPhong');
+  Context.uniformValues['u_ShowNormals'] = index => gl.uniform1i(index, document.getElementById("normalsShown").checked);
+  Context.uniformValues['u_Light.pos'] = index => gl.uniform3f(index, document.getElementById("lightX").value, document.getElementById("lightY").value, document.getElementById("lightZ").value);
+  Context.uniformValues['u_WorldStretch'] = index => gl.uniform1f(index, document.getElementById("worldStretch").value);
+  Context.uniformValues['u_WorldStretchPhase'] = index => gl.uniform1f(index, (Date.now() / 1000) % (Math.PI * 2));
+  Context.uniformValues['u_PopOut'] = index => gl.uniform1i(index, document.getElementById("popOut").checked);
 
-  Context.uniformValues['u_Light.Ia'] = index => gl.uniform3f(index, 1.0, 1.0, 1.0);
-  Context.uniformValues['u_Light.Id'] = index => gl.uniform3f(index, 1.0, 1.0, 1.0);
-  Context.uniformValues['u_Light.Is'] = index => gl.uniform3f(index, 1.0, 1.0, 1.0);
+  Context.uniformValues['u_Light.Ia'] = index => {
+    let albedoColor = document.getElementById("lightAlbedoColor").value
+    gl.uniform3f(index,
+                 parseInt(albedoColor.substring(1, 3), 16) / 255,
+                 parseInt(albedoColor.substring(3, 5), 16) / 255,
+                 parseInt(albedoColor.substring(5, 7), 16) / 255);
+  }
+  
+  Context.uniformValues['u_Light.Id'] = index => {
+    let diffuseColor = document.getElementById("lightDiffuseColor").value
+    gl.uniform3f(index,
+                 parseInt(diffuseColor.substring(1, 3), 16) / 255,
+                 parseInt(diffuseColor.substring(3, 5), 16) / 255,
+                 parseInt(diffuseColor.substring(5, 7), 16) / 255);
+  }
+  
+  Context.uniformValues['u_Light.Is'] = index => {
+    let specularColor = document.getElementById("lightSpecularColor").value
+    gl.uniform3f(index,
+                 parseInt(specularColor.substring(1, 3), 16) / 255,
+                 parseInt(specularColor.substring(3, 5), 16) / 255,
+                 parseInt(specularColor.substring(5, 7), 16) / 255);
+  }
+  
+  Context.uniformValues['u_ColorOverride'] = index => gl.uniform4f(index, 
+                                                                   document.getElementById("r").value / 255, 
+                                                                   document.getElementById("g").value / 255,
+                                                                   document.getElementById("b").value / 255,
+                                                                   document.getElementById("a").value / 255);
 
   tick();
 }
@@ -91,12 +116,6 @@ function animate() {
   translateCamera(elapsed);
   rotateCamera(elapsed);
 
-  var r = document.getElementById("r").value / 255;
-  var g = document.getElementById("g").value / 255;
-  var b = document.getElementById("b").value / 255;
-  var a = document.getElementById("a").value / 255;
-  Context.uniformValues['u_ColorOverride'] = index => gl.uniform4f(index, r, g, b, a);
-
   animateArm(time);
   animateBoxes(time);
   animateProp(time);
@@ -105,22 +124,12 @@ function animate() {
   Animation.nodes["buildings"].enabled = buildingsShown;
   
   Animation.nodes["sphere"].rot.multiplySelf(QuatFromAxisAngle(0, 0, 1, elapsed / 30));
-
-  updateFramerate(elapsed);
-  
-  Context.uniformValues['u_Light.pos'] = index => gl.uniform3f(index, 10 * Math.cos(time/200), 10 * Math.sin(time/200), 10);
-  Context.uniformValues['u_WorldStretch'] = index => gl.uniform1f(index, document.getElementById("worldStretch").value);
-  Context.uniformValues['u_WorldStretchPhase'] = index => gl.uniform1f(index, (time / 1000) % (Math.PI * 2));
-  
-  let normalsShown = document.getElementById("normalsShown").checked;
-  Context.uniformValues['u_ShowNormals'] = index => gl.uniform1i(index, normalsShown);
-  
-  let popOut = document.getElementById("popOut").checked;
-  Context.uniformValues['u_PopOut'] = index => gl.uniform1i(index, popOut);
   
   let wireframe = document.getElementById("wireframe").checked;
   Context.wireframe = wireframe;
 
+  updateFramerate(elapsed);
+  
   Animation.lastTick = time;
 }
 
