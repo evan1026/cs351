@@ -43,9 +43,7 @@ void getColorFromLighting() {
     }
     float specular = pow(specAngle, u_Material.shininess);
 
-    vec4 lighting = vec4(u_Material.Ka * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
-
-    gl_FragColor = v_Color * lighting;
+    gl_FragColor = vec4(u_Material.Ka * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
 }
 
 void getColorFromNormals() {

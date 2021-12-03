@@ -13,28 +13,10 @@ function main() {
     return;
   }
   
-  var phongRenderer = new RenderProgram("phong", phongVertShader, phongFragShader);
-  var flatRenderer = new RenderProgram("flat", flatVertShader, flatFragShader);
-  var garaudRenderer = new RenderProgram("garaud", garaudVertShader, garaudFragShader);
-  phongRenderer.verifyAttribs(phongAttribs);
-  flatRenderer.verifyAttribs(flatAttribs);
-  garaudRenderer.verifyAttribs(garaudAttribs);
-  
-  phongRenderer.modelMatrixAttrib = 'u_ModelMatrix';
-  phongRenderer.normalMatrixAttrib = 'u_NormalMatrix';
-  phongRenderer.projectionMatrixAttrib = 'u_ProjectionMatrix';
-  phongRenderer.cameraPosAttrib = 'u_CameraPos';
-  
-  flatRenderer.modelMatrixAttrib = 'u_ModelMatrix';
-  flatRenderer.projectionMatrixAttrib = 'u_ProjectionMatrix';
-  
-  garaudRenderer.modelMatrixAttrib = 'u_ModelMatrix';
-  garaudRenderer.normalMatrixAttrib = 'u_NormalMatrix';
-  garaudRenderer.projectionMatrixAttrib = 'u_ProjectionMatrix';
-  garaudRenderer.cameraPosAttrib = 'u_CameraPos';
-
+  initRenderPrograms();
   initSceneGraph();
   initCameras();
+  initUniformControls();
 
   var maxVerts = initVertexBuffer(gl);
   if (maxVerts < 0) {
@@ -60,12 +42,114 @@ function main() {
       }
     }
   });
+  
+  document.getElementById("objAlbedoColor").addEventListener('input', event => {
+    let color = event.target.value;
+    Animation.materials[document.getElementById("mesh").value].albedo = new Color(parseInt(color.substring(1, 3), 16) / 255, parseInt(color.substring(3, 5), 16) / 255, parseInt(color.substring(5, 7), 16) / 255);
+  });
+  
+  document.getElementById("objDiffuseColor").addEventListener('input', event => {
+    let color = event.target.value;
+    Animation.materials[document.getElementById("mesh").value].diffuse = new Color(parseInt(color.substring(1, 3), 16) / 255, parseInt(color.substring(3, 5), 16) / 255, parseInt(color.substring(5, 7), 16) / 255);
+  });
+  
+  document.getElementById("objSpecularColor").addEventListener('input', event => {
+    let color = event.target.value;
+    Animation.materials[document.getElementById("mesh").value].specular = new Color(parseInt(color.substring(1, 3), 16) / 255, parseInt(color.substring(3, 5), 16) / 255, parseInt(color.substring(5, 7), 16) / 255);
+  });
+  
+  document.getElementById("shininess").addEventListener('input', event => {
+    Animation.materials[document.getElementById("mesh").value].shininess = event.target.value;
+  });
+  
+  document.getElementById("mesh").addEventListener('input', event => {
+    updateObjectMaterialDisplay(event.target.value);
+  });
 
   Animation.armTime = Date.now();
   Animation.boxTime = Date.now();
   Event.mouseDrag.x = 0.0;
   Event.mouseDrag.y = -1.0;
   
+  initMaterials();
+  
+  updateObjectMaterialDisplay(document.getElementById("mesh").value);
+
+  tick();
+}
+
+function updateObjectMaterialDisplay(mesh) {
+  let mat = Animation.materials[mesh];
+  document.getElementById("objAlbedoColor").value = '#' + toHexColorValue(mat.albedo.r) + toHexColorValue(mat.albedo.g) + toHexColorValue(mat.albedo.b);
+  document.getElementById("objDiffuseColor").value = '#' + toHexColorValue(mat.diffuse.r) + toHexColorValue(mat.diffuse.g) + toHexColorValue(mat.diffuse.b);
+  document.getElementById("objSpecularColor").value = '#' + toHexColorValue(mat.specular.r) + toHexColorValue(mat.specular.g) + toHexColorValue(mat.specular.b);
+  document.getElementById("shininess").value = mat.shininess;
+  document.getElementById("shininess").nextElementSibling.value = mat.shininess;
+}
+
+function toHexColorValue(colorValue) {
+  return (Math.round(colorValue * 255)).toString(16).padStart(2, '0');
+}
+
+class Material {
+  albedo;
+  diffuse;
+  specular;
+  shininess;
+  
+  constructor(albedo, diffuse, specular, shininess) {
+    this.albedo = albedo;
+    this.diffuse = diffuse;
+    this.specular = specular;
+    this.shininess = shininess;
+  }
+}
+
+function initMaterials() {
+  Animation.materials = {};
+  
+  var meshSelector = document.getElementById("mesh");
+  for (let meshName in Context.meshes) {
+    let meshOpt = document.createElement('option');
+    meshOpt.value = meshName;
+    meshOpt.text = meshName;
+    meshSelector.add(meshOpt);
+    
+    Animation.materials[meshName] = new Material(new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), 80);
+    
+    Context.meshes[meshName].uniforms = {
+      "u_Material.Ka": index => gl.uniform3f(index, Animation.materials[meshName].albedo.r, Animation.materials[meshName].albedo.g, Animation.materials[meshName].albedo.b),
+      "u_Material.Kd": index => gl.uniform3f(index, Animation.materials[meshName].diffuse.r, Animation.materials[meshName].diffuse.g, Animation.materials[meshName].diffuse.b),
+      "u_Material.shininess": index => gl.uniform1f(index, Animation.materials[meshName].shininess),
+      "u_Material.Ks": index => gl.uniform3f(index, Animation.materials[meshName].specular.r, Animation.materials[meshName].specular.g, Animation.materials[meshName].specular.b)
+    };
+  }
+  
+}
+
+function initRenderPrograms() {
+  var phongRenderer = new RenderProgram("phong", phongVertShader, phongFragShader);
+  var flatRenderer = new RenderProgram("flat", flatVertShader, flatFragShader);
+  var garaudRenderer = new RenderProgram("garaud", garaudVertShader, garaudFragShader);
+  phongRenderer.verifyAttribs(phongAttribs);
+  flatRenderer.verifyAttribs(flatAttribs);
+  garaudRenderer.verifyAttribs(garaudAttribs);
+  
+  phongRenderer.modelMatrixAttrib = 'u_ModelMatrix';
+  phongRenderer.normalMatrixAttrib = 'u_NormalMatrix';
+  phongRenderer.projectionMatrixAttrib = 'u_ProjectionMatrix';
+  phongRenderer.cameraPosAttrib = 'u_CameraPos';
+  
+  flatRenderer.modelMatrixAttrib = 'u_ModelMatrix';
+  flatRenderer.projectionMatrixAttrib = 'u_ProjectionMatrix';
+  
+  garaudRenderer.modelMatrixAttrib = 'u_ModelMatrix';
+  garaudRenderer.normalMatrixAttrib = 'u_NormalMatrix';
+  garaudRenderer.projectionMatrixAttrib = 'u_ProjectionMatrix';
+  garaudRenderer.cameraPosAttrib = 'u_CameraPos';
+}
+
+function initUniformControls() {
   Context.uniformValues['u_BlinnLighting'] = index => gl.uniform1i(index, document.getElementById("lighting").value == 'blinnPhong');
   Context.uniformValues['u_ShowNormals'] = index => gl.uniform1i(index, document.getElementById("normalsShown").checked);
   Context.uniformValues['u_Light.pos'] = index => gl.uniform3f(index, document.getElementById("lightX").value, document.getElementById("lightY").value, document.getElementById("lightZ").value);
@@ -96,14 +180,6 @@ function main() {
                  parseInt(specularColor.substring(3, 5), 16) / 255,
                  parseInt(specularColor.substring(5, 7), 16) / 255);
   }
-  
-  Context.uniformValues['u_ColorOverride'] = index => gl.uniform4f(index, 
-                                                                   document.getElementById("r").value / 255, 
-                                                                   document.getElementById("g").value / 255,
-                                                                   document.getElementById("b").value / 255,
-                                                                   document.getElementById("a").value / 255);
-
-  tick();
 }
 
 /**
@@ -290,12 +366,11 @@ function initSceneGraph() {
   var gridMesh = initGridMesh(-10, 10, -10, 10, 50);
   var axesMesh = initAxesMesh();
   var planeMesh = initPlaneMesh();
-  var blackBoxMesh = initBlackBoxMesh();
   var sphereMesh = initSphereMesh(numSphereParts);
   
   var buildingMeshes = [initBuildingMesh(3), initBuildingMesh(4), initBuildingMesh(5), initBuildingMesh(6), initBuildingMesh(7), initBuildingMesh(8)];
   
-  calculateAllNormals([houseMesh, blackBoxMesh, planeMesh]);
+  calculateAllNormals([houseMesh, planeMesh]);
   calculateAllNormals(buildingMeshes);
   calculateAllNormals([cyllinderMesh], true /* smooth */);
 
@@ -367,13 +442,6 @@ function initCircleMesh(numCircleParts, invert) {
     color = new Color(rgb.r, rgb.g, rgb.b);
     circleMesh.verts.push(new Vertex(pos, color, new Vec3(0, 0, 1)));
   }
-  
-  circleMesh.uniforms = {
-    "u_Material.Ka": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.Kd": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.shininess": index => gl.uniform1f(index, 80),
-    "u_Material.Ks": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
-  };
 
   return circleMesh;
 }
@@ -400,13 +468,6 @@ function initCyllinderSideMesh(numCircleParts) {
     prevVertZ0 = new Vertex(pos1, color);
     prevVertZ1 = new Vertex(pos2, color);
   }
-  
-  cyllinderMesh.uniforms = {
-    "u_Material.Ka": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.Kd": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.shininess": index => gl.uniform1f(index, 80),
-    "u_Material.Ks": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
-  };
 
   return cyllinderMesh;
 }
@@ -468,13 +529,6 @@ function initHouseMesh() {
     new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(1.0, 1.0, 0.0)),
     new Vertex(new Pos( 0.0,  0.75, 0.0), new Color(1.0, 1.0, 1.0)),
   ];
-  
-  houseMesh.uniforms = {
-    "u_Material.Ka": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.Kd": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.shininess": index => gl.uniform1f(index, 80),
-    "u_Material.Ks": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
-  };
   
   return houseMesh;
 }
@@ -730,13 +784,6 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.1,  0.05)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.1,  0.05)));
   }
-  
-  planeMesh.uniforms = {
-    "u_Material.Ka": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.Kd": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.shininess": index => gl.uniform1f(index, 80),
-    "u_Material.Ks": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
-  };
 
   return planeMesh;
 }
@@ -746,66 +793,6 @@ function initPlaneMesh() {
  */
 function planeVertex(pos) {
   return new Vertex(pos, new Color(pos.add(new Vec3(0.5, 0.5, 0.5))));
-}
-
-/**
- * Creates a black box mesh.
- */
-function initBlackBoxMesh() {
-   var boxMesh = new Mesh(gl.TRIANGLES, "BlackBox", Context.renderPrograms["phong"]);
-
-   boxMesh.verts = [
-    new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-
-    new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-
-    new Vertex(new Pos(-0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-
-    new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos(-0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-
-    new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos( 0.5, -0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos( 0.5, -0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-
-    new Vertex(new Pos(-0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos( 0.5,  0.5, -0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos(-0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-    new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(0.0, 0.0, 0.0)),
-  ];
-  
-  boxMesh.uniforms = {
-    "u_Material.Ka": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.Kd": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.shininess": index => gl.uniform1f(index, 80),
-    "u_Material.Ks": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
-  };
-
-  return boxMesh;
 }
 
 function initBuildingMesh(numFloors) {
@@ -926,14 +913,7 @@ function initBuildingMesh(numFloors) {
         new Vertex(center.add(new Pos( 0.25, 0.25, i + 0.95)), colorFunc())
       )
     }
-  }    
-  
-  buildingMesh.uniforms = {
-    "u_Material.Ka": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.Kd": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.shininess": index => gl.uniform1f(index, 80),
-    "u_Material.Ks": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
-  };
+  }
   
   return buildingMesh;
 }
@@ -996,13 +976,6 @@ function initSphereMesh(numDivisions) {
       sphereMesh.verts.push(new Vertex(new Pos(upRightPoint), new Color(1.0, 1.0, 0.5), new Vec3(upRightPoint)));
     }
   }
-  
-  sphereMesh.uniforms = {
-    "u_Material.Ka": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.Kd": index => gl.uniform3f(index, 0.5, 0.5, 0.5),
-    "u_Material.shininess": index => gl.uniform1f(index, 80),
-    "u_Material.Ks": index => gl.uniform3f(index, 1.0, 1.0, 1.0)
-  };
   
   return sphereMesh;
 }

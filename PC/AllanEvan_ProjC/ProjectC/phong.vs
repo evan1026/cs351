@@ -3,7 +3,6 @@
 uniform mat4 u_ModelMatrix;
 uniform mat4 u_ProjectionMatrix;
 uniform mat4 u_NormalMatrix;
-uniform vec4 u_ColorOverride;
 uniform bool u_PopOut;
 uniform float u_WorldStretch;
 uniform float u_WorldStretchPhase;
@@ -29,9 +28,7 @@ void main() {
     gl_Position = u_ProjectionMatrix * position;
     gl_PointSize = 10.0;
 
-    vec4 a_Color4 = vec4(a_Color.r, a_Color.g, a_Color.b, 1.0);
-
-    v_Color = mix(u_ColorOverride, a_Color4, 1.0 - u_ColorOverride.a);
+    v_Color = vec4(a_Color.r, a_Color.g, a_Color.b, 1.0);
     v_Pos = vec3(position) / position.w;
     v_Normal = transformedNormal;
 }
