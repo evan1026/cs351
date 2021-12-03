@@ -67,7 +67,7 @@ void getColorFromLighting() {
     vec3 L = normalize(u_Light.pos - v_Pos);
 
     float diffuse = max(dot(N, L), 0.0);
-    
+
     float specAngle;
     vec3 V = normalize(u_CameraPos - v_Pos);
     if (u_BlinnLighting) {
@@ -79,7 +79,7 @@ void getColorFromLighting() {
     }
     float specular = pow(specAngle, u_Material.shininess);
 
-    vec4 lighting = vec4(u_Material.Ka * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
+    vec4 lighting = vec4(u_Material.Ka * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is + 0.0001 * v_Color.rgb, 1.0);
 
     gl_FragColor = lighting;
 }
