@@ -12,19 +12,17 @@ function main() {
   if (!init(canvas, false /* debug mode */)) {
     return;
   }
-  
+
   initRenderPrograms();
   initSceneGraph();
   initCameras();
   initUniformControls();
 
-  var maxVerts = initVertexBuffer(gl);
-  if (maxVerts < 0) {
+  var success = initVertexBuffer(gl);
+  if (!success) {
     console.log('Failed to set the vertex information');
     return;
   }
-  
-  console.log(maxVerts / Vertex.primsPerVertex + " verts in vbo");
 
   gl.clearColor(0.3, 0.3, 0.3, 1.0);
 
@@ -33,7 +31,7 @@ function main() {
   window.addEventListener("mouseup", myMouseUp);
   window.addEventListener("keydown", myKeyDown, false);
   window.addEventListener("keyup", myKeyUp, false);
-  
+
   document.getElementById("shading").addEventListener('change', event => {
     for (let meshName in Context.meshes) {
       let mesh = Context.meshes[meshName];
@@ -42,26 +40,26 @@ function main() {
       }
     }
   });
-  
+
   document.getElementById("objAlbedoColor").addEventListener('input', event => {
     let color = event.target.value;
     Animation.materials[document.getElementById("mesh").value].albedo = new Color(parseInt(color.substring(1, 3), 16) / 255, parseInt(color.substring(3, 5), 16) / 255, parseInt(color.substring(5, 7), 16) / 255);
   });
-  
+
   document.getElementById("objDiffuseColor").addEventListener('input', event => {
     let color = event.target.value;
     Animation.materials[document.getElementById("mesh").value].diffuse = new Color(parseInt(color.substring(1, 3), 16) / 255, parseInt(color.substring(3, 5), 16) / 255, parseInt(color.substring(5, 7), 16) / 255);
   });
-  
+
   document.getElementById("objSpecularColor").addEventListener('input', event => {
     let color = event.target.value;
     Animation.materials[document.getElementById("mesh").value].specular = new Color(parseInt(color.substring(1, 3), 16) / 255, parseInt(color.substring(3, 5), 16) / 255, parseInt(color.substring(5, 7), 16) / 255);
   });
-  
+
   document.getElementById("shininess").addEventListener('input', event => {
     Animation.materials[document.getElementById("mesh").value].shininess = event.target.value;
   });
-  
+
   document.getElementById("mesh").addEventListener('input', event => {
     updateObjectMaterialDisplay(event.target.value);
   });
@@ -70,9 +68,9 @@ function main() {
   Animation.boxTime = Date.now();
   Event.mouseDrag.x = 0.0;
   Event.mouseDrag.y = -1.0;
-  
+
   initMaterials();
-  
+
   updateObjectMaterialDisplay(document.getElementById("mesh").value);
 
   tick();
@@ -96,7 +94,7 @@ class Material {
   diffuse;
   specular;
   shininess;
-  
+
   constructor(albedo, diffuse, specular, shininess) {
     this.albedo = albedo;
     this.diffuse = diffuse;
@@ -107,16 +105,16 @@ class Material {
 
 function initMaterials() {
   Animation.materials = {};
-  
+
   var meshSelector = document.getElementById("mesh");
   for (let meshName in Context.meshes) {
     let meshOpt = document.createElement('option');
     meshOpt.value = meshName;
     meshOpt.text = meshName;
     meshSelector.add(meshOpt);
-    
+
     Animation.materials[meshName] = new Material(new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), 80);
-    
+
     Context.meshes[meshName].uniforms = {
       "u_Material.Ka": index => gl.uniform3f(index, Animation.materials[meshName].albedo.r, Animation.materials[meshName].albedo.g, Animation.materials[meshName].albedo.b),
       "u_Material.Kd": index => gl.uniform3f(index, Animation.materials[meshName].diffuse.r, Animation.materials[meshName].diffuse.g, Animation.materials[meshName].diffuse.b),
@@ -124,7 +122,7 @@ function initMaterials() {
       "u_Material.Ks": index => gl.uniform3f(index, Animation.materials[meshName].specular.r, Animation.materials[meshName].specular.g, Animation.materials[meshName].specular.b)
     };
   }
-  
+
 }
 
 function initRenderPrograms() {
@@ -134,15 +132,15 @@ function initRenderPrograms() {
   phongRenderer.verifyAttribs(phongAttribs);
   flatRenderer.verifyAttribs(flatAttribs);
   garaudRenderer.verifyAttribs(garaudAttribs);
-  
+
   phongRenderer.modelMatrixAttrib = 'u_ModelMatrix';
   phongRenderer.normalMatrixAttrib = 'u_NormalMatrix';
   phongRenderer.projectionMatrixAttrib = 'u_ProjectionMatrix';
   phongRenderer.cameraPosAttrib = 'u_CameraPos';
-  
+
   flatRenderer.modelMatrixAttrib = 'u_ModelMatrix';
   flatRenderer.projectionMatrixAttrib = 'u_ProjectionMatrix';
-  
+
   garaudRenderer.modelMatrixAttrib = 'u_ModelMatrix';
   garaudRenderer.normalMatrixAttrib = 'u_NormalMatrix';
   garaudRenderer.projectionMatrixAttrib = 'u_ProjectionMatrix';
@@ -164,7 +162,7 @@ function initUniformControls() {
                  parseInt(albedoColor.substring(3, 5), 16) / 255,
                  parseInt(albedoColor.substring(5, 7), 16) / 255);
   }
-  
+
   Context.uniformValues['u_Light.Id'] = index => {
     let diffuseColor = document.getElementById("lightDiffuseColor").value
     gl.uniform3f(index,
@@ -172,7 +170,7 @@ function initUniformControls() {
                  parseInt(diffuseColor.substring(3, 5), 16) / 255,
                  parseInt(diffuseColor.substring(5, 7), 16) / 255);
   }
-  
+
   Context.uniformValues['u_Light.Is'] = index => {
     let specularColor = document.getElementById("lightSpecularColor").value
     gl.uniform3f(index,
@@ -195,17 +193,17 @@ function animate() {
   animateArm(time);
   animateBoxes(time);
   animateProp(time);
-  
+
   var buildingsShown = document.getElementById("buildingsShown").checked;
   Animation.nodes["buildings"].enabled = buildingsShown;
-  
+
   Animation.nodes["sphere"].rot.multiplySelf(QuatFromAxisAngle(0, 0, 1, elapsed / 30));
-  
+
   let wireframe = document.getElementById("wireframe").checked;
   Context.wireframe = wireframe;
 
   updateFramerate(elapsed);
-  
+
   Animation.lastTick = time;
 }
 
@@ -268,7 +266,7 @@ function animateBoxes(time) {
 function animateProp(time) {
   var propShown = document.getElementById("propShown").checked;
   var propAnimate = document.getElementById("propAnimation").checked;
-  
+
   var planeThrottle = document.getElementById("planeThrottle").value / 100;
   var planePitch = document.getElementById("planePitch").value / -10;
   var planeYaw = document.getElementById("planeYaw").value / -10;
@@ -280,7 +278,7 @@ function animateProp(time) {
   if (propAnimate) {
     var planeForward = new Vec3(0, -1, 0);
     planeForward = planeForward.multiply(planeThrottle);
-    
+
     planeNode.rot.rotateFromEuler(planePitch, planeRoll, planeYaw);
     planeNode.rot.multiplyVector3(planeForward);
     planeNode.pos = planeNode.pos.add(planeForward);
@@ -303,9 +301,9 @@ function updateFramerate(elapsed) {
  */
 function translateCamera(elapsed) {
   speed = 0.05 * elapsed / 15;
-  
+
   var lockForward = document.getElementById("lockForward").checked;
-  
+
   if (Animation.moveFwd) {
     Context.cameras[0].move(speed, 0, 0, lockForward);
   } else if (Animation.moveBack) {
@@ -363,13 +361,13 @@ function initSceneGraph() {
   var topCircleMesh = initCircleMesh(numCircleParts, true /* invert */);
   var cyllinderMesh = initCyllinderSideMesh(numCircleParts);
   var houseMesh = initHouseMesh();
-  var gridMesh = initGridMesh(-10, 10, -10, 10, 50);
+  var gridMesh = initGridMesh(-20, 20, -20, 20, 200);
   var axesMesh = initAxesMesh();
   var planeMesh = initPlaneMesh();
   var sphereMesh = initSphereMesh(numSphereParts);
-  
+
   var buildingMeshes = [initBuildingMesh(3), initBuildingMesh(4), initBuildingMesh(5), initBuildingMesh(6), initBuildingMesh(7), initBuildingMesh(8)];
-  
+
   calculateAllNormals([houseMesh, planeMesh]);
   calculateAllNormals(buildingMeshes);
   calculateAllNormals([cyllinderMesh], true /* smooth */);
@@ -405,14 +403,14 @@ function initSceneGraph() {
   var housesAxesNode = new SceneGraphNode("housesAxes", houseNode, new Pos(),          new Quaternion(), new Scale(3.0, 3.0, 3.0), axesMesh);
 
   var planeNode = new SceneGraphNode("plane", topNode, new Pos(3.0, 3.0, 1.0), new Quaternion(), new Scale(1.0, 1.0, 1.0), planeMesh);
-  
+
   var buildingsNode = new SceneGraphNode("buildings", topNode, new Pos(0, 3, 0), QuatFromEuler(0, 0, 45), new Scale(1.0, 1.0, 1.0));
   for (var x = -3; x < 0; ++x) {
     for (var y = 0; y < 3; ++y) {
       buildingNode = new SceneGraphNode("building" + x + "_" + y, buildingsNode, new Pos(x, y, 0), QuatFromEuler(0, 0, Math.floor(Math.random() * 4) * 90), new Scale(0.25, 0.25, 0.25), buildingMeshes[Math.floor(Math.random() * buildingMeshes.length)]);
     }
   }
-  
+
   var sphereMesh = new SceneGraphNode("sphere", topNode, new Pos(), new Quaternion(), new Scale(0.4, 0.4, 0.4), sphereMesh);
 
   Context.sceneGraph = topNode;
@@ -429,7 +427,7 @@ function initCircleMesh(numCircleParts, invert) {
   circleMesh.verts = [new Vertex(new Pos(), new Color(1.0, 1.0, 1.0), new Vec3(0, 0, 1))];
   for (i = 0; i <= numCircleParts; ++i) {
     rads = 2.0 * Math.PI / numCircleParts * i;
-    
+
     let hue;
     if (invert) {
       hue = 1 - i / numCircleParts;
@@ -460,11 +458,11 @@ function initCyllinderSideMesh(numCircleParts) {
     pos1 = new Pos(Math.cos(rads), Math.sin(rads), 0.0);
     pos2 = new Pos(0.5 * Math.cos(rads), 0.5 * Math.sin(rads), 1.0);
     color = new Color(rgb.r, rgb.g, rgb.b);
-    
+
     if (i != 0) {
       cyllinderMesh.verts.push(prevVertZ0.copy(), new Vertex(pos1, color), prevVertZ1.copy(), prevVertZ1.copy(), new Vertex(pos1, color), new Vertex(pos2, color));
     }
-    
+
     prevVertZ0 = new Vertex(pos1, color);
     prevVertZ1 = new Vertex(pos2, color);
   }
@@ -529,7 +527,7 @@ function initHouseMesh() {
     new Vertex(new Pos( 0.5,  0.5,  0.5), new Color(1.0, 1.0, 0.0)),
     new Vertex(new Pos( 0.0,  0.75, 0.0), new Color(1.0, 1.0, 1.0)),
   ];
-  
+
   return houseMesh;
 }
 
@@ -541,7 +539,7 @@ function initGridMesh(xmin, xmax, ymin, ymax, numlines) {
 
   let xadd = (xmax - xmin) / (numlines - 1);
   let yadd = (ymax - ymin) / (numlines - 1);
-  
+
   for (let x = xmin; x <= xmax + xadd; x += xadd) {
     for (let y = ymin; y <= ymax; y += yadd) {
       gridMesh.verts.push(new Vertex(new Pos(x, y, 0.0), new Color(1.0, 1.0, 0.3)));
@@ -604,7 +602,7 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1, -0.3,  0.0)));
@@ -626,7 +624,7 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.0)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.3,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1, -0.5,  0.0)));
@@ -676,7 +674,7 @@ function initPlaneMesh() {
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5, -0.1)));
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.0)));
-    
+
     planeMesh.verts.push(planeVertex(new Pos(-0.1,  0.5,  0.0)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.1)));
     planeMesh.verts.push(planeVertex(new Pos( 0.1,  0.5,  0.0)));
@@ -797,7 +795,7 @@ function planeVertex(pos) {
 
 function initBuildingMesh(numFloors) {
   var buildingMesh = new Mesh(gl.TRIANGLES, "Building" + numFloors, Context.renderPrograms["phong"]);
-  
+
   buildingMesh.verts = [
     // Bottom face
     new Vertex(new Pos(-1, -1, 0), getGrey()),
@@ -806,7 +804,7 @@ function initBuildingMesh(numFloors) {
     new Vertex(new Pos(-1,  1, 0), getGrey()),
     new Vertex(new Pos( 1,  1, 0), getGrey()),
     new Vertex(new Pos( 1, -1, 0), getGrey()),
-    
+
     // Top face
     new Vertex(new Pos(-1, -1, numFloors), getGrey()),
     new Vertex(new Pos( 1, -1, numFloors), getGrey()),
@@ -814,7 +812,7 @@ function initBuildingMesh(numFloors) {
     new Vertex(new Pos(-1,  1, numFloors), getGrey()),
     new Vertex(new Pos( 1, -1, numFloors), getGrey()),
     new Vertex(new Pos( 1,  1, numFloors), getGrey()),
-    
+
     // -X face
     new Vertex(new Pos(-1, -1, 0),         getGrey()),
     new Vertex(new Pos(-1, -1, numFloors), getGrey()),
@@ -822,7 +820,7 @@ function initBuildingMesh(numFloors) {
     new Vertex(new Pos(-1,  1, 0),         getGrey()),
     new Vertex(new Pos(-1, -1, numFloors), getGrey()),
     new Vertex(new Pos(-1,  1, numFloors), getGrey()),
-    
+
     // +X face
     new Vertex(new Pos(1, -1, 0),         getGrey()),
     new Vertex(new Pos(1,  1, 0),         getGrey()),
@@ -830,7 +828,7 @@ function initBuildingMesh(numFloors) {
     new Vertex(new Pos(1,  1, 0),         getGrey()),
     new Vertex(new Pos(1,  1, numFloors), getGrey()),
     new Vertex(new Pos(1, -1, numFloors), getGrey()),
-    
+
     // -Y face
     new Vertex(new Pos(-1, -1, 0),         getGrey()),
     new Vertex(new Pos( 1, -1, 0),         getGrey()),
@@ -838,7 +836,7 @@ function initBuildingMesh(numFloors) {
     new Vertex(new Pos( 1, -1, 0),         getGrey()),
     new Vertex(new Pos( 1, -1, numFloors), getGrey()),
     new Vertex(new Pos(-1, -1, numFloors), getGrey()),
-    
+
     // +Y face
     new Vertex(new Pos(-1, 1, 0),         getGrey()),
     new Vertex(new Pos(-1, 1, numFloors), getGrey()),
@@ -847,7 +845,7 @@ function initBuildingMesh(numFloors) {
     new Vertex(new Pos(-1, 1, numFloors), getGrey()),
     new Vertex(new Pos( 1, 1, numFloors), getGrey())
   ];
-  
+
   var centers = [
     new Pos( 0.76, -0.65, 0), new Pos( 0.76, 0,    0), new Pos( 0.76,  0.65, 0),
     new Pos(-0.76, -0.65, 0), new Pos(-0.76, 0,    0), new Pos(-0.76,  0.65, 0),
@@ -862,7 +860,7 @@ function initBuildingMesh(numFloors) {
       } else {
         colorFunc = getBlack;
       }
-      
+
       buildingMesh.verts.push(
         // Bottom face
         new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.05)), colorFunc()),
@@ -871,7 +869,7 @@ function initBuildingMesh(numFloors) {
         new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos( 0.25,  0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.05)), colorFunc()),
-        
+
         // Top face
         new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.95)), colorFunc()),
         new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.95)), colorFunc()),
@@ -879,7 +877,7 @@ function initBuildingMesh(numFloors) {
         new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.95)), colorFunc()),
         new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.95)), colorFunc()),
         new Vertex(center.add(new Pos( 0.25,  0.25, i + 0.95)), colorFunc()),
-        
+
         // -X face
         new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.95)), colorFunc()),
@@ -887,7 +885,7 @@ function initBuildingMesh(numFloors) {
         new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.95)), colorFunc()),
         new Vertex(center.add(new Pos(-0.25,  0.25, i + 0.95)), colorFunc()),
-        
+
         // +X face
         new Vertex(center.add(new Pos(0.25, -0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos(0.25,  0.25, i + 0.05)), colorFunc()),
@@ -895,7 +893,7 @@ function initBuildingMesh(numFloors) {
         new Vertex(center.add(new Pos(0.25,  0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos(0.25,  0.25, i + 0.95)), colorFunc()),
         new Vertex(center.add(new Pos(0.25, -0.25, i + 0.95)), colorFunc()),
-        
+
         // -Y face
         new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.05)), colorFunc()),
@@ -903,7 +901,7 @@ function initBuildingMesh(numFloors) {
         new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos( 0.25, -0.25, i + 0.95)), colorFunc()),
         new Vertex(center.add(new Pos(-0.25, -0.25, i + 0.95)), colorFunc()),
-        
+
         // +Y face
         new Vertex(center.add(new Pos(-0.25, 0.25, i + 0.05)), colorFunc()),
         new Vertex(center.add(new Pos(-0.25, 0.25, i + 0.95)), colorFunc()),
@@ -914,7 +912,7 @@ function initBuildingMesh(numFloors) {
       )
     }
   }
-  
+
   return buildingMesh;
 }
 
@@ -935,11 +933,11 @@ function getBlack() {
 
 function initSphereMesh(numDivisions) {
   // Basic idea for how to subdivide a sphere adapted from http://www.songho.ca/opengl/gl_sphere.html
-  
+
   var sphereMesh = new Mesh(gl.TRIANGLES, "Sphere", Context.renderPrograms["phong"]);
-  
+
   var spherePoints = [];
-  
+
   for (let i = 0; i < numDivisions; ++i) {
     let theta = i / numDivisions * 2 * Math.PI;
     spherePoints.push([]);
@@ -951,14 +949,14 @@ function initSphereMesh(numDivisions) {
       spherePoints[i].push(new Vec3(x, y, z));
     }
   }
-  
+
   for (let i = 0; i < numDivisions; ++i) {
     for (let j = 0; j < numDivisions; ++j) {
       let currentPoint = spherePoints[i][j];
       let rightPoint;
       let upPoint = spherePoints[i][j + 1];
       let upRightPoint;
-      
+
       if (i < numDivisions - 1) {
         rightPoint = spherePoints[i + 1][j];
         upRightPoint = spherePoints[i + 1][j + 1];
@@ -966,17 +964,17 @@ function initSphereMesh(numDivisions) {
         rightPoint = spherePoints[0][j];
         upRightPoint = spherePoints[0][j + 1];
       }
-      
+
       sphereMesh.verts.push(new Vertex(new Pos(currentPoint), new Color(1.0, 1.0, 0.5), new Vec3(currentPoint)));
       sphereMesh.verts.push(new Vertex(new Pos(upRightPoint), new Color(1.0, 1.0, 0.5), new Vec3(upRightPoint)));
       sphereMesh.verts.push(new Vertex(new Pos(upPoint), new Color(1.0, 1.0, 0.5), new Vec3(upPoint)));
-      
+
       sphereMesh.verts.push(new Vertex(new Pos(currentPoint), new Color(1.0, 1.0, 0.5), new Vec3(currentPoint)));
       sphereMesh.verts.push(new Vertex(new Pos(rightPoint), new Color(1.0, 1.0, 0.5), new Vec3(rightPoint)));
       sphereMesh.verts.push(new Vertex(new Pos(upRightPoint), new Color(1.0, 1.0, 0.5), new Vec3(upRightPoint)));
     }
   }
-  
+
   return sphereMesh;
 }
 
@@ -1016,31 +1014,7 @@ function initCameras() {
  * GLSL program and sets up of all of the attributes we need.
  */
 function initVertexBuffer() {
-  var bufferValues = buildBuffer(Context.sceneGraph);
-  var buffer = new Float32Array(bufferValues);
-
-  // Create a buffer object
-  Context.vboId = gl.createBuffer();
-  if (!Context.vboId) {
-    console.log('Failed to create the shape buffer object');
-    return -1;
-  }
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, Context.vboId);
-  gl.bufferData(gl.ARRAY_BUFFER, buffer, gl.STATIC_DRAW);
-
-  Vertex.primSize = buffer.BYTES_PER_ELEMENT;
-
-  gl.vertexAttribPointer(Context.renderPrograms["phong"].attribIds['a_Position'], Vertex.primsPerPos, Vertex.primType, false /* Normalize */, Vertex.stride, 0);
-  gl.enableVertexAttribArray(Context.renderPrograms["phong"].attribIds['a_Position']);
-
-  gl.vertexAttribPointer(Context.renderPrograms["phong"].attribIds['a_Color'], Vertex.primsPerColor, Vertex.primType, false /* Normalize */, Vertex.stride, Vertex.primSize * Vertex.primsPerPos);
-  gl.enableVertexAttribArray(Context.renderPrograms["phong"].attribIds['a_Color']);
-
-  gl.vertexAttribPointer(Context.renderPrograms["phong"].attribIds['a_Normal'], Vertex.primsPerNormal, Vertex.primType, false /* Normalize */, Vertex.stride, Vertex.primSize * Vertex.primsPerPos + Vertex.primSize * Vertex.primsPerColor);
-  gl.enableVertexAttribArray(Context.renderPrograms["phong"].attribIds['a_Normal']);
-
-  return bufferValues.length;
+  return buildBuffer(Context.sceneGraph);
 }
 
 // HSV to RGB conversion from https://stackoverflow.com/questions/17242144/javascript-convert-hsb-hsv-color-to-rgb-accurately

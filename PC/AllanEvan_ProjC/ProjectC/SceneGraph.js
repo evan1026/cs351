@@ -194,14 +194,14 @@ class Vec3 {
                     this.z * vector.x - this.x * vector.z,
                     this.x * vector.y - this.y * vector.x);
   }
-  
+
   /**
    * Gets the dot product between two vectors
    */
   dot(vector) {
     return this.x * vector.x + this.y * vector.y + this.z * vector.z;
   }
-  
+
   /**
    * Finds the angle between two vectors by taking the inverse cosine of
    * the dot product of the normalized versions of the vectors
@@ -209,7 +209,7 @@ class Vec3 {
   angle(vector) {
     return Math.acos(this.normalized().dot(vector.normalized()));
   }
-  
+
   toString() {
     return `[${toFixed(this.x, 8)}, ${toFixed(this.y, 8)}, ${toFixed(this.z, 8)}]`;
   }
@@ -249,7 +249,7 @@ class Vertex {
       this.normal = new Pos(1, 0, 0);
     }
   }
-  
+
   copy() {
     return new Vertex(new Pos(this.pos), new Color(this.color), new Vec3(this.normal));
   }
@@ -281,26 +281,27 @@ class Mesh {
   // These get filled in after the vbo generation
   vboStart;
   vboCount;
-  
+  vboId;
+
   static meshes = {};
 
   constructor(renderType, name, renderProgram) {
     this.renderType = renderType;
     this.name = name;
     this.renderProgram = renderProgram;
-    
+
     if (!name) {
       throw 'Mesh missing name';
     }
-    
+
     if (!renderProgram) {
       throw 'Mesh "' + name + '" missing render program';
     }
-    
+
     if (!renderType) {
       throw 'Mesh "' + name + '" missing render type';
     }
-    
+
     Context.meshes[this.name] = this;
   }
 }
@@ -377,7 +378,7 @@ var SceneGraph = SceneGraphNode;
 class RenderProgram {
   vertShader;
   fragShader;
-  
+
   modelMatrixAttrib;
   normalMatrixAttrib;
   projectionMatrixAttrib;
@@ -386,7 +387,7 @@ class RenderProgram {
   attribIds = {};
   name;
   program;
-  
+
   constructor(name, vertShader, fragShader) {
     this.vertShader = vertShader;
     this.fragShader = fragShader;
@@ -397,26 +398,26 @@ class RenderProgram {
     }
 
     gl.useProgram(this.program);
-    
+
     var numAttribs = gl.getProgramParameter(this.program, gl.ACTIVE_ATTRIBUTES);
     for (var i = 0; i < numAttribs; ++i) {
       var attribInfo = gl.getActiveAttrib(this.program, i);
       var index = gl.getAttribLocation(this.program, attribInfo.name);
       this.attribIds[attribInfo.name] = index;
     }
-    
+
     var numUniforms = gl.getProgramParameter(this.program, gl.ACTIVE_UNIFORMS);
     for (var i = 0; i < numUniforms; ++i) {
       var attribInfo = gl.getActiveUniform(this.program, i);
       var index = gl.getUniformLocation(this.program, attribInfo.name);
       this.attribIds[attribInfo.name] = index;
     }
-    
+
     Context.renderPrograms[name] = this;
-    
+
     console.log("Attribs for '" + this.name + "': ", this.attribIds);
   }
-  
+
   /**
    * Utility function to ensure that all of the expected attributes were found
    */
@@ -604,10 +605,8 @@ class Viewport {
  * TODO: if verteces are changed to hold arbitrary stuff then
  *       this needs an overhaul
  */
-function buildBuffer(graphNode, currBuffer) {
-  if (currBuffer === undefined) {
-    currBuffer = [];
-  }
+function buildBuffer(graphNode) {
+  let currBuffer = [];
 
   if (graphNode) {
     if (graphNode.mesh && graphNode.mesh.vboStart === undefined) {
@@ -620,14 +619,22 @@ function buildBuffer(graphNode, currBuffer) {
       }
       graphNode.mesh.vboCount = currBuffer.length / Vertex.primsPerVertex - graphNode.mesh.vboStart;
       calculateWireframeElements(graphNode.mesh);
+
+      var buffer = new Float32Array(currBuffer);
+      Vertex.primSize = buffer.BYTES_PER_ELEMENT;
+      graphNode.mesh.vboId = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, graphNode.mesh.vboId);
+      gl.bufferData(gl.ARRAY_BUFFER, buffer, gl.STATIC_DRAW);
+
+      console.log(graphNode.mesh.vboCount + " verts in buffer for " + graphNode.mesh.name);
     }
 
     for (let child of graphNode.children) {
-      buildBuffer(child, currBuffer);
+      buildBuffer(child);
     }
   }
 
-  return currBuffer;
+  return true;
 }
 
 function calculateWireframeElements(mesh) {
@@ -643,7 +650,7 @@ function calculateWireframeElements(mesh) {
       wireframeElements.push(mesh.vboStart, i, i, i - 1);
     }
   }
-  
+
   if (wireframeElements) {
     mesh.wireframeElementsIndex = gl.createBuffer();
     mesh.wireframeElementsSize = wireframeElements.length;
@@ -670,11 +677,11 @@ function calculateNormals(mesh, smooth) {
   if (mesh.renderType != gl.TRIANGLES) {
     throw 'Cannot calculate normals for ' + mesh.name + ' - Normals cannot be calculated for anything other than GL_TRIANGLES!';
   }
-  
+
   if (smooth === undefined || smooth === null) {
     smooth = false;
   }
-  
+
   for (var i = 0; i < mesh.verts.length; i += 3) {
     let side1 = mesh.verts[i];
     let side2 = mesh.verts[i+1];
@@ -732,7 +739,7 @@ function smoothNormals(mesh) {
     }
     vertsDict[mesh.verts[i].pos].push(mesh.verts[i]);
   }
-  
+
   for (var key in vertsDict) {
     if (vertsDict.hasOwnProperty(key)) {
       var vertList = vertsDict[key];
@@ -740,7 +747,7 @@ function smoothNormals(mesh) {
       for (var i = 1; i < vertList.length; ++i) {
         cumSum = cumSum.add(vertList[i].normal);
       }
-      
+
       cumSum = cumSum.normalized();
       for (var vert of vertList) {
         vert.normal = new Vec3(cumSum);
@@ -772,19 +779,19 @@ function drawNode(modelMatrix, node, scale, projectionMatrix, cameraPos) {
 
   if (node.mesh) {
     pushMatrix(modelMatrix);
-    
+
     // Select shaders for this mesh
     var renderProgram = node.mesh.renderProgram;
     selectRenderProgram(renderProgram);
     if (renderProgram.projectionMatrixAttrib) {
       gl.uniformMatrix4fv(renderProgram.attribIds[renderProgram.projectionMatrixAttrib], false, projectionMatrix.elements);
     }
-    
+
     // Push camera world-space position
     if (renderProgram.cameraPosAttrib) {
       gl.uniform3f(renderProgram.attribIds[renderProgram.cameraPosAttrib], cameraPos.x, cameraPos.y, cameraPos.z);
     }
-    
+
     // Push model matrix
     if (renderProgram.modelMatrixAttrib) {
       modelMatrix.scale(scale.x, scale.y, scale.z);
@@ -797,7 +804,7 @@ function drawNode(modelMatrix, node, scale, projectionMatrix, cameraPos) {
       normalMatrix.invert().transpose();
       gl.uniformMatrix4fv(renderProgram.attribIds[renderProgram.normalMatrixAttrib], false, normalMatrix.elements);
     }
-    
+
     // Push uniforms for this mesh
     for (let attr in node.mesh.uniforms) {
       if (attr in renderProgram.attribIds) {
@@ -806,13 +813,24 @@ function drawNode(modelMatrix, node, scale, projectionMatrix, cameraPos) {
     }
 
     // Render object
+    gl.bindBuffer(gl.ARRAY_BUFFER, node.mesh.vboId);
+    // TODO detect attribs automatically
+    gl.vertexAttribPointer(Context.renderPrograms["phong"].attribIds['a_Position'], Vertex.primsPerPos, Vertex.primType, false /* Normalize */, Vertex.stride, 0);
+    gl.enableVertexAttribArray(Context.renderPrograms["phong"].attribIds['a_Position']);
+
+    gl.vertexAttribPointer(Context.renderPrograms["phong"].attribIds['a_Color'], Vertex.primsPerColor, Vertex.primType, false /* Normalize */, Vertex.stride, Vertex.primSize * Vertex.primsPerPos);
+    gl.enableVertexAttribArray(Context.renderPrograms["phong"].attribIds['a_Color']);
+
+    gl.vertexAttribPointer(Context.renderPrograms["phong"].attribIds['a_Normal'], Vertex.primsPerNormal, Vertex.primType, false /* Normalize */, Vertex.stride, Vertex.primSize * Vertex.primsPerPos + Vertex.primSize * Vertex.primsPerColor);
+    gl.enableVertexAttribArray(Context.renderPrograms["phong"].attribIds['a_Normal']);
+
     if (Context.wireframe && node.mesh.wireframeElementsIndex !== undefined) {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, node.mesh.wireframeElementsIndex);
       gl.drawElements(gl.LINES, node.mesh.wireframeElementsSize, gl.UNSIGNED_SHORT, 0);
     } else {
       gl.drawArrays(node.mesh.renderType, node.mesh.vboStart, node.mesh.vboCount);
     }
-    
+
     modelMatrix = popMatrix();
   }
 
@@ -824,7 +842,7 @@ function drawNode(modelMatrix, node, scale, projectionMatrix, cameraPos) {
 
 function selectRenderProgram(renderProgram) {
   gl.useProgram(renderProgram.program);
-  
+
   for (let attr in Context.uniformValues) {
     if (attr in renderProgram.attribIds) {
       Context.uniformValues[attr](renderProgram.attribIds[attr]);
