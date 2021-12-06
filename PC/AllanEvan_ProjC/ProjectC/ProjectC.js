@@ -13,6 +13,7 @@ function main() {
     return;
   }
 
+  Animation.materials = {};
   initRenderPrograms();
   initSceneGraph();
   initCameras();
@@ -60,6 +61,10 @@ function main() {
     Animation.materials[document.getElementById("mesh").value].shininess = event.target.value;
   });
 
+  document.getElementById("useVertColors").addEventListener('change', event => {
+    Animation.materials[document.getElementById("mesh").value].useVertColors = event.target.checked;
+  });
+
   document.getElementById("mesh").addEventListener('input', event => {
     updateObjectMaterialDisplay(event.target.value);
   });
@@ -83,6 +88,7 @@ function updateObjectMaterialDisplay(mesh) {
   document.getElementById("objSpecularColor").value = '#' + toHexColorValue(mat.specular.r) + toHexColorValue(mat.specular.g) + toHexColorValue(mat.specular.b);
   document.getElementById("shininess").value = mat.shininess;
   document.getElementById("shininess").nextElementSibling.value = mat.shininess;
+  document.getElementById("useVertColors").checked = mat.useVertColors;
 }
 
 function toHexColorValue(colorValue) {
@@ -94,18 +100,18 @@ class Material {
   diffuse;
   specular;
   shininess;
+  useVertColors;
 
   constructor(albedo, diffuse, specular, shininess) {
     this.albedo = albedo;
     this.diffuse = diffuse;
     this.specular = specular;
     this.shininess = shininess;
+    this.useVertColors = true;
   }
 }
 
 function initMaterials() {
-  Animation.materials = {};
-
   var meshSelector = document.getElementById("mesh");
   for (let meshName in Context.meshes) {
     let meshOpt = document.createElement('option');
@@ -113,13 +119,16 @@ function initMaterials() {
     meshOpt.text = meshName;
     meshSelector.add(meshOpt);
 
-    Animation.materials[meshName] = new Material(new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), 80);
+    if (!Animation.materials[meshName]) {
+      Animation.materials[meshName] = new Material(new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), 80);
+    }
 
     Context.meshes[meshName].uniforms = {
       "u_Material.Ka": index => gl.uniform3f(index, Animation.materials[meshName].albedo.r, Animation.materials[meshName].albedo.g, Animation.materials[meshName].albedo.b),
       "u_Material.Kd": index => gl.uniform3f(index, Animation.materials[meshName].diffuse.r, Animation.materials[meshName].diffuse.g, Animation.materials[meshName].diffuse.b),
       "u_Material.shininess": index => gl.uniform1f(index, Animation.materials[meshName].shininess),
-      "u_Material.Ks": index => gl.uniform3f(index, Animation.materials[meshName].specular.r, Animation.materials[meshName].specular.g, Animation.materials[meshName].specular.b)
+      "u_Material.Ks": index => gl.uniform3f(index, Animation.materials[meshName].specular.r, Animation.materials[meshName].specular.g, Animation.materials[meshName].specular.b),
+      "u_UseVertColors": index => gl.uniform1i(index, Animation.materials[meshName].useVertColors)
     };
   }
 
