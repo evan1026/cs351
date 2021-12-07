@@ -143,7 +143,7 @@ void main() {
 
 flatAttribs = ['a_Position', 'a_Color', 'u_ModelMatrix', 'u_ProjectionMatrix', 'u_WorldStretch', 'u_WorldStretchPhase'];
 
-garaudVertShader = `
+gouraudVertShader = `
 struct Material {
     float shininess;
     vec3 Ka;
@@ -239,6 +239,6 @@ void main() {
 }
 `;
 
-garaudFragShader = flatFragShader;
+gouraudFragShader = flatFragShader;
 
-garaudAttribs = ['a_Position', 'a_Color', 'a_Normal', 'u_ModelMatrix', 'u_ProjectionMatrix', 'u_NormalMatrix', 'u_ShowNormals', 'u_PopOut', 'u_CameraPos', 'u_WorldStretchPhase', 'u_BlinnLighting', 'u_UseVertColors'];
+gouraudAttribs = ['a_Position', 'a_Color', 'a_Normal', 'u_ModelMatrix', 'u_ProjectionMatrix', 'u_NormalMatrix', 'u_ShowNormals', 'u_PopOut', 'u_CameraPos', 'u_WorldStretchPhase', 'u_BlinnLighting', 'u_UseVertColors'];

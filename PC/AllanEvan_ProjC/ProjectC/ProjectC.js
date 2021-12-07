@@ -137,10 +137,10 @@ function initMaterials() {
 function initRenderPrograms() {
   var phongRenderer = new RenderProgram("phong", phongVertShader, phongFragShader);
   var flatRenderer = new RenderProgram("flat", flatVertShader, flatFragShader);
-  var garaudRenderer = new RenderProgram("garaud", garaudVertShader, garaudFragShader);
+  var gouraudRenderer = new RenderProgram("gouraud", gouraudVertShader, gouraudFragShader);
   phongRenderer.verifyAttribs(phongAttribs);
   flatRenderer.verifyAttribs(flatAttribs);
-  garaudRenderer.verifyAttribs(garaudAttribs);
+  gouraudRenderer.verifyAttribs(gouraudAttribs);
 
   phongRenderer.modelMatrixAttrib = 'u_ModelMatrix';
   phongRenderer.normalMatrixAttrib = 'u_NormalMatrix';
@@ -150,10 +150,10 @@ function initRenderPrograms() {
   flatRenderer.modelMatrixAttrib = 'u_ModelMatrix';
   flatRenderer.projectionMatrixAttrib = 'u_ProjectionMatrix';
 
-  garaudRenderer.modelMatrixAttrib = 'u_ModelMatrix';
-  garaudRenderer.normalMatrixAttrib = 'u_NormalMatrix';
-  garaudRenderer.projectionMatrixAttrib = 'u_ProjectionMatrix';
-  garaudRenderer.cameraPosAttrib = 'u_CameraPos';
+  gouraudRenderer.modelMatrixAttrib = 'u_ModelMatrix';
+  gouraudRenderer.normalMatrixAttrib = 'u_NormalMatrix';
+  gouraudRenderer.projectionMatrixAttrib = 'u_ProjectionMatrix';
+  gouraudRenderer.cameraPosAttrib = 'u_CameraPos';
 }
 
 function initUniformControls() {
