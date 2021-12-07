@@ -107,7 +107,7 @@ class Material {
     this.diffuse = diffuse;
     this.specular = specular;
     this.shininess = shininess;
-    this.useVertColors = true;
+    this.useVertColors = false;
   }
 }
 
