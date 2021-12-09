@@ -57,6 +57,7 @@ uniform bool u_ShowNormals;
 uniform Material u_Material;
 uniform Light u_Light;
 uniform bool u_BlinnLighting;
+uniform bool u_UseVertColors;
 
 varying vec4 v_Color;
 varying vec3 v_Pos;
@@ -67,7 +68,7 @@ void getColorFromLighting() {
     vec3 L = normalize(u_Light.pos - v_Pos);
 
     float diffuse = max(dot(N, L), 0.0);
-    
+
     float specAngle;
     vec3 V = normalize(u_CameraPos - v_Pos);
     if (u_BlinnLighting) {
@@ -79,9 +80,14 @@ void getColorFromLighting() {
     }
     float specular = pow(specAngle, u_Material.shininess);
 
-    vec4 lighting = vec4(u_Material.Ka * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
+    vec3 albedo;
+    if (u_UseVertColors) {
+        albedo = v_Color.rgb;
+    } else {
+        albedo = u_Material.Ka;
+    }
 
-    gl_FragColor = lighting;
+    gl_FragColor = vec4(albedo * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
 }
 
 void getColorFromNormals() {
@@ -102,7 +108,7 @@ void main() {
 }
 `;
 
-phongAttribs = ['a_Position', 'a_Color', 'a_Normal', 'u_ModelMatrix', 'u_ProjectionMatrix', 'u_NormalMatrix', 'u_ShowNormals', 'u_PopOut', 'u_CameraPos', 'u_WorldStretch', 'u_WorldStretchPhase', 'u_BlinnLighting'];
+phongAttribs = ['a_Position', 'a_Color', 'a_Normal', 'u_ModelMatrix', 'u_ProjectionMatrix', 'u_NormalMatrix', 'u_ShowNormals', 'u_PopOut', 'u_CameraPos', 'u_WorldStretch', 'u_WorldStretchPhase', 'u_BlinnLighting', 'u_UseVertColors'];
 
 flatVertShader = `
 uniform mat4 u_ModelMatrix;
@@ -137,7 +143,7 @@ void main() {
 
 flatAttribs = ['a_Position', 'a_Color', 'u_ModelMatrix', 'u_ProjectionMatrix', 'u_WorldStretch', 'u_WorldStretchPhase'];
 
-garaudVertShader = `
+gouraudVertShader = `
 struct Material {
     float shininess;
     vec3 Ka;
@@ -163,6 +169,7 @@ uniform Light u_Light;
 uniform float u_WorldStretch;
 uniform float u_WorldStretchPhase;
 uniform bool u_BlinnLighting;
+uniform bool u_UseVertColors;
 
 attribute vec4 a_Position;
 attribute vec3 a_Color;
@@ -187,7 +194,14 @@ void getColorFromLighting(vec3 v_Pos, vec3 v_Normal) {
     }
     float specular = pow(specAngle, u_Material.shininess);
 
-    vec4 lighting = vec4(u_Material.Ka * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
+    vec3 albedo;
+    if (u_UseVertColors) {
+        albedo = a_Color;
+    } else {
+        albedo = u_Material.Ka;
+    }
+
+    vec4 lighting = vec4(albedo * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
 
     v_Color = lighting;
 }
@@ -225,6 +239,6 @@ void main() {
 }
 `;
 
-garaudFragShader = flatFragShader;
+gouraudFragShader = flatFragShader;
 
-garaudAttribs = ['a_Position', 'a_Color', 'a_Normal', 'u_ModelMatrix', 'u_ProjectionMatrix', 'u_NormalMatrix', 'u_ShowNormals', 'u_PopOut', 'u_CameraPos', 'u_WorldStretchPhase', 'u_BlinnLighting'];
+gouraudAttribs = ['a_Position', 'a_Color', 'a_Normal', 'u_ModelMatrix', 'u_ProjectionMatrix', 'u_NormalMatrix', 'u_ShowNormals', 'u_PopOut', 'u_CameraPos', 'u_WorldStretchPhase', 'u_BlinnLighting', 'u_UseVertColors'];

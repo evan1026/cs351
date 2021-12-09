@@ -25,6 +25,7 @@ uniform Light u_Light;
 uniform float u_WorldStretch;
 uniform float u_WorldStretchPhase;
 uniform bool u_BlinnLighting;
+uniform bool u_UseVertColors;
 
 attribute vec4 a_Position;
 attribute vec3 a_Color;
@@ -49,7 +50,14 @@ void getColorFromLighting(vec3 v_Pos, vec3 v_Normal) {
     }
     float specular = pow(specAngle, u_Material.shininess);
 
-    vec4 lighting = vec4(u_Material.Ka * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
+    vec3 albedo;
+    if (u_UseVertColors) {
+        albedo = a_Color;
+    } else {
+        albedo = u_Material.Ka;
+    }
+
+    vec4 lighting = vec4(albedo * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
 
     v_Color = lighting;
 }
