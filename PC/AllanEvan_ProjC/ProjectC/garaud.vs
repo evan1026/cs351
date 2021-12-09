@@ -50,14 +50,17 @@ void getColorFromLighting(vec3 v_Pos, vec3 v_Normal) {
     }
     float specular = pow(specAngle, u_Material.shininess);
 
-    vec3 albedo;
+    vec3 albedoColor;
+    vec3 diffuseColor;
     if (u_UseVertColors) {
-        albedo = a_Color;
+        albedoColor = a_Color;
+        diffuseColor = a_Color;
     } else {
-        albedo = u_Material.Ka;
+        albedoColor = u_Material.Ka;
+        diffuseColor = u_Material.Kd;
     }
 
-    vec4 lighting = vec4(albedo * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
+    vec4 lighting = vec4(albedoColor * u_Light.Ia + diffuseColor * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
 
     v_Color = lighting;
 }

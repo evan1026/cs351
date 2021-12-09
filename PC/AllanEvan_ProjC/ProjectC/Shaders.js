@@ -80,14 +80,17 @@ void getColorFromLighting() {
     }
     float specular = pow(specAngle, u_Material.shininess);
 
-    vec3 albedo;
+    vec3 albedoColor;
+    vec3 diffuseColor;
     if (u_UseVertColors) {
-        albedo = v_Color.rgb;
+        albedoColor = v_Color.rgb;
+        diffuseColor = v_Color.rgb;
     } else {
-        albedo = u_Material.Ka;
+        albedoColor = u_Material.Ka;
+        diffuseColor = u_Material.Kd;
     }
 
-    gl_FragColor = vec4(albedo * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
+    gl_FragColor = vec4(albedoColor * u_Light.Ia + diffuseColor * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
 }
 
 void getColorFromNormals() {
@@ -106,6 +109,7 @@ void main() {
         getColorFromNormals();
     }
 }
+
 `;
 
 phongAttribs = ['a_Position', 'a_Color', 'a_Normal', 'u_ModelMatrix', 'u_ProjectionMatrix', 'u_NormalMatrix', 'u_ShowNormals', 'u_PopOut', 'u_CameraPos', 'u_WorldStretch', 'u_WorldStretchPhase', 'u_BlinnLighting', 'u_UseVertColors'];
@@ -194,14 +198,17 @@ void getColorFromLighting(vec3 v_Pos, vec3 v_Normal) {
     }
     float specular = pow(specAngle, u_Material.shininess);
 
-    vec3 albedo;
+    vec3 albedoColor;
+    vec3 diffuseColor;
     if (u_UseVertColors) {
-        albedo = a_Color;
+        albedoColor = a_Color;
+        diffuseColor = a_Color;
     } else {
-        albedo = u_Material.Ka;
+        albedoColor = u_Material.Ka;
+        diffuseColor = u_Material.Kd;
     }
 
-    vec4 lighting = vec4(albedo * u_Light.Ia + u_Material.Kd * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
+    vec4 lighting = vec4(albedoColor * u_Light.Ia + diffuseColor * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
 
     v_Color = lighting;
 }
