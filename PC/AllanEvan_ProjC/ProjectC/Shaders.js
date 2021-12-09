@@ -42,6 +42,7 @@ struct Material {
     vec3 Ka;
     vec3 Kd;
     vec3 Ks;
+    vec3 Ke;
     float shininess;
 };
 
@@ -90,7 +91,7 @@ void getColorFromLighting() {
         diffuseColor = u_Material.Kd;
     }
 
-    gl_FragColor = vec4(albedoColor * u_Light.Ia + diffuseColor * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
+    gl_FragColor = vec4(albedoColor * u_Light.Ia + diffuseColor * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is + u_Material.Ke, 1.0);
 }
 
 void getColorFromNormals() {
@@ -109,7 +110,6 @@ void main() {
         getColorFromNormals();
     }
 }
-
 `;
 
 phongAttribs = ['a_Position', 'a_Color', 'a_Normal', 'u_ModelMatrix', 'u_ProjectionMatrix', 'u_NormalMatrix', 'u_ShowNormals', 'u_PopOut', 'u_CameraPos', 'u_WorldStretch', 'u_WorldStretchPhase', 'u_BlinnLighting', 'u_UseVertColors'];
@@ -153,6 +153,7 @@ struct Material {
     vec3 Ka;
     vec3 Kd;
     vec3 Ks;
+    vec3 Ke;
 };
 
 struct Light {
@@ -208,7 +209,7 @@ void getColorFromLighting(vec3 v_Pos, vec3 v_Normal) {
         diffuseColor = u_Material.Kd;
     }
 
-    vec4 lighting = vec4(albedoColor * u_Light.Ia + diffuseColor * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
+    vec4 lighting = vec4(albedoColor * u_Light.Ia + diffuseColor * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is + u_Material.Ke, 1.0);
 
     v_Color = lighting;
 }

@@ -5,6 +5,7 @@ struct Material {
     vec3 Ka;
     vec3 Kd;
     vec3 Ks;
+    vec3 Ke;
 };
 
 struct Light {
@@ -60,7 +61,7 @@ void getColorFromLighting(vec3 v_Pos, vec3 v_Normal) {
         diffuseColor = u_Material.Kd;
     }
 
-    vec4 lighting = vec4(albedoColor * u_Light.Ia + diffuseColor * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
+    vec4 lighting = vec4(albedoColor * u_Light.Ia + diffuseColor * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is + u_Material.ke, 1.0);
 
     v_Color = lighting;
 }

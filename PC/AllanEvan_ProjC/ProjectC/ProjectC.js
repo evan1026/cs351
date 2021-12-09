@@ -56,6 +56,11 @@ function main() {
     let color = event.target.value;
     Animation.materials[document.getElementById("mesh").value].specular = new Color(parseInt(color.substring(1, 3), 16) / 255, parseInt(color.substring(3, 5), 16) / 255, parseInt(color.substring(5, 7), 16) / 255);
   });
+  
+  document.getElementById("objEmissiveColor").addEventListener('input', event => {
+    let color = event.target.value;
+    Animation.materials[document.getElementById("mesh").value].emissive = new Color(parseInt(color.substring(1, 3), 16) / 255, parseInt(color.substring(3, 5), 16) / 255, parseInt(color.substring(5, 7), 16) / 255);
+  });
 
   document.getElementById("shininess").addEventListener('input', event => {
     Animation.materials[document.getElementById("mesh").value].shininess = event.target.value;
@@ -86,6 +91,7 @@ function updateObjectMaterialDisplay(mesh) {
   document.getElementById("objAlbedoColor").value = '#' + toHexColorValue(mat.albedo.r) + toHexColorValue(mat.albedo.g) + toHexColorValue(mat.albedo.b);
   document.getElementById("objDiffuseColor").value = '#' + toHexColorValue(mat.diffuse.r) + toHexColorValue(mat.diffuse.g) + toHexColorValue(mat.diffuse.b);
   document.getElementById("objSpecularColor").value = '#' + toHexColorValue(mat.specular.r) + toHexColorValue(mat.specular.g) + toHexColorValue(mat.specular.b);
+  document.getElementById("objEmissiveColor").value = '#' + toHexColorValue(mat.emissive.r) + toHexColorValue(mat.emissive.g) + toHexColorValue(mat.emissive.b);
   document.getElementById("shininess").value = mat.shininess;
   document.getElementById("shininess").nextElementSibling.value = mat.shininess;
   document.getElementById("useVertColors").checked = mat.useVertColors;
@@ -100,13 +106,15 @@ class Material {
   diffuse;
   specular;
   shininess;
+  emissive;
   useVertColors;
 
-  constructor(albedo, diffuse, specular, shininess) {
+  constructor(albedo, diffuse, specular, emissive, shininess) {
     this.albedo = albedo;
     this.diffuse = diffuse;
     this.specular = specular;
     this.shininess = shininess;
+    this.emissive = emissive;
     this.useVertColors = false;
   }
 }
@@ -123,13 +131,14 @@ function initMaterials(topNode) {
     meshOpt.text = topNode.name;
     meshSelector.add(meshOpt);
     
-    Animation.materials[topNode.name] = new Material(new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), 80);
+    Animation.materials[topNode.name] = new Material(new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), new Color(0.0, 0.0, 0.0), 80);
     
     topNode.uniforms = {
       "u_Material.Ka": index => gl.uniform3f(index, Animation.materials[topNode.name].albedo.r, Animation.materials[topNode.name].albedo.g, Animation.materials[topNode.name].albedo.b),
       "u_Material.Kd": index => gl.uniform3f(index, Animation.materials[topNode.name].diffuse.r, Animation.materials[topNode.name].diffuse.g, Animation.materials[topNode.name].diffuse.b),
       "u_Material.shininess": index => gl.uniform1f(index, Animation.materials[topNode.name].shininess),
       "u_Material.Ks": index => gl.uniform3f(index, Animation.materials[topNode.name].specular.r, Animation.materials[topNode.name].specular.g, Animation.materials[topNode.name].specular.b),
+      "u_Material.Ke": index => gl.uniform3f(index, Animation.materials[topNode.name].emissive.r, Animation.materials[topNode.name].emissive.g, Animation.materials[topNode.name].emissive.b),
       "u_UseVertColors": index => gl.uniform1i(index, Animation.materials[topNode.name].useVertColors)
     };
   }

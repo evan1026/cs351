@@ -6,6 +6,7 @@ struct Material {
     vec3 Ka;
     vec3 Kd;
     vec3 Ks;
+    vec3 Ke;
     float shininess;
 };
 
@@ -54,7 +55,7 @@ void getColorFromLighting() {
         diffuseColor = u_Material.Kd;
     }
 
-    gl_FragColor = vec4(albedoColor * u_Light.Ia + diffuseColor * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is, 1.0);
+    gl_FragColor = vec4(albedoColor * u_Light.Ia + diffuseColor * diffuse * u_Light.Id + u_Material.Ks * specular * u_Light.Is + u_Material.Ke, 1.0);
 }
 
 void getColorFromNormals() {
