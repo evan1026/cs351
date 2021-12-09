@@ -111,25 +111,31 @@ class Material {
   }
 }
 
-function initMaterials() {
-  var meshSelector = document.getElementById("mesh");
-  for (let meshName in Context.meshes) {
+function initMaterials(topNode) {
+  if (!topNode) {
+    topNode = Context.sceneGraph;
+  }
+  
+  if (topNode.mesh) {
+    var meshSelector = document.getElementById("mesh");
     let meshOpt = document.createElement('option');
-    meshOpt.value = meshName;
-    meshOpt.text = meshName;
+    meshOpt.value = topNode.name;
+    meshOpt.text = topNode.name;
     meshSelector.add(meshOpt);
-
-    if (!Animation.materials[meshName]) {
-      Animation.materials[meshName] = new Material(new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), 80);
-    }
-
-    Context.meshes[meshName].uniforms = {
-      "u_Material.Ka": index => gl.uniform3f(index, Animation.materials[meshName].albedo.r, Animation.materials[meshName].albedo.g, Animation.materials[meshName].albedo.b),
-      "u_Material.Kd": index => gl.uniform3f(index, Animation.materials[meshName].diffuse.r, Animation.materials[meshName].diffuse.g, Animation.materials[meshName].diffuse.b),
-      "u_Material.shininess": index => gl.uniform1f(index, Animation.materials[meshName].shininess),
-      "u_Material.Ks": index => gl.uniform3f(index, Animation.materials[meshName].specular.r, Animation.materials[meshName].specular.g, Animation.materials[meshName].specular.b),
-      "u_UseVertColors": index => gl.uniform1i(index, Animation.materials[meshName].useVertColors)
+    
+    Animation.materials[topNode.name] = new Material(new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), 80);
+    
+    topNode.uniforms = {
+      "u_Material.Ka": index => gl.uniform3f(index, Animation.materials[topNode.name].albedo.r, Animation.materials[topNode.name].albedo.g, Animation.materials[topNode.name].albedo.b),
+      "u_Material.Kd": index => gl.uniform3f(index, Animation.materials[topNode.name].diffuse.r, Animation.materials[topNode.name].diffuse.g, Animation.materials[topNode.name].diffuse.b),
+      "u_Material.shininess": index => gl.uniform1f(index, Animation.materials[topNode.name].shininess),
+      "u_Material.Ks": index => gl.uniform3f(index, Animation.materials[topNode.name].specular.r, Animation.materials[topNode.name].specular.g, Animation.materials[topNode.name].specular.b),
+      "u_UseVertColors": index => gl.uniform1i(index, Animation.materials[topNode.name].useVertColors)
     };
+  }
+  
+  for (let child of topNode.children) {
+    initMaterials(child);
   }
 
 }
@@ -203,9 +209,6 @@ function animate() {
   animateBoxes(time);
   animateProp(time);
 
-  var buildingsShown = document.getElementById("buildingsShown").checked;
-  Animation.nodes["buildings"].enabled = buildingsShown;
-
   Animation.nodes["sphere"].rot.multiplySelf(QuatFromAxisAngle(0, 0, 1, elapsed / 30));
 
   let wireframe = document.getElementById("wireframe").checked;
@@ -220,14 +223,7 @@ function animate() {
  * Animates the waving arm.
  */
 function animateArm(time) {
-  var armShown = document.getElementById("armShown").checked;
-  var armAnimate = document.getElementById("armAnimation").checked;
-
-  Animation.nodes["l1"].enabled = armShown;
-
-  if (armAnimate) {
-    Animation.armTime += (time - Animation.lastTick);
-  }
+  Animation.armTime += (time - Animation.lastTick);
   armTime = Animation.armTime;
 
   var waveAmount = document.getElementById("armWaveAmount").value;
@@ -243,16 +239,10 @@ function animateArm(time) {
  * Animates the pointed box objects.
  */
 function animateBoxes(time) {
-  var boxShown = document.getElementById("boxShown").checked;
-  var boxAnimate = document.getElementById("boxAnimation").checked;
-
-  Animation.nodes["house"].enabled = boxShown;
 
   Animation.boxStep = 0;
-  if (boxAnimate) {
-    Animation.boxTime += (time - Animation.lastTick);
-    Animation.boxStep = time - Animation.lastTick;
-  }
+  Animation.boxTime += (time - Animation.lastTick);
+  Animation.boxStep = time - Animation.lastTick;
 
   boxTime = Animation.boxTime;
   boxStep = Animation.boxStep;
@@ -273,8 +263,6 @@ function animateBoxes(time) {
  * Animates the propeller on the heli.
  */
 function animateProp(time) {
-  var propShown = document.getElementById("propShown").checked;
-  var propAnimate = document.getElementById("propAnimation").checked;
 
   var planeThrottle = document.getElementById("planeThrottle").value / 100;
   var planePitch = document.getElementById("planePitch").value / -10;
@@ -282,16 +270,13 @@ function animateProp(time) {
   var planeRoll = document.getElementById("planeRoll").value / -10;
 
   var planeNode = Animation.nodes["plane"];
-  planeNode.enabled = propShown;
 
-  if (propAnimate) {
-    var planeForward = new Vec3(0, -1, 0);
-    planeForward = planeForward.multiply(planeThrottle);
+  var planeForward = new Vec3(0, -1, 0);
+  planeForward = planeForward.multiply(planeThrottle);
 
-    planeNode.rot.rotateFromEuler(planePitch, planeRoll, planeYaw);
-    planeNode.rot.multiplyVector3(planeForward);
-    planeNode.pos = planeNode.pos.add(planeForward);
-  }
+  planeNode.rot.rotateFromEuler(planePitch, planeRoll, planeYaw);
+  planeNode.rot.multiplyVector3(planeForward);
+  planeNode.pos = planeNode.pos.add(planeForward);
 }
 
 /**

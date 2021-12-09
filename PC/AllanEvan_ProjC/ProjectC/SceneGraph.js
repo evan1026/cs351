@@ -325,6 +325,7 @@ class SceneGraphNode {
   mesh;
   enabled = true;
   parent;
+  uniforms = [];
 
   constructor(name, parent, pos, rot, scale, mesh) {
     this.parent = parent;
@@ -783,6 +784,13 @@ function drawNode(modelMatrix, node, scale, projectionMatrix, cameraPos) {
     // Select shaders for this mesh
     var renderProgram = node.mesh.renderProgram;
     selectRenderProgram(renderProgram);
+    
+    for (let attr in node.uniforms) {
+      if (attr in renderProgram.attribIds) {
+        node.uniforms[attr](renderProgram.attribIds[attr]);
+      }
+    }
+    
     if (renderProgram.projectionMatrixAttrib) {
       gl.uniformMatrix4fv(renderProgram.attribIds[renderProgram.projectionMatrixAttrib], false, projectionMatrix.elements);
     }
