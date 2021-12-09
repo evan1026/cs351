@@ -1,0 +1,329 @@
+digraph G {
+    graph [pad="0.5", nodesep="1", ranksep="5"];
+    CVVTransform -> CVVGroup [color=darkgreen];
+    CVVGroup [label="'CVV' Group", style=filled, fillcolor=darkgreen];
+    subgraph cluster_0 {
+        style=invis;
+        l1Transform -> l1Group [color=darkgreen];
+        l1Group [label="'l1' Group", style=filled, fillcolor=darkgreen];
+        subgraph cluster_1 {
+            style=invis;
+            l1_TopTransform [label="'l1_Top' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            l1_BotTransform [label="'l1_Bot' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            l1_MiddleTransform [label="'l1_Middle' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            l2Transform -> l2Group [color=darkgreen];
+            l2Group [label="'l2' Group", style=filled, fillcolor=darkgreen];
+            subgraph cluster_2 {
+                style=invis;
+                l2_TopTransform [label="'l2_Top' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                l2_BotTransform [label="'l2_Bot' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                l2_MiddleTransform [label="'l2_Middle' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                l3Transform -> l3Group [color=darkgreen];
+                l3Group [label="'l3' Group", style=filled, fillcolor=darkgreen];
+                subgraph cluster_3 {
+                    style=invis;
+                    l3_TopTransform [label="'l3_Top' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                    l3_BotTransform [label="'l3_Bot' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                    l3_MiddleTransform [label="'l3_Middle' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                    l4Transform -> l4Group [color=darkgreen];
+                    l4Group [label="'l4' Group", style=filled, fillcolor=darkgreen];
+                    subgraph cluster_4 {
+                        style=invis;
+                        l4_TopTransform [label="'l4_Top' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                        l4_BotTransform [label="'l4_Bot' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                        l4_MiddleTransform [label="'l4_Middle' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                        l5Transform -> l5Group [color=darkgreen];
+                        l5Group [label="'l5' Group", style=filled, fillcolor=darkgreen];
+                        subgraph cluster_5 {
+                            style=invis;
+                            l5_TopTransform [label="'l5_Top' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                            l5_BotTransform [label="'l5_Bot' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                            l5_MiddleTransform [label="'l5_Middle' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                            l6Transform -> l6Group [color=darkgreen];
+                            l6Group [label="'l6' Group", style=filled, fillcolor=darkgreen];
+                            subgraph cluster_6 {
+                                style=invis;
+                                l6_TopTransform [label="'l6_Top' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                                l6_BotTransform [label="'l6_Bot' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                                l6_MiddleTransform [label="'l6_Middle' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                                l7Transform -> l7Group [color=darkgreen];
+                                l7Group [label="'l7' Group", style=filled, fillcolor=darkgreen];
+                                subgraph cluster_7 {
+                                    style=invis;
+                                    l7_TopTransform [label="'l7_Top' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                                    l7_BotTransform [label="'l7_Bot' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                                    l7_MiddleTransform [label="'l7_Middle' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                                    armTipAxesTransform [label="'armTipAxes' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                                l7Group -> l7_TopTransform [color=darkgoldenrod4];
+                                l7Group -> l7_BotTransform [color=darkgoldenrod4];
+                                l7Group -> l7_MiddleTransform [color=darkgoldenrod4];
+                                l7Group -> armTipAxesTransform [color=darkgoldenrod4];
+                                }
+                                l7Transform [label="'l7' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                            l6Group -> l6_TopTransform [color=darkgoldenrod4];
+                            l6Group -> l6_BotTransform [color=darkgoldenrod4];
+                            l6Group -> l6_MiddleTransform [color=darkgoldenrod4];
+                            l6Group -> l7Transform [color=darkgoldenrod4];
+                            }
+                            l6Transform [label="'l6' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                        l5Group -> l5_TopTransform [color=darkgoldenrod4];
+                        l5Group -> l5_BotTransform [color=darkgoldenrod4];
+                        l5Group -> l5_MiddleTransform [color=darkgoldenrod4];
+                        l5Group -> l6Transform [color=darkgoldenrod4];
+                        }
+                        l5Transform [label="'l5' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                    l4Group -> l4_TopTransform [color=darkgoldenrod4];
+                    l4Group -> l4_BotTransform [color=darkgoldenrod4];
+                    l4Group -> l4_MiddleTransform [color=darkgoldenrod4];
+                    l4Group -> l5Transform [color=darkgoldenrod4];
+                    }
+                    l4Transform [label="'l4' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                l3Group -> l3_TopTransform [color=darkgoldenrod4];
+                l3Group -> l3_BotTransform [color=darkgoldenrod4];
+                l3Group -> l3_MiddleTransform [color=darkgoldenrod4];
+                l3Group -> l4Transform [color=darkgoldenrod4];
+                }
+                l3Transform [label="'l3' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            l2Group -> l2_TopTransform [color=darkgoldenrod4];
+            l2Group -> l2_BotTransform [color=darkgoldenrod4];
+            l2Group -> l2_MiddleTransform [color=darkgoldenrod4];
+            l2Group -> l3Transform [color=darkgoldenrod4];
+            }
+            l2Transform [label="'l2' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            armAxesTransform [label="'armAxes' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+        l1Group -> l1_TopTransform [color=darkgoldenrod4];
+        l1Group -> l1_BotTransform [color=darkgoldenrod4];
+        l1Group -> l1_MiddleTransform [color=darkgoldenrod4];
+        l1Group -> l2Transform [color=darkgoldenrod4];
+        l1Group -> armAxesTransform [color=darkgoldenrod4];
+        }
+        l1Transform [label="'l1' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+        houseTransform -> houseGroup [color=darkgreen];
+        houseGroup [label="'house' Group", style=filled, fillcolor=darkgreen];
+        subgraph cluster_8 {
+            style=invis;
+            house2Transform [label="'house2' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            house3Transform [label="'house3' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            house4Transform [label="'house4' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            house5Transform [label="'house5' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            housesAxesTransform [label="'housesAxes' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+        houseGroup -> house2Transform [color=darkgoldenrod4];
+        houseGroup -> house3Transform [color=darkgoldenrod4];
+        houseGroup -> house4Transform [color=darkgoldenrod4];
+        houseGroup -> house5Transform [color=darkgoldenrod4];
+        houseGroup -> housesAxesTransform [color=darkgoldenrod4];
+        }
+        houseTransform [label="'house' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+        gridTransform [label="'grid' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+        axesTransform [label="'axes' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+        planeTransform [label="'plane' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+        buildingsTransform -> buildingsGroup [color=darkgreen];
+        buildingsGroup [label="'buildings' Group", style=filled, fillcolor=darkgreen];
+        subgraph cluster_9 {
+            style=invis;
+            building_3_0Transform [label="'building_3_0' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            building_3_1Transform [label="'building_3_1' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            building_3_2Transform [label="'building_3_2' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            building_2_0Transform [label="'building_2_0' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            building_2_1Transform [label="'building_2_1' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            building_2_2Transform [label="'building_2_2' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            building_1_0Transform [label="'building_1_0' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            building_1_1Transform [label="'building_1_1' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            building_1_2Transform [label="'building_1_2' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+        buildingsGroup -> building_3_0Transform [color=darkgoldenrod4];
+        buildingsGroup -> building_3_1Transform [color=darkgoldenrod4];
+        buildingsGroup -> building_3_2Transform [color=darkgoldenrod4];
+        buildingsGroup -> building_2_0Transform [color=darkgoldenrod4];
+        buildingsGroup -> building_2_1Transform [color=darkgoldenrod4];
+        buildingsGroup -> building_2_2Transform [color=darkgoldenrod4];
+        buildingsGroup -> building_1_0Transform [color=darkgoldenrod4];
+        buildingsGroup -> building_1_1Transform [color=darkgoldenrod4];
+        buildingsGroup -> building_1_2Transform [color=darkgoldenrod4];
+        }
+        buildingsTransform [label="'buildings' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+        sphereTransform [label="'sphere' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+        personTransform -> personGroup [color=darkgreen];
+        personGroup [label="'person' Group", style=filled, fillcolor=darkgreen];
+        subgraph cluster_10 {
+            style=invis;
+            personTorsoTransform -> personTorsoGroup [color=darkgreen];
+            personTorsoGroup [label="'personTorso' Group", style=filled, fillcolor=darkgreen];
+            subgraph cluster_11 {
+                style=invis;
+                personTorsoP1Transform [label="'personTorsoP1' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                personTorsoP2Transform [label="'personTorsoP2' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                personTorsoP3Transform [label="'personTorsoP3' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                personTorsoP4Transform [label="'personTorsoP4' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                personTorsoP5Transform [label="'personTorsoP5' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                personNeckTransform -> personNeckGroup [color=darkgreen];
+                personNeckGroup [label="'personNeck' Group", style=filled, fillcolor=darkgreen];
+                subgraph cluster_12 {
+                    style=invis;
+                    personHeadTransform [label="'personHead' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                personNeckGroup -> personHeadTransform [color=darkgoldenrod4];
+                }
+                personNeckTransform [label="'personNeck' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                personLShoulderTransform -> personLShoulderGroup [color=darkgreen];
+                personLShoulderGroup [label="'personLShoulder' Group", style=filled, fillcolor=darkgreen];
+                subgraph cluster_13 {
+                    style=invis;
+                    personLArmUpperTransform [label="'personLArmUpper' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                    personLElbowTransform -> personLElbowGroup [color=darkgreen];
+                    personLElbowGroup [label="'personLElbow' Group", style=filled, fillcolor=darkgreen];
+                    subgraph cluster_14 {
+                        style=invis;
+                        personLLowerTransform [label="'personLLower' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                    personLElbowGroup -> personLLowerTransform [color=darkgoldenrod4];
+                    }
+                    personLElbowTransform [label="'personLElbow' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                personLShoulderGroup -> personLArmUpperTransform [color=darkgoldenrod4];
+                personLShoulderGroup -> personLElbowTransform [color=darkgoldenrod4];
+                }
+                personLShoulderTransform [label="'personLShoulder' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                personRShoulderTransform -> personRShoulderGroup [color=darkgreen];
+                personRShoulderGroup [label="'personRShoulder' Group", style=filled, fillcolor=darkgreen];
+                subgraph cluster_15 {
+                    style=invis;
+                    personRArmUpperTransform [label="'personRArmUpper' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                    personRElbowTransform -> personRElbowGroup [color=darkgreen];
+                    personRElbowGroup [label="'personRElbow' Group", style=filled, fillcolor=darkgreen];
+                    subgraph cluster_16 {
+                        style=invis;
+                        personRLowerTransform [label="'personRLower' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                    personRElbowGroup -> personRLowerTransform [color=darkgoldenrod4];
+                    }
+                    personRElbowTransform [label="'personRElbow' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                personRShoulderGroup -> personRArmUpperTransform [color=darkgoldenrod4];
+                personRShoulderGroup -> personRElbowTransform [color=darkgoldenrod4];
+                }
+                personRShoulderTransform [label="'personRShoulder' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                personLHipTransform -> personLHipGroup [color=darkgreen];
+                personLHipGroup [label="'personLHip' Group", style=filled, fillcolor=darkgreen];
+                subgraph cluster_17 {
+                    style=invis;
+                    personLLegUpperTransform [label="'personLLegUpper' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                    personLKneeTransform -> personLKneeGroup [color=darkgreen];
+                    personLKneeGroup [label="'personLKnee' Group", style=filled, fillcolor=darkgreen];
+                    subgraph cluster_18 {
+                        style=invis;
+                        personLLegLowerTransform [label="'personLLegLower' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                    personLKneeGroup -> personLLegLowerTransform [color=darkgoldenrod4];
+                    }
+                    personLKneeTransform [label="'personLKnee' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                personLHipGroup -> personLLegUpperTransform [color=darkgoldenrod4];
+                personLHipGroup -> personLKneeTransform [color=darkgoldenrod4];
+                }
+                personLHipTransform [label="'personLHip' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                personRHipTransform -> personRHipGroup [color=darkgreen];
+                personRHipGroup [label="'personRHip' Group", style=filled, fillcolor=darkgreen];
+                subgraph cluster_19 {
+                    style=invis;
+                    personRLegUpperTransform [label="'personRLegUpper' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                    personRKneeTransform -> personRKneeGroup [color=darkgreen];
+                    personRKneeGroup [label="'personRKnee' Group", style=filled, fillcolor=darkgreen];
+                    subgraph cluster_20 {
+                        style=invis;
+                        personRLegLowerTransform [label="'personRLegLower' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                    personRKneeGroup -> personRLegLowerTransform [color=darkgoldenrod4];
+                    }
+                    personRKneeTransform [label="'personRKnee' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+                personRHipGroup -> personRLegUpperTransform [color=darkgoldenrod4];
+                personRHipGroup -> personRKneeTransform [color=darkgoldenrod4];
+                }
+                personRHipTransform [label="'personRHip' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+            personTorsoGroup -> personTorsoP1Transform [color=darkgoldenrod4];
+            personTorsoGroup -> personTorsoP2Transform [color=darkgoldenrod4];
+            personTorsoGroup -> personTorsoP3Transform [color=darkgoldenrod4];
+            personTorsoGroup -> personTorsoP4Transform [color=darkgoldenrod4];
+            personTorsoGroup -> personTorsoP5Transform [color=darkgoldenrod4];
+            personTorsoGroup -> personNeckTransform [color=darkgoldenrod4];
+            personTorsoGroup -> personLShoulderTransform [color=darkgoldenrod4];
+            personTorsoGroup -> personRShoulderTransform [color=darkgoldenrod4];
+            personTorsoGroup -> personLHipTransform [color=darkgoldenrod4];
+            personTorsoGroup -> personRHipTransform [color=darkgoldenrod4];
+            }
+            personTorsoTransform [label="'personTorso' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+        personGroup -> personTorsoTransform [color=darkgoldenrod4];
+        }
+        personTransform [label="'person' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    CVVGroup -> l1Transform [color=darkgoldenrod4];
+    CVVGroup -> houseTransform [color=darkgoldenrod4];
+    CVVGroup -> gridTransform [color=darkgoldenrod4];
+    CVVGroup -> axesTransform [color=darkgoldenrod4];
+    CVVGroup -> planeTransform [color=darkgoldenrod4];
+    CVVGroup -> buildingsTransform [color=darkgoldenrod4];
+    CVVGroup -> sphereTransform [color=darkgoldenrod4];
+    CVVGroup -> personTransform [color=darkgoldenrod4];
+    }
+    CVVTransform [label="'CVV' Transform", fillcolor=darkgoldenrod4, shape=invtrapezium, style=filled];
+    l1_TopTransform -> CircleMesh [color=firebrick4];
+    l1_BotTransform -> CircleMesh [color=firebrick4];
+    l1_MiddleTransform -> CyllinderSideMesh [color=firebrick4];
+    l2_TopTransform -> CircleMesh [color=firebrick4];
+    l2_BotTransform -> CircleMesh [color=firebrick4];
+    l2_MiddleTransform -> CyllinderSideMesh [color=firebrick4];
+    l3_TopTransform -> CircleMesh [color=firebrick4];
+    l3_BotTransform -> CircleMesh [color=firebrick4];
+    l3_MiddleTransform -> CyllinderSideMesh [color=firebrick4];
+    l4_TopTransform -> CircleMesh [color=firebrick4];
+    l4_BotTransform -> CircleMesh [color=firebrick4];
+    l4_MiddleTransform -> CyllinderSideMesh [color=firebrick4];
+    l5_TopTransform -> CircleMesh [color=firebrick4];
+    l5_BotTransform -> CircleMesh [color=firebrick4];
+    l5_MiddleTransform -> CyllinderSideMesh [color=firebrick4];
+    l6_TopTransform -> CircleMesh [color=firebrick4];
+    l6_BotTransform -> CircleMesh [color=firebrick4];
+    l6_MiddleTransform -> CyllinderSideMesh [color=firebrick4];
+    l7_TopTransform -> CircleMesh [color=firebrick4];
+    l7_BotTransform -> CircleMesh [color=firebrick4];
+    l7_MiddleTransform -> CyllinderSideMesh [color=firebrick4];
+    armTipAxesTransform -> AxesMesh [color=firebrick4];
+    armAxesTransform -> AxesMesh [color=firebrick4];
+    houseTransform -> HouseMesh [color=firebrick4];
+    house2Transform -> HouseMesh [color=firebrick4];
+    house3Transform -> HouseMesh [color=firebrick4];
+    house4Transform -> HouseMesh [color=firebrick4];
+    house5Transform -> HouseMesh [color=firebrick4];
+    housesAxesTransform -> AxesMesh [color=firebrick4];
+    gridTransform -> GridMesh [color=firebrick4];
+    axesTransform -> AxesMesh [color=firebrick4];
+    planeTransform -> PlaneMesh [color=firebrick4];
+    building_3_0Transform -> Building6Mesh [color=firebrick4];
+    building_3_1Transform -> Building4Mesh [color=firebrick4];
+    building_3_2Transform -> Building5Mesh [color=firebrick4];
+    building_2_0Transform -> Building8Mesh [color=firebrick4];
+    building_2_1Transform -> Building5Mesh [color=firebrick4];
+    building_2_2Transform -> Building3Mesh [color=firebrick4];
+    building_1_0Transform -> Building3Mesh [color=firebrick4];
+    building_1_1Transform -> Building3Mesh [color=firebrick4];
+    building_1_2Transform -> Building6Mesh [color=firebrick4];
+    sphereTransform -> SphereMesh [color=firebrick4];
+    personTorsoP1Transform -> SphereMesh [color=firebrick4];
+    personTorsoP2Transform -> SphereMesh [color=firebrick4];
+    personTorsoP3Transform -> SphereMesh [color=firebrick4];
+    personTorsoP4Transform -> SphereMesh [color=firebrick4];
+    personTorsoP5Transform -> SphereMesh [color=firebrick4];
+    personNeckTransform -> SphereMesh [color=firebrick4];
+    personHeadTransform -> SphereMesh [color=firebrick4];
+    personLArmUpperTransform -> SphereMesh [color=firebrick4];
+    personLLowerTransform -> SphereMesh [color=firebrick4];
+    personRArmUpperTransform -> SphereMesh [color=firebrick4];
+    personRLowerTransform -> SphereMesh [color=firebrick4];
+    personLLegUpperTransform -> SphereMesh [color=firebrick4];
+    personLLegLowerTransform -> SphereMesh [color=firebrick4];
+    personRLegUpperTransform -> SphereMesh [color=firebrick4];
+    personRLegLowerTransform -> SphereMesh [color=firebrick4];
+    CircleMesh [fillcolor=firebrick4, shape=trapezium, style=filled];
+    CircleMesh [fillcolor=firebrick4, shape=trapezium, style=filled];
+    CyllinderSideMesh [fillcolor=firebrick4, shape=trapezium, style=filled];
+    AxesMesh [fillcolor=firebrick4, shape=trapezium, style=filled];
+    HouseMesh [fillcolor=firebrick4, shape=trapezium, style=filled];
+    GridMesh [fillcolor=firebrick4, shape=trapezium, style=filled];
+    PlaneMesh [fillcolor=firebrick4, shape=trapezium, style=filled];
+    Building6Mesh [fillcolor=firebrick4, shape=trapezium, style=filled];
+    Building4Mesh [fillcolor=firebrick4, shape=trapezium, style=filled];
+    Building5Mesh [fillcolor=firebrick4, shape=trapezium, style=filled];
+    Building8Mesh [fillcolor=firebrick4, shape=trapezium, style=filled];
+    Building3Mesh [fillcolor=firebrick4, shape=trapezium, style=filled];
+    SphereMesh [fillcolor=firebrick4, shape=trapezium, style=filled];
+}
