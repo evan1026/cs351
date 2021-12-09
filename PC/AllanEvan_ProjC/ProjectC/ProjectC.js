@@ -131,7 +131,9 @@ function initMaterials(topNode) {
     meshOpt.text = topNode.name;
     meshSelector.add(meshOpt);
     
-    Animation.materials[topNode.name] = new Material(new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), new Color(0.0, 0.0, 0.0), 80);
+    if (!Animation.materials[topNode.name]) {
+      Animation.materials[topNode.name] = new Material(new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0), new Color(0.0, 0.0, 0.0), 80);
+    }
     
     topNode.uniforms = {
       "u_Material.Ka": index => gl.uniform3f(index, Animation.materials[topNode.name].albedo.r, Animation.materials[topNode.name].albedo.g, Animation.materials[topNode.name].albedo.b),
@@ -455,6 +457,22 @@ function initSceneGraph() {
   var personRLegUpper = new SceneGraphNode("personRLegUpper", personRHip,      new Pos( 0.0, 0.0, -0.3),  new Quaternion(), new Scale(0.3, 0.3, 0.8), sphereMesh);
   var personRKnee     = new SceneGraphNode("personRKnee",     personRHip,      new Pos( 0.0, 0.0, -1.0),  new Quaternion(), new Scale(1.0, 1.0, 1.0));
   var personRLegLower = new SceneGraphNode("personRLegLower", personRKnee,     new Pos( 0.0, 0.0, -0.3),  new Quaternion(), new Scale(0.3, 0.3, 0.8), sphereMesh);
+  
+  Animation.materials["personNeck"] = new Material(new Color(1.0, 0.76, 0.66), new Color(1.0, 0.76, 0.66), new Color(0.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), 80);
+  Animation.materials["personHead"] = new Material(new Color(1.0, 0.76, 0.66), new Color(1.0, 0.76, 0.66), new Color(0.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), 80);
+  Animation.materials["personLLower"] = new Material(new Color(1.0, 0.76, 0.66), new Color(1.0, 0.76, 0.66), new Color(0.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), 80);
+  Animation.materials["personRLower"] = new Material(new Color(1.0, 0.76, 0.66), new Color(1.0, 0.76, 0.66), new Color(0.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), 80);
+  Animation.materials["personLLegLower"] = new Material(new Color(1.0, 0.76, 0.66), new Color(1.0, 0.76, 0.66), new Color(0.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), 80);
+  Animation.materials["personRLegLower"] = new Material(new Color(1.0, 0.76, 0.66), new Color(1.0, 0.76, 0.66), new Color(0.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), 80);
+  Animation.materials["personTorsoP1"] = new Material(new Color(1.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), 80);
+  Animation.materials["personTorsoP2"] = new Material(new Color(1.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), 80);
+  Animation.materials["personTorsoP3"] = new Material(new Color(1.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), 80);
+  Animation.materials["personTorsoP4"] = new Material(new Color(1.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), 80);
+  Animation.materials["personTorsoP5"] = new Material(new Color(1.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), 80);
+  Animation.materials["personLArmUpper"] = new Material(new Color(1.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), 80);
+  Animation.materials["personRArmUpper"] = new Material(new Color(1.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), 80);
+  Animation.materials["personLLegUpper"] = new Material(new Color(0.5, 0.5, 1.0), new Color(0.5, 0.5, 1.0), new Color(0.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), 80);
+  Animation.materials["personRLegUpper"] = new Material(new Color(0.5, 0.5, 1.0), new Color(0.5, 0.5, 1.0), new Color(0.0, 0.0, 0.0), new Color(0.0, 0.0, 0.0), 80);
 
   Context.sceneGraph = topNode;
   console.log("Full Graph: ",topNode);
