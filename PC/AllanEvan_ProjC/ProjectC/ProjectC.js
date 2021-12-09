@@ -208,6 +208,7 @@ function animate() {
   animateArm(time);
   animateBoxes(time);
   animateProp(time);
+  animatePerson(time);
 
   Animation.nodes["sphere"].rot.multiplySelf(QuatFromAxisAngle(0, 0, 1, elapsed / 30));
 
@@ -217,6 +218,19 @@ function animate() {
   updateFramerate(elapsed);
 
   Animation.lastTick = time;
+}
+
+function animatePerson(time) {
+  var personTime = time / 500;
+  
+  Animation.nodes["personLShoulder"].rot = QuatFromEuler(0, 80 * Math.cos(personTime), 0);
+  Animation.nodes["personRShoulder"].rot = QuatFromEuler(0, -80 * Math.cos(personTime), 0);
+  
+  Animation.nodes["personLElbow"].rot = QuatFromEuler(0, 20 * Math.cos(personTime) - 20, 0);
+  Animation.nodes["personRElbow"].rot = QuatFromEuler(0, -20 * Math.cos(personTime) + 20, 0);
+  
+  Animation.nodes["personLHip"].rot = QuatFromEuler(0, -10 * Math.cos(personTime) + 10, 0);
+  Animation.nodes["personRHip"].rot = QuatFromEuler(0, 10 * Math.cos(personTime) - 10, 0);
 }
 
 /**
@@ -405,7 +419,33 @@ function initSceneGraph() {
     }
   }
 
-  var sphereMesh = new SceneGraphNode("sphere", topNode, new Pos(), new Quaternion(), new Scale(0.4, 0.4, 0.4), sphereMesh);
+  var sphere = new SceneGraphNode("sphere", topNode, new Pos(), new Quaternion(), new Scale(0.4, 0.4, 0.4), sphereMesh);
+  
+  var person          = new SceneGraphNode("person",          topNode,         new Pos( 5.0, 0.0,  1.0),  new Quaternion(), new Scale(0.2, 0.2, 0.2));
+  var personTorso     = new SceneGraphNode("personTorso",     person,          new Pos( 0.0, 0.0,  0.0),  new Quaternion(), new Scale(1.0, 1.0, 1.0));
+  var personTorsoP1   = new SceneGraphNode("personTorsoP1",   personTorso,     new Pos( 0.0, 0.0,  0.5),  new Quaternion(), new Scale(1.0, 0.5, 0.4), sphereMesh);
+  var personTorsoP2   = new SceneGraphNode("personTorsoP2",   personTorso,     new Pos( 0.0, 0.0,  0.25), new Quaternion(), new Scale(1.0, 0.5, 0.4), sphereMesh);
+  var personTorsoP3   = new SceneGraphNode("personTorsoP3",   personTorso,     new Pos( 0.0, 0.0,  0.0),  new Quaternion(), new Scale(1.0, 0.5, 0.4), sphereMesh);
+  var personTorsoP4   = new SceneGraphNode("personTorsoP4",   personTorso,     new Pos( 0.0, 0.0, -0.25), new Quaternion(), new Scale(1.0, 0.5, 0.4), sphereMesh);
+  var personTorsoP5   = new SceneGraphNode("personTorsoP5",   personTorso,     new Pos( 0.0, 0.0, -0.5),  new Quaternion(), new Scale(1.0, 0.5, 0.4), sphereMesh);
+  var personNeck      = new SceneGraphNode("personNeck",      personTorso,     new Pos( 0.0, 0.0,  1.0),  new Quaternion(), new Scale(0.2, 0.2, 0.4), sphereMesh);
+  var personHead      = new SceneGraphNode("personHead",      personNeck,      new Pos( 0.0, 0.0,  1.0),  new Quaternion(), new Scale(1.5, 1.5, 1.0), sphereMesh);
+  var personLShoulder = new SceneGraphNode("personLShoulder", personTorso,     new Pos( 1.0, 0.0,  0.5),  new Quaternion(), new Scale(1.0, 1.0, 1.0));
+  var personLArmUpper = new SceneGraphNode("personLArmUpper", personLShoulder, new Pos( 0.4, 0.0,  0.0),  new Quaternion(), new Scale(0.5, 0.2, 0.2), sphereMesh);
+  var personLElbow    = new SceneGraphNode("personLElbow",    personLShoulder, new Pos( 0.8, 0.0,  0.0),  new Quaternion(), new Scale(1.0, 1.0, 1.0));
+  var personLLower    = new SceneGraphNode("personLLower",    personLElbow,    new Pos( 0.4, 0.0,  0.0),  new Quaternion(), new Scale(0.5, 0.2, 0.2), sphereMesh);
+  var personRShoulder = new SceneGraphNode("personRShoulder", personTorso,     new Pos(-1.0, 0.0,  0.5),  new Quaternion(), new Scale(1.0, 1.0, 1.0));
+  var personRArmUpper = new SceneGraphNode("personRArmUpper", personRShoulder, new Pos(-0.4, 0.0,  0.0),  new Quaternion(), new Scale(0.5, 0.2, 0.2), sphereMesh);
+  var personRElbow    = new SceneGraphNode("personRElbow",    personRShoulder, new Pos(-0.8, 0.0,  0.0),  new Quaternion(), new Scale(1.0, 1.0, 1.0));
+  var personRLower    = new SceneGraphNode("personRLower",    personRElbow,    new Pos(-0.4, 0.0,  0.0),  new Quaternion(), new Scale(0.5, 0.2, 0.2), sphereMesh);
+  var personLHip      = new SceneGraphNode("personLHip",      personTorso,     new Pos(-0.4, 0.0, -1.0),  new Quaternion(), new Scale(1.0, 1.0, 1.0));
+  var personLLegUpper = new SceneGraphNode("personLLegUpper", personLHip,      new Pos( 0.0, 0.0, -0.3),  new Quaternion(), new Scale(0.3, 0.3, 0.8), sphereMesh);
+  var personLKnee     = new SceneGraphNode("personLKnee",     personLHip,      new Pos( 0.0, 0.0, -1.0),  new Quaternion(), new Scale(1.0, 1.0, 1.0));
+  var personLLegLower = new SceneGraphNode("personLLegLower", personLKnee,     new Pos( 0.0, 0.0, -0.3),  new Quaternion(), new Scale(0.3, 0.3, 0.8), sphereMesh);
+  var personRHip      = new SceneGraphNode("personRHip",      personTorso,     new Pos( 0.4, 0.0, -1.0),  new Quaternion(), new Scale(1.0, 1.0, 1.0));
+  var personRLegUpper = new SceneGraphNode("personRLegUpper", personRHip,      new Pos( 0.0, 0.0, -0.3),  new Quaternion(), new Scale(0.3, 0.3, 0.8), sphereMesh);
+  var personRKnee     = new SceneGraphNode("personRKnee",     personRHip,      new Pos( 0.0, 0.0, -1.0),  new Quaternion(), new Scale(1.0, 1.0, 1.0));
+  var personRLegLower = new SceneGraphNode("personRLegLower", personRKnee,     new Pos( 0.0, 0.0, -0.3),  new Quaternion(), new Scale(0.3, 0.3, 0.8), sphereMesh);
 
   Context.sceneGraph = topNode;
   console.log("Full Graph: ",topNode);
