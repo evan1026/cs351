@@ -985,7 +985,7 @@ function initSphereMesh(numDivisions) {
  */
 function initCameras() {
   near = 0.1;
-  far = 30;
+  far = 100;
   fovy = 30;
 
   startx = -7;
